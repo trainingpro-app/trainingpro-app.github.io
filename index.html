@@ -608,6 +608,60 @@ body.drag-on{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .vmini.big{left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:min(900px,calc(100vw - 24px))}
 .vmini.big.vert{width:auto}
 .vmini.big.vert iframe{height:min(calc(100vh - 110px),calc((100vw - 24px) * 16 / 9));width:calc(min(calc(100vh - 110px),calc((100vw - 24px) * 16 / 9)) * 9 / 16)}
+/* biblioteca de ejercicios */
+.ej-filt{display:grid;gap:8px;margin-bottom:12px}
+.ej-q{max-width:420px;width:100%}
+.ej-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ej-chip{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:20px;padding:5px 11px;font-size:13px;font-weight:600;cursor:pointer;line-height:1.2}
+.ej-chip small{font-family:var(--f-mono);font-size:10px;opacity:.7}
+.ej-chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ej-sels{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ej-sels select{width:auto;min-width:160px;flex:0 1 220px}
+.ej-auto{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--accent-soft);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px}
+.ej-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ej-card{display:flex;flex-direction:column;gap:5px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;min-width:0;color:var(--ink);font:inherit}
+.ej-card:hover{border-color:var(--accent)}
+.ej-card b{font-size:12.5px;line-height:1.25;letter-spacing:.02em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ej-th{position:relative;display:grid;place-items:center;aspect-ratio:4/3;border-radius:7px;overflow:hidden;background:var(--surface-2);flex:none}
+.ej-th img{width:100%;height:100%;object-fit:cover;display:block}
+.ej-th.sm{width:54px;aspect-ratio:1;border-radius:6px}
+.ej-vb{position:absolute;right:5px;bottom:5px;background:rgba(0,0,0,.6);color:#fff;font-style:normal;font-size:10px;border-radius:4px;padding:1px 5px}
+.ej-ini{font-family:var(--f-disp);font-weight:700;font-size:26px;letter-spacing:.04em;color:var(--ink-3)}
+.ej-th.sm.ej-ini{font-size:16px}
+.ej-ini[data-z=inf]{background:#e3efe6;color:#2c6b42}.ej-ini[data-z=sup]{background:#e5ecf5;color:#34507a}.ej-ini[data-z=core]{background:#f4ecdf;color:#80602b}.ej-ini[data-z=full]{background:#efe5f2;color:#6b3f78}
+:root[data-theme=dark] .ej-ini[data-z]{filter:brightness(.45) saturate(1.3)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ej-ini[data-z]{filter:brightness(.45) saturate(1.3)}}
+.ej-tags{display:flex;flex-wrap:wrap;gap:3px}
+.ej-tags i{font-style:normal;font-size:10.5px;background:var(--surface-2);color:var(--ink-2);border-radius:4px;padding:1px 5px}
+.ej-uso{font-size:11px;color:var(--ink-3);margin-top:auto}
+.ej-ficha{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.ej-ph{width:180px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--surface-2);display:grid;place-items:center;color:var(--ink-3);font-size:13px;position:relative}
+.ej-ph img{width:100%;height:100%;object-fit:cover}
+.ej-ph small{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.55);color:#fff;border-radius:4px;padding:1px 6px;font-size:10.5px}
+.ej-phb{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.ej-phb label.btn{cursor:pointer}
+.ej-sug{background:var(--accent-soft);border-radius:6px;padding:6px 10px;margin:0}
+.blk-tools{display:flex;gap:6px;flex-wrap:wrap}
+.ejp{position:fixed;top:0;right:0;bottom:0;width:min(360px,100vw);z-index:60;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.ejp-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);font-family:var(--f-disp);font-size:18px;letter-spacing:.06em;text-transform:uppercase}
+.ejp-h .x{background:none;border:0;font-size:26px;line-height:1;color:var(--ink-2);cursor:pointer;width:34px;height:34px}
+.ejp-to{padding:8px 14px 0;font-size:13px}
+.ejp-to label{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.ejp-to select{flex:1;min-width:0}
+.ejp-f{padding:8px 14px 0}
+.ejp-f .ej-sels select{min-width:0;flex:1 1 130px}
+.ejp-f .ej-chip{padding:4px 9px;font-size:12px}
+.ejp-l{flex:1;overflow-y:auto;padding:4px 8px 16px;overscroll-behavior:contain}
+.ejp-it{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:7px 6px;cursor:pointer;color:var(--ink);font:inherit}
+.ejp-it:hover{background:var(--surface-2)}
+.ejp-it .ejp-tx{flex:1;min-width:0;display:grid;gap:2px}
+.ejp-it b{font-size:13px;letter-spacing:.02em}
+.ejp-it small{font-size:11px;color:var(--ink-3)}
+.ejp-plus{font-style:normal;font-size:20px;font-weight:700;color:var(--accent);width:30px;height:30px;border-radius:50%;border:1.5px solid var(--accent);display:grid;place-items:center;flex:none}
+@media (min-width:861px){body.ejp-on .modal-wrap.full .modal{padding-right:360px}}
+@media (max-width:860px){.ejp{top:auto;height:72vh;width:100%;border-left:0;border-top:1px solid var(--line);border-radius:14px 14px 0 0}.ej-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ej-ph{width:140px}}
+@keyframes ejfl{0%{background:var(--accent-soft)}100%{background:transparent}}
+.exr.ej-flash{animation:ejfl 1.4s ease-out}
 .vmini-media{position:relative;background:#000}
 .vmini video{width:100%;aspect-ratio:16/9;display:block;background:#000;object-fit:contain}
 .vmini.vert video{aspect-ratio:auto;height:min(62vh,520px,calc((100vw - 32px) * 16 / 9));width:calc(min(62vh,520px,calc((100vw - 32px) * 16 / 9)) * 9 / 16)}
@@ -718,7 +772,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 14 oct 2026 · TrainingPro · arrastrar ejercicios y bloques · videos en la app</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 19 oct 2026 · TrainingPro · biblioteca de ejercicios</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -941,18 +995,19 @@ function renderNav(){
     h+='<div class="grp"><div class="grp-t">'+esc(g)+'</div>';
     groups[g].forEach(c=>{
       const n=injCount[c.id];
-      h+='<button class="cat-btn'+(c.id===S.cat&&S.view!=='lib'?' on':'')+'" data-cat="'+esc(c.id)+'"><span class="nm">'+esc(c.nombre)+'</span>'+(n?'<span class="inj-dot" title="Lesionados activos">'+n+'</span>':'')+'</button>';
+      h+='<button class="cat-btn'+(c.id===S.cat&&S.view==='cat'?' on':'')+'" data-cat="'+esc(c.id)+'"><span class="nm">'+esc(c.nombre)+'</span>'+(n?'<span class="inj-dot" title="Lesionados activos">'+n+'</span>':'')+'</button>';
     });
     h+='</div>';
   });
   if(!S.cats.length) h='<div class="grp"><div class="grp-t">Sin categorías</div><div style="padding:0 8px;color:var(--side-ink-2);font-size:13px">Sumá la primera abajo.</div></div>';
-  h='<div class="grp"><button class="cat-btn lib-btn'+(S.view==='lib'?' on':'')+'" data-lib><span class="nm">Rutinas</span><span class="lib-n">'+S.rutAll.length+'</span></button><button class="cat-btn ag-open-btn" data-agopen><span class="nm">Agenda de hoy</span></button><a class="cat-btn ag-open-btn" href="'+esc(atlUrl(''))+'" target="_blank" rel="noopener"><span class="nm">App de atletas ↗</span></a>'+
+  h='<div class="grp"><button class="cat-btn lib-btn'+(S.view==='lib'?' on':'')+'" data-lib><span class="nm">Rutinas</span><span class="lib-n">'+S.rutAll.length+'</span></button><button class="cat-btn lib-btn'+(S.view==='ejs'?' on':'')+'" data-ejs><span class="nm">Ejercicios</span><span class="lib-n">'+ejAll().length+'</span></button><button class="cat-btn ag-open-btn" data-agopen><span class="nm">Agenda de hoy</span></button><a class="cat-btn ag-open-btn" href="'+esc(atlUrl(''))+'" target="_blank" rel="noopener"><span class="nm">App de atletas ↗</span></a>'+
     (RO?'':'<button class="cat-btn ag-open-btn" data-share><span class="nm">Compartir (solo lectura)</span>'+(shareCfg().activo?'<span class="sh-on">ON</span>':'')+'</button>')+'</div>'+h;
   $('#catNav').innerHTML=h;
 }
 $('#catNav').addEventListener('click',e=>{
   if(e.target.closest('[data-share]')){openShare();if(window.innerWidth<=860)setSide(false);return;}
   if(e.target.closest('[data-agopen]')){AG.day=TODAY;setAg('open');if(window.innerWidth<=860)setSide(false);return;}
+  if(e.target.closest('[data-ejs]')){S.view='ejs';ls.set('pf-view','ejs');renderNav();render();if(window.innerWidth<=860)setSide(false);return;}
   if(e.target.closest('[data-lib]')){S.view='lib';ls.set('pf-view','lib');renderNav();render();if(window.innerWidth<=860)setSide(false);return;}
   const b=e.target.closest('[data-cat]');if(!b)return;S.view='cat';ls.set('pf-view','cat');selectCat(b.dataset.cat);if(window.innerWidth<=860)setSide(false);});
 $('#catForm').addEventListener('submit',async e=>{
@@ -1021,7 +1076,9 @@ $('#editCat').onclick=openCat;
 function render(){
   renderAgenda();
   const lib=S.view==='lib';
-  $('#tabs').hidden=lib;$('#kpis').hidden=lib;
+  $('#tabs').hidden=lib||S.view==='ejs';$('#kpis').hidden=lib||S.view==='ejs';
+  if(S.view==='ejs'){$('#catName').textContent='Biblioteca de ejercicios';$('#catGroup').textContent='Ejercicios';$('#editCat').hidden=true;
+    if(document.activeElement&&document.activeElement.matches('#view [data-ejq]'))return;ejRedrawView();return;}
   if(lib){$('#catName').textContent='Biblioteca de rutinas';$('#catGroup').textContent='Rutinas';$('#editCat').hidden=true;
     const v=$('#view'),fo=document.activeElement&&document.activeElement.id==='libSearch';v.innerHTML=vLib();
     if(fo){const i=$('#libSearch');i.focus();i.setSelectionRange(i.value.length,i.value.length);}return;}
@@ -1183,7 +1240,7 @@ const modalHead=(eyebrow,title)=>'<div class="modal-h"><div class="t"><div class
 /* ---------- sesión del día (bloques) ---------- */
 function libMap(){
   const m={};DEFAULT_LIB.forEach(n=>m[slug(n)]={nombre:n.toLocaleUpperCase('es'),link:''});
-  S.lib.forEach(x=>{if(x.nombre)m[x.id]={nombre:String(x.nombre).toLocaleUpperCase('es'),link:x.link||''};});
+  S.lib.forEach(x=>{if(x.nombre)m[x.id]={nombre:String(x.nombre).toLocaleUpperCase('es'),link:x.link||'',oculto:!!x.oculto};});
   return m;
 }
 function toBloques(s,tipo){
@@ -1336,8 +1393,8 @@ function saveToLibrary(bloques){
   bloques.forEach(b=>b.ejercicios.forEach(e=>{
     const k=slug(e.n);if(seen[k])return;seen[k]=1;
     const ex=S.lib.find(x=>x.id===k);
-    if(!ex)Store.put('ejercicios',k,{nombre:e.n,link:e.link||''});
-    else if((e.link&&!ex.link)||ex.nombre!==e.n)Store.put('ejercicios',k,{nombre:e.n,link:ex.link||e.link||''});
+    if(!ex)ejPut(k,Object.assign({nombre:e.n,link:e.link||''},ejGuess(e.n)));
+    else if((e.link&&!ex.link)||ex.nombre!==e.n||ex.oculto)ejPut(k,{nombre:e.n,link:ex.link||e.link||'',oculto:false});
   }));
 }
 
@@ -1402,7 +1459,7 @@ function contentHtml(s,tipo,opts){
      '<div class="field"><label for="s_rpe">RPE objetivo (1-10)</label><input id="s_rpe" type="number" min="1" max="10" inputmode="numeric" value="'+esc(s.rpe||'')+'"></div>'+
      (opts.rutina?'':'<div class="field"><label for="s_mic">Día del microciclo</label><input id="s_mic" value="'+esc(s.micro||'')+'" placeholder="Ej: MD-3"></div>')+'</div>';
   b+='<div class="field"><label for="s_ec">Entrada en calor'+(tipo==='gym'?' / activación':'')+'</label><textarea id="s_ec">'+esc(s.calor||'')+'</textarea></div>';
-  b+='<div><div class="blk-title"><h3>'+(tipo==='gym'?'Bloques de trabajo':'Bloques / tareas')+'</h3><button type="button" class="btn sm" data-paste>Pegar texto</button></div>'+
+  b+='<div><div class="blk-title"><h3>'+(tipo==='gym'?'Bloques de trabajo':'Bloques / tareas')+'</h3><span class="blk-tools"><button type="button" class="btn sm" data-ejpanel>Biblioteca de ejercicios</button><button type="button" class="btn sm" data-paste>Pegar texto</button></span></div>'+
      '<div class="paste-box" hidden><label class="f-lbl" for="pasteTxt">Escribí o pegá la rutina, un ejercicio por renglón</label>'+
      '<textarea class="paste-txt" id="pasteTxt" placeholder="Bloque 1 - 3 series&#10;CMJ 3x5&#10;Saltos al cajón 3x4 60cm&#10;&#10;Bloque 2 - 4 series&#10;Sentadilla 4x6-6-4-4 80kg&#10;Hip thrust 4x8 100kg&#10;&#10;Accesorios:&#10;Nórdicos 3x6&#10;Curl bíceps 3x12"></textarea>'+
      '<div class="paste-help tiny">Títulos de bloque: una línea que empiece con <b>Bloque</b>, <b>Circuito</b>… o que termine en <b>:</b> (si no ponés títulos, cada renglón vacío arma un bloque nuevo). Series y reps: <b>3x12</b>, <b>4x6-6-4-4</b>, <b>3 series de 10</b> o solo <b>6-6-4-4</b>. Lo que va después es la carga. Si pegás un link de YouTube o Drive, queda como video. En una rutina, la progresión por semana va separada con <b>/</b>: <b>Sentadilla 3x8 / 3x8 / 4x6 / 5x4</b>. También podés poner solo los nombres y completar el resto después.</div>'+
@@ -1417,7 +1474,7 @@ function contentHtml(s,tipo,opts){
 }
 /* desplegable de ejercicios: la flecha muestra todos; escribiendo filtra; se ven ~4 y el resto con scroll */
 const CB={box:null,inp:null,i:-1,
-  names(){return [...new Set(Object.values(libMap()).map(x=>x.nombre))].sort((a,b)=>a.localeCompare(b,'es'));},
+  names(){return [...new Set(Object.values(libMap()).filter(x=>!x.oculto).map(x=>x.nombre))].sort((a,b)=>a.localeCompare(b,'es'));},
   open(inp,all){this.close();this.inp=inp;const q=all?'':normTxt(inp.value);
     const L=this.names().filter(n=>!q||normTxt(n).includes(q));
     const box=document.createElement('div');box.className='cb-list';box.setAttribute('role','listbox');
@@ -1640,7 +1697,7 @@ function openLoads(s,tipo,fecha,only){
       const sel=ev.target.closest('[data-map]');if(!sel)return;
       const k=sel.dataset.map;const cur=S.lib.find(x=>x.id===k)||{};
       const nombre=cur.nombre||sel.closest('.ld-sec').dataset.exname;
-      const d={nombre,link:cur.link||'',test:sel.value};
+      const d=Object.assign({},cur,{nombre,link:cur.link||'',test:sel.value});delete d.id;
       /* actualizo al toque en memoria para redibujar sin esperar a la nube */
       const i=S.lib.findIndex(x=>x.id===k);if(i>=0)S.lib[i]=Object.assign({},S.lib[i],d);else S.lib.push(Object.assign({id:k},d));
       Store.put('ejercicios',k,d);
@@ -3137,6 +3194,219 @@ document.addEventListener('click',e=>{
     if(vd){vd.muted=box._muted;if(!box._muted)vd.play().catch(()=>{});}else vidYT(box._muted?'mute':'unMute');
     s.textContent=box._muted?'🔇':'🔊';}
 },true);
+
+/* ================= biblioteca de EJERCICIOS ================= */
+const EJ_ZONAS=[['inf','Tren inferior'],['sup','Tren superior'],['core','Core'],['full','Cuerpo completo']];
+const EJ_TIPOS=['Sentadilla','Bisagra','Unilateral','Empuje','Tracción','Pliometría','Potencia','Core','Movilidad','Prevención','Velocidad / carrera','Accesorio'];
+const EJ_IMPL=['Barra','Mancuerna','Kettlebell','Disco','Banda','Polea','Máquina','Balón medicinal','TRX','Cajón','Landmine','Peso corporal'];
+const zonaName=k=>(EJ_ZONAS.find(z=>z[0]===k)||['',''])[1];
+/* adivina etiquetas a partir del nombre (después se pueden corregir a mano) */
+function ejGuess(nombre){
+  const n=' '+normTxt(nombre)+' ',has=re=>re.test(n);const g={zona:'',tipo:'',impl:[]};
+  const T=[[/sentadilla|squat|prensa|goblet/,'Sentadilla','inf'],[/peso muerto|rumano|\brdl\b|deadlift|hip thrust|puente|good morning|nordic|nordico|curl femoral|swing|hiperextension/,'Bisagra','inf'],
+    [/bulgara|estocada|zancada|lunge|step ?up|pistol|unilateral|split/,'Unilateral','inf'],
+    [/cmj|salto|saltos|jump|pliom|vallas|drop|rebote|skipping|bound/,'Pliometría','inf'],
+    [/clean|cargada|arranque|snatch|jerk|envion|lanzamiento|throw|slam/,'Potencia','full'],
+    [/plancha|plank|pallof|dead bug|crunch|abdominal|rueda|rollout|core|antirrotacion|copenhague|copenhagen|hollow|bird dog/,'Core','core'],
+    [/press|banca|bench|flexion|push|fondos|dips|empuje|militar|landmine press/,'Empuje','sup'],
+    [/remo|row|dominada|pull|jalon|traccion|face pull|chin/,'Tracción','sup'],
+    [/movilidad|estiramiento|mobility|cat camel|90 90|apertura/,'Movilidad',''],
+    [/tobillo|aductor|isquio|manguito|rotador externo|rotacion externa|prevencion|propiocep|excentrico/,'Prevención',''],
+    [/sprint|carrera|aceleracion|velocidad|cambio de direccion|cod|trineo|sled/,'Velocidad / carrera','inf'],
+    [/curl|biceps|triceps|gemelo|pantorrilla|elevaciones laterales|vuelos|extension de|pajaro/,'Accesorio','']];
+  for(const [re,t,z] of T){if(has(re)){g.tipo=t;g.zona=z;break;}}
+  if(/copenhague|copenhagen|aductor/.test(n))g.zona='inf';
+  if(/curl femoral|nordic|nordico|gemelo|pantorrilla|tobillo|isquio/.test(n))g.zona='inf';
+  if(/curl biceps|biceps|triceps|elevaciones laterales|vuelos|pajaro|manguito|rotador/.test(n))g.zona='sup';
+  const I=[[/ barra |barra |con barra|trasera|frontal|banca|hip thrust|clean|cargada|arranque|militar/,'Barra'],[/mancuerna|manc |db /,'Mancuerna'],[/kettlebell| kb |pesa rusa|swing|goblet/,'Kettlebell'],
+    [/banda|elastico|liga|mini band/,'Banda'],[/polea|cable|jalon|face pull/,'Polea'],[/maquina|prensa|smith|extension de cuadriceps|camilla/,'Máquina'],
+    [/balon|medicine|pelota|slam|lanzamiento/,'Balón medicinal'],[/trx/,'TRX'],[/cajon|box/,'Cajón'],[/disco/,'Disco'],[/landmine/,'Landmine'],
+    [/dominada|flexion|plancha|nordic|nordico|copenhague|copenhagen|salto|cmj|fondos|dead bug|pistol|bird dog|hollow|sprint/,'Peso corporal']];
+  I.forEach(([re,v])=>{if(has(re)&&!g.impl.includes(v))g.impl.push(v);});
+  if(g.impl.includes('Barra')&&/mancuerna|kettlebell|goblet/.test(n))g.impl=g.impl.filter(x=>x!=='Barra');
+  return g;
+}
+/* todos los ejercicios: los guardados + los de las rutinas + la lista base */
+function ejAll(withHidden){
+  const m={};
+  const add=(id,d)=>{m[id]=Object.assign({id,nombre:'',link:'',zona:'',tipo:'',impl:[],uso:0},m[id]||{},d);};
+  DEFAULT_LIB.forEach(n=>add(slug(n),{nombre:n.toLocaleUpperCase('es')}));
+  const uso={};
+  S.rutAll.forEach(r=>{if(r.archivada)return;const seen={};rutDays(r).forEach(d=>(d.bloques||[]).forEach(b=>(b.ejercicios||[]).forEach(e=>{
+    if(!e.n)return;const k=slug(e.n);if(seen[k])return;seen[k]=1;uso[k]=(uso[k]||0)+1;
+    if(!m[k])add(k,{nombre:String(e.n).toLocaleUpperCase('es'),link:e.link||''});else if(!m[k].link&&e.link)m[k].link=e.link;})));});
+  S.lib.forEach(x=>{if(!x.nombre)return;const d=Object.assign({},x);d.nombre=String(x.nombre).toLocaleUpperCase('es');d.impl=Array.isArray(x.impl)?x.impl:[];
+    if(!d.link&&m[x.id]&&m[x.id].link)d.link=m[x.id].link;add(x.id,d);});
+  Object.keys(uso).forEach(k=>{if(m[k])m[k].uso=uso[k];});
+  const arr=Object.values(m).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  return withHidden?arr:arr.filter(e=>!e.oculto);
+}
+/* guardar sin pisar lo que ya tenía (etiquetas, foto, 1RM del testeo…) */
+function ejPut(id,patch){
+  const cur=S.lib.find(x=>x.id===id)||{};const d=Object.assign({},cur,patch);delete d.id;
+  const i=S.lib.findIndex(x=>x.id===id);if(i>=0)S.lib[i]=Object.assign({id},d);else S.lib.push(Object.assign({id},d));
+  return Store.put('ejercicios',id,d);
+}
+/* fotos: van aparte (colección ejImg) y se bajan recién cuando abrís la biblioteca, así la app arranca igual de rápido */
+const EJIMG={on:false,m:{}};
+function ejImgStart(){if(EJIMG.on)return;EJIMG.on=true;
+  Store.watch('ejImg',null,null,a=>{const m={};a.forEach(x=>{if(x.d)m[x.id]=x.d;});EJIMG.m=m;
+    if(S.view==='ejs')render();if(EJP.box)EJP.draw();});}
+function ejThumb(e,cls){
+  const own=EJIMG.m[e.id];const v=e.link?vidInfo(e.link):null;const src=own||(v&&v.thumb)||'';
+  if(src)return '<span class="'+(cls||'ej-th')+'"><img alt="" loading="lazy" src="'+esc(src)+'">'+(!own&&v?'<i class="ej-vb">▶</i>':'')+'</span>';
+  const ini=e.nombre.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('');
+  return '<span class="'+(cls||'ej-th')+' ej-ini" data-z="'+esc(e.zona||'')+'">'+esc(ini)+'</span>';
+}
+/* achica la foto a 360 px (pesa ~15-30 KB) para guardarla gratis */
+function ejShrink(file){return new Promise((res,rej)=>{
+  const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const im=new Image();im.onerror=()=>rej(new Error('img'));im.onload=()=>{
+    const M=360;let w=im.naturalWidth,h=im.naturalHeight;const s=Math.min(1,M/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
+    const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);
+    let q=.78,d=c.toDataURL('image/jpeg',q);while(d.length>90000&&q>.4){q-=.1;d=c.toDataURL('image/jpeg',q);}res(d);};im.src=fr.result;};fr.readAsDataURL(file);});}
+
+/* filtros (los usa la biblioteca y el panel del editor) */
+function ejFilter(list,f){
+  const q=normTxt(f.q||'');
+  return list.filter(e=>(!q||normTxt(e.nombre).includes(q))&&(!f.zona||e.zona===f.zona)&&(!f.tipo||e.tipo===f.tipo)&&(!f.impl||(e.impl||[]).includes(f.impl))&&(!f.sin||(!e.zona&&!e.tipo&&!(e.impl||[]).length)));
+}
+function ejFiltersHtml(f,list){
+  const cnt=k=>list.filter(e=>e.zona===k).length;
+  return '<div class="ej-filt"><input class="inp ej-q" data-ejq placeholder="Buscar ejercicio…" value="'+esc(f.q||'')+'" autocomplete="off">'+
+    '<div class="ej-chips"><button type="button" class="ej-chip'+(!f.zona?' on':'')+'" data-ejz="">Todo</button>'+EJ_ZONAS.map(z=>'<button type="button" class="ej-chip'+(f.zona===z[0]?' on':'')+'" data-ejz="'+z[0]+'">'+z[1]+' <small>'+cnt(z[0])+'</small></button>').join('')+'</div>'+
+    '<div class="ej-sels"><select class="inp" data-ejt aria-label="Tipo"><option value="">Tipo: todos</option>'+EJ_TIPOS.map(t=>'<option'+(f.tipo===t?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select>'+
+    '<select class="inp" data-eji aria-label="Implemento"><option value="">Implemento: todos</option>'+EJ_IMPL.map(t=>'<option'+(f.impl===t?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select>'+
+    ((f.q||f.zona||f.tipo||f.impl||f.sin)?'<button type="button" class="btn sm ghost" data-ejclr>Limpiar filtros</button>':'')+'</div></div>';
+}
+/* un mismo manejador de filtros para la vista y el panel */
+function ejFiltEvents(root,f,redraw){
+  root.addEventListener('input',e=>{if(e.target.matches('[data-ejq]')){f.q=e.target.value;redraw(true);}});
+  root.addEventListener('change',e=>{if(e.target.matches('[data-ejt]')){f.tipo=e.target.value;redraw();}if(e.target.matches('[data-eji]')){f.impl=e.target.value;redraw();}});
+  root.addEventListener('click',e=>{const z=e.target.closest('[data-ejz]');if(z){f.zona=z.dataset.ejz;redraw();return;}
+    if(e.target.closest('[data-ejclr]')){f.q='';f.zona='';f.tipo='';f.impl='';f.sin=false;redraw();return;}
+    if(e.target.closest('[data-ejsin]')){f.sin=!f.sin;redraw();}});
+}
+S.ejF={q:'',zona:'',tipo:'',impl:'',sin:false};
+function vEjs(){
+  ejImgStart();
+  const all=ejAll(),f=S.ejF,list=ejFilter(all,f);
+  const sin=all.filter(e=>!e.zona&&!e.tipo&&!(e.impl||[]).length).length;
+  let h='<div class="bar" style="margin-top:14px"><div class="grow"><p class="tiny" style="margin:0">'+all.length+' ejercicios · tocá uno para ver o cargar foto, video y etiquetas</p></div>'+
+    (RO?'':'<button class="btn pri" data-ejnew>+ Nuevo ejercicio</button>')+'</div>';
+  h+=ejFiltersHtml(f,all);
+  if(sin&&!RO)h+='<div class="ej-auto"><span><b>'+sin+'</b> sin etiquetas.</span><button type="button" class="btn sm" data-ejauto>Completar automáticamente</button><button type="button" class="btn sm ghost" data-ejsin>'+(f.sin?'Ver todos':'Ver solo esos')+'</button></div>';
+  if(!list.length)return h+'<p class="muted" style="margin-top:14px">No hay ejercicios con esos filtros.</p>';
+  h+='<div class="ej-grid">'+list.map(e=>'<button type="button" class="ej-card" data-ejopen="'+esc(e.id)+'">'+ejThumb(e)+
+    '<b>'+esc(e.nombre)+'</b><span class="ej-tags">'+[zonaName(e.zona),e.tipo].concat(e.impl||[]).filter(Boolean).map(t=>'<i>'+esc(t)+'</i>').join('')+'</span>'+
+    (e.uso?'<small class="ej-uso">'+e.uso+(e.uso===1?' rutina':' rutinas')+'</small>':'')+'</button>').join('')+'</div>';
+  return h;
+}
+function ejRedrawView(keepFocus){
+  if(S.view!=='ejs')return;const v=$('#view');const fo=keepFocus&&document.activeElement&&document.activeElement.matches('[data-ejq]');
+  v.innerHTML=vEjs();if(fo){const i=v.querySelector('[data-ejq]');i.focus();i.setSelectionRange(i.value.length,i.value.length);}
+}
+ejFiltEvents($('#view'),S.ejF,k=>ejRedrawView(k));
+$('#view').addEventListener('click',e=>{
+  if(S.view!=='ejs')return;
+  const o=e.target.closest('[data-ejopen]');if(o)return openEj(o.dataset.ejopen);
+  if(e.target.closest('[data-ejnew]'))return RO?roMsg():openEj(null);
+  if(e.target.closest('[data-ejauto]')){if(RO)return roMsg();
+    const todo=ejAll().filter(x=>!x.zona&&!x.tipo&&!(x.impl||[]).length);let n=0;
+    todo.forEach(x=>{const g=ejGuess(x.nombre);if(!g.zona&&!g.tipo&&!g.impl.length)return;n++;ejPut(x.id,Object.assign({nombre:x.nombre,link:x.link||''},g));});
+    ejRedrawView();toast(n?'Listo: etiqueté '+n+' ejercicios. Revisá los que quieras.':'No pude adivinar ninguno: etiquetalos a mano.');}
+});
+
+/* ficha del ejercicio */
+function openEj(id,onSaved){
+  const e0=id?ejAll(true).find(x=>x.id===id):null;
+  const e=e0?Object.assign({},e0):{id:'',nombre:'',link:'',zona:'',tipo:'',impl:[]};
+  const guess=(!e.zona&&!e.tipo&&!(e.impl||[]).length&&e.nombre)?ejGuess(e.nombre):null;
+  const st={zona:guess?guess.zona:e.zona,tipo:guess?guess.tipo:e.tipo,impl:(guess?guess.impl:e.impl||[]).slice(),img:EJIMG.m[e.id]||'',imgCh:false};
+  const draw=()=>{
+    const th=st.img?'<img alt="" src="'+esc(st.img)+'">':(e.link&&vidInfo(e.link)&&vidInfo(e.link).thumb?'<img alt="" src="'+esc(vidInfo(e.link).thumb)+'"><small>portada del video</small>':'<span>Sin foto</span>');
+    return '<div class="ej-ficha"><div class="ej-ph">'+th+'</div><div class="ej-phb">'+
+      (RO?'':'<label class="btn sm">'+(st.img?'Cambiar foto':'Subir foto')+'<input type="file" accept="image/*" id="ej_f" hidden></label>'+(st.img?'<button type="button" class="btn sm ghost" id="ej_fx">Quitar foto</button>':''))+
+      (e.link?'<button type="button" class="btn sm" data-vplay="'+esc(fixUrl(e.link))+'">▶ Ver video</button>':'')+'</div></div>'+
+      '<div class="field"><label for="ej_n">Nombre</label><input id="ej_n" value="'+esc(e.nombre)+'" placeholder="Ej: SENTADILLA TRASERA" style="text-transform:uppercase"></div>'+
+      '<div class="field"><label for="ej_l">Link de video (YouTube o Drive)</label><input id="ej_l" type="url" inputmode="url" value="'+esc(e.link||'')+'" placeholder="Pegá el link"></div>'+
+      (guess?'<p class="tiny ej-sug">Te sugerí etiquetas según el nombre. Revisalas y guardá.</p>':'')+
+      '<div class="field"><label>Zona del cuerpo</label><div class="ej-chips">'+EJ_ZONAS.map(z=>'<button type="button" class="ej-chip'+(st.zona===z[0]?' on':'')+'" data-fz="'+z[0]+'">'+z[1]+'</button>').join('')+'</div></div>'+
+      '<div class="field"><label>Tipo / patrón</label><div class="ej-chips">'+EJ_TIPOS.map(t=>'<button type="button" class="ej-chip'+(st.tipo===t?' on':'')+'" data-ft="'+esc(t)+'">'+esc(t)+'</button>').join('')+'</div></div>'+
+      '<div class="field"><label>Implemento <small class="tiny">(podés marcar varios)</small></label><div class="ej-chips">'+EJ_IMPL.map(t=>'<button type="button" class="ej-chip'+(st.impl.includes(t)?' on':'')+'" data-fi="'+esc(t)+'">'+esc(t)+'</button>').join('')+'</div></div>'+
+      (e.uso?'<p class="tiny">Está en '+e.uso+(e.uso===1?' rutina.':' rutinas.')+'</p>':'');
+  };
+  const foot='<div class="modal-f">'+(e0&&!RO?'<button class="btn danger" id="ej_del">Sacar de la biblioteca</button>':'')+'<div class="grow"></div><button class="btn" data-close>Cancelar</button>'+(RO?'':'<button class="btn pri" id="ej_save">Guardar</button>')+'</div>';
+  openModal(modalHead('Biblioteca de ejercicios',e0?e.nombre:'Nuevo ejercicio')+'<div class="modal-b" id="ej_b">'+draw()+'</div>'+foot,mw=>{
+    const body=mw.querySelector('#ej_b');
+    const keep=()=>{e.nombre=body.querySelector('#ej_n').value;e.link=body.querySelector('#ej_l').value;};
+    const redraw=()=>{keep();body.innerHTML=draw();};
+    body.addEventListener('click',ev=>{const t=ev.target;
+      const z=t.closest('[data-fz]');if(z){st.zona=st.zona===z.dataset.fz?'':z.dataset.fz;return redraw();}
+      const ty=t.closest('[data-ft]');if(ty){st.tipo=st.tipo===ty.dataset.ft?'':ty.dataset.ft;return redraw();}
+      const im=t.closest('[data-fi]');if(im){const v=im.dataset.fi;st.impl=st.impl.includes(v)?st.impl.filter(x=>x!==v):st.impl.concat(v);return redraw();}
+      if(t.closest('#ej_fx')){st.img='';st.imgCh=true;return redraw();}
+    });
+    body.addEventListener('change',async ev=>{if(ev.target.id!=='ej_f')return;const fl=ev.target.files&&ev.target.files[0];if(!fl)return;
+      try{st.img=await ejShrink(fl);st.imgCh=true;redraw();}catch(err){toast('No pude leer esa imagen');}});
+    body.addEventListener('input',ev=>{if(ev.target.id==='ej_l'){keep();}});
+    body.addEventListener('focusout',ev=>{if(ev.target.id==='ej_l')redraw();});
+    if(RO)body.querySelectorAll('input').forEach(i=>i.disabled=true);
+    const del=mw.querySelector('#ej_del');if(del)armDelete(del,()=>{ejPut(e.id,{nombre:e.nombre,oculto:true});closeModal();ejRedrawView();toast('Lo saqué de la biblioteca (las rutinas no cambian)');});
+    const sv=mw.querySelector('#ej_save');if(sv)sv.onclick=()=>{
+      keep();const n=e.nombre.trim().replace(/\s+/g,' ').toLocaleUpperCase('es');if(!n){toast('Poné el nombre');return;}
+      let nid=e.id||slug(n);
+      /* si le cambiaste el nombre, queda como ejercicio nuevo y el viejo se oculta */
+      if(e0&&slug(n)!==e.id){nid=slug(n);ejPut(e.id,{oculto:true});if(EJIMG.m[e.id]&&!st.imgCh){st.imgCh=true;}}
+      ejPut(nid,Object.assign({},{nombre:n,link:e.link.trim(),zona:st.zona,tipo:st.tipo,impl:st.impl,oculto:false,foto:!!st.img}));
+      if(st.imgCh){if(st.img){EJIMG.m[nid]=st.img;Store.put('ejImg',nid,{d:st.img});}else{delete EJIMG.m[nid];Store.remove('ejImg',nid);}}
+      closeModal();ejRedrawView();if(EJP.box)EJP.draw();toast('Ejercicio guardado');if(onSaved)onSaved(nid);
+    };
+  });
+}
+
+/* ---------- panel de la biblioteca adentro del editor: tocás y se agrega al bloque ---------- */
+const EJP={box:null,f:{q:'',zona:'',tipo:'',impl:'',sin:false},blk:null,
+  blocks(){const mw=$('#mw');return mw?[...mw.querySelectorAll('#blocks .blk')]:[];},
+  open(){const mw=$('#mw');if(!mw)return;ejImgStart();this.close();
+    const bs=this.blocks();if(!this.blk||!bs.includes(this.blk))this.blk=bs[bs.length-1]||null;
+    const box=document.createElement('aside');box.className='ejp';box.setAttribute('aria-label','Biblioteca de ejercicios');
+    box.innerHTML='<div class="ejp-h"><b>Biblioteca</b><span class="grow"></span><button type="button" class="x" data-ejpx aria-label="Cerrar">×</button></div><div class="ejp-to"></div><div class="ejp-f"></div><div class="ejp-l"></div>';
+    mw.appendChild(box);this.box=box;document.body.classList.add('ejp-on');
+    ejFiltEvents(box,this.f,k=>this.draw(k));
+    box.addEventListener('click',e=>{
+      if(e.target.closest('[data-ejpx]'))return this.close();
+      const a=e.target.closest('[data-ejadd]');if(a)return this.add(a.dataset.ejadd);
+    });
+    box.addEventListener('change',e=>{if(e.target.matches('[data-ejpto]')){this.blk=this.blocks()[+e.target.value]||null;}});
+    this.draw();},
+  close(){if(this.box)this.box.remove();this.box=null;document.body.classList.remove('ejp-on');},
+  draw(keepFocus){if(!this.box)return;const bs=this.blocks();
+    if(!this.blk||!bs.includes(this.blk))this.blk=bs[bs.length-1]||null;
+    this.box.querySelector('.ejp-to').innerHTML=bs.length?'<label>Se agrega a <select class="inp" data-ejpto>'+bs.map((b,i)=>'<option value="'+i+'"'+(b===this.blk?' selected':'')+'>'+esc(b.querySelector('.blk-name').value||('Bloque '+(i+1)))+'</option>').join('')+'</select></label>':'<p class="tiny">Agregá un bloque primero.</p>';
+    const all=ejAll(),list=ejFilter(all,this.f);
+    const fo=keepFocus&&document.activeElement&&document.activeElement.matches('.ejp [data-ejq]');
+    this.box.querySelector('.ejp-f').innerHTML=ejFiltersHtml(this.f,all);
+    if(fo){const i=this.box.querySelector('[data-ejq]');i.focus();i.setSelectionRange(i.value.length,i.value.length);}
+    this.box.querySelector('.ejp-l').innerHTML=list.length?list.map(e=>'<button type="button" class="ejp-it" data-ejadd="'+esc(e.id)+'">'+ejThumb(e,'ej-th sm')+'<span class="ejp-tx"><b>'+esc(e.nombre)+'</b><small>'+[zonaName(e.zona),e.tipo].filter(Boolean).map(esc).join(' · ')+'</small></span><i class="ejp-plus">+</i></button>').join(''):'<p class="muted" style="padding:10px">No hay ejercicios con esos filtros.</p>';},
+  add(id){const e=ejAll(true).find(x=>x.id===id);if(!e)return;
+    let bk=this.blk;if(!bk||!document.contains(bk)){const bs=this.blocks();bk=bs[bs.length-1];}
+    if(!bk){const add=$('#mw [data-addblk]');if(add){add.click();bk=this.blocks().pop();}}
+    if(!bk)return;
+    let row=[...bk.querySelectorAll('.exr')].find(r=>!r.querySelector('.ex-n').value.trim());
+    if(!row){bk.querySelector('.blk-ex').insertAdjacentHTML('beforeend',exRowHtml({},bk.querySelector('.blk-series').value));const rs=bk.querySelectorAll('.exr');row=rs[rs.length-1];}
+    const ni=row.querySelector('.ex-n');ni.value=e.nombre;
+    const li=row.querySelector('.ex-l');if(li&&!li.value&&e.link){li.value=e.link;}
+    ni.dispatchEvent(new Event('input',{bubbles:true}));CB.close();
+    row.classList.remove('ej-flash');void row.offsetWidth;row.classList.add('ej-flash');
+    if(window.innerWidth>860)row.scrollIntoView({block:'nearest',behavior:'smooth'});
+    toast(e.nombre+' → '+(bk.querySelector('.blk-name').value||'bloque'));}
+};
+/* bloque activo = el último donde tocaste */
+document.addEventListener('focusin',e=>{const b=e.target.closest&&e.target.closest('#mw #blocks .blk');if(b){EJP.blk=b;if(EJP.box){const s=EJP.box.querySelector('[data-ejpto]');const i=EJP.blocks().indexOf(b);if(s&&i>=0)s.value=i;}}});
+document.addEventListener('click',e=>{if(e.target.closest('[data-ejpanel]')){EJP.box?EJP.close():EJP.open();return;}
+  if(EJP.box&&(e.target.closest('[data-addblk],[data-rmblk],[data-parse],[data-dtab],[data-dadd]')))setTimeout(()=>EJP.draw(),0);},true);
+/* si se cierra el editor, se cierra el panel */
+new MutationObserver(()=>{if(EJP.box&&!document.contains(EJP.box))EJP.close();}).observe($('#modalRoot'),{childList:true});
 
 /* ---------- lo que anotaron los atletas, por ejercicio de la rutina ---------- */
 let ATLCTX=null,ATLCTX_LAST=null;
