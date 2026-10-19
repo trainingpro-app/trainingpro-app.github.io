@@ -3198,32 +3198,49 @@ document.addEventListener('click',e=>{
 /* ================= biblioteca de EJERCICIOS ================= */
 const EJ_ZONAS=[['inf','Tren inferior'],['sup','Tren superior'],['core','Core'],['full','Cuerpo completo']];
 const EJ_TIPOS=['Sentadilla','Bisagra','Unilateral','Empuje','Tracción','Pliometría','Potencia','Core','Movilidad','Prevención','Velocidad / carrera','Accesorio'];
-const EJ_IMPL=['Barra','Mancuerna','Kettlebell','Disco','Banda','Polea','Máquina','Balón medicinal','TRX','Cajón','Landmine','Peso corporal'];
+const EJ_IMPL=['Barra','Mancuerna','Kettlebell','Disco','Banda','Polea','Máquina','Balón medicinal','TRX','Fitball','Cajón','Landmine','Peso corporal'];
 const zonaName=k=>(EJ_ZONAS.find(z=>z[0]===k)||['',''])[1];
 /* adivina etiquetas a partir del nombre (después se pueden corregir a mano) */
 function ejGuess(nombre){
-  const n=' '+normTxt(nombre)+' ',has=re=>re.test(n);const g={zona:'',tipo:'',impl:[]};
-  const T=[[/sentadilla|squat|prensa|goblet/,'Sentadilla','inf'],[/peso muerto|rumano|\brdl\b|deadlift|hip thrust|puente|good morning|nordic|nordico|curl femoral|swing|hiperextension/,'Bisagra','inf'],
-    [/bulgara|estocada|zancada|lunge|step ?up|pistol|unilateral|split/,'Unilateral','inf'],
-    [/cmj|salto|saltos|jump|pliom|vallas|drop|rebote|skipping|bound/,'Pliometría','inf'],
-    [/clean|cargada|arranque|snatch|jerk|envion|lanzamiento|throw|slam/,'Potencia','full'],
-    [/plancha|plank|pallof|dead bug|crunch|abdominal|rueda|rollout|core|antirrotacion|copenhague|copenhagen|hollow|bird dog/,'Core','core'],
-    [/press|banca|bench|flexion|push|fondos|dips|empuje|militar|landmine press/,'Empuje','sup'],
-    [/remo|row|dominada|pull|jalon|traccion|face pull|chin/,'Tracción','sup'],
-    [/movilidad|estiramiento|mobility|cat camel|90 90|apertura/,'Movilidad',''],
-    [/tobillo|aductor|isquio|manguito|rotador externo|rotacion externa|prevencion|propiocep|excentrico/,'Prevención',''],
-    [/sprint|carrera|aceleracion|velocidad|cambio de direccion|cod|trineo|sled/,'Velocidad / carrera','inf'],
-    [/curl|biceps|triceps|gemelo|pantorrilla|elevaciones laterales|vuelos|extension de|pajaro/,'Accesorio','']];
-  for(const [re,t,z] of T){if(has(re)){g.tipo=t;g.zona=z;break;}}
-  if(/copenhague|copenhagen|aductor/.test(n))g.zona='inf';
-  if(/curl femoral|nordic|nordico|gemelo|pantorrilla|tobillo|isquio/.test(n))g.zona='inf';
-  if(/curl biceps|biceps|triceps|elevaciones laterales|vuelos|pajaro|manguito|rotador/.test(n))g.zona='sup';
-  const I=[[/ barra |barra |con barra|trasera|frontal|banca|hip thrust|clean|cargada|arranque|militar/,'Barra'],[/mancuerna|manc |db /,'Mancuerna'],[/kettlebell| kb |pesa rusa|swing|goblet/,'Kettlebell'],
-    [/banda|elastico|liga|mini band/,'Banda'],[/polea|cable|jalon|face pull/,'Polea'],[/maquina|prensa|smith|extension de cuadriceps|camilla/,'Máquina'],
-    [/balon|medicine|pelota|slam|lanzamiento/,'Balón medicinal'],[/trx/,'TRX'],[/cajon|box/,'Cajón'],[/disco/,'Disco'],[/landmine/,'Landmine'],
-    [/dominada|flexion|plancha|nordic|nordico|copenhague|copenhagen|salto|cmj|fondos|dead bug|pistol|bird dog|hollow|sprint/,'Peso corporal']];
-  I.forEach(([re,v])=>{if(has(re)&&!g.impl.includes(v))g.impl.push(v);});
-  if(g.impl.includes('Barra')&&/mancuerna|kettlebell|goblet/.test(n))g.impl=g.impl.filter(x=>x!=='Barra');
+  const full=normTxt(nombre);const g={zona:'',tipo:'',impl:[]};
+  const TIP=[
+    ['Potencia',/cargada|arranque|segundo tiempo|2do tiempo|clean|snatch|jerk|push press|high pull|balistico|lanzamiento|slam/],
+    ['Pliometría',/salto|cmj|drop|jump|vallas|bound|pliometria|despegue/],
+    ['Velocidad / carrera',/sprint|carrera|aceleracion|skipping|cambios? de direccion|coordinacion|trineo/],
+    ['Unilateral',/bulgar|estocada|zancada|split|step up|subida a cajon|subir banco|alcances|pistol|una pierna|1 pierna|\b1pp\b/],
+    ['Sentadilla',/sentadilla|squat|prensa|goblet/],
+    ['Bisagra',/peso muerto|rumano|hip thrust|puente de|elevaciones de cadera|curl femoral|good morning|swing/],
+    ['Core',/abdominal|plancha|pallof|bicho muerto|dead bug|rollout|twist|rotacion|carpa|sit up|rodillas al pecho|levantada turca|triple amenaza|estabilidad|halo|colgado|anti/],
+    ['Empuje',/press(?! ?pallof)|banco plano|banco inclinado|inclinado|flexion|push up|fondos|aperturas|arnold|militar/],
+    ['Tracción',/remo|dominada|traccion|face pull|jalon|australian/],
+    ['Movilidad',/movilidad|elongacion|estiramiento|liberacion|miofascial|90 90|psoas|recto|spiderman/],
+    ['Prevención',/aductor|copenhag|cophenag|gemelo|soleo|tobillo|manguito|rotador|espinal|isquio|nordic|nordico|y t a/],
+    ['Accesorio',/biceps|triceps|frances|vuelo|pullover|cuadriceps|curl/]];
+  const ZI=/aductor|copenhag|cophenag|gemelo|soleo|tobillo|isquio|cuadriceps|psoas|nordic|nordico|cadera|gluteo|femoral/,ZS=/biceps|triceps|frances|vuelo|hombro|espinal|manguito|rotador|pullover|pecho|tren sup|brazo/;
+  const zOf=t=>({'Sentadilla':'inf','Bisagra':'inf','Unilateral':'inf','Pliometría':'inf','Velocidad / carrera':'inf','Empuje':'sup','Tracción':'sup','Core':'core','Potencia':'full'})[t]||'';
+  const parts=String(nombre).split('+').map(x=>normTxt(x)).filter(Boolean).map(x=>' '+x+' ');
+  const res=parts.map(p=>{let best=null;
+    TIP.forEach(([t,re])=>{const m=p.match(re);if(m&&(!best||m.index<best.i))best={t,i:m.index};});
+    let t=best?best.t:'';
+    /* sentadilla búlgara / a una pierna = unilateral; peso muerto a una pierna sigue siendo bisagra */
+    if(t==='Sentadilla'&&/bulgar|split|una pierna|1 pierna/.test(p))t='Unilateral';
+    if(t==='Unilateral'&&/peso muerto|hip thrust/.test(p))t='Bisagra';
+    if(t==='Unilateral'&&/biceps|triceps|vuelo|press|remo|halo|pallof/.test(p)&&!/estocada|bulgar|split|step|subida|alcances/.test(p)){const b2=TIP.filter(x=>x[0]!=='Unilateral').map(([tt,re])=>{const m=p.match(re);return m?{t:tt,i:m.index}:null;}).filter(Boolean).sort((a,b)=>a.i-b.i)[0];if(b2)t=b2.t;}
+    let z=zOf(t);
+    if(t==='Pliometría'&&/flexion|despegue|pecho|tren sup/.test(p))z='sup';
+    if(t==='Potencia'&&/lanzamiento.*pecho|pecho|tren sup|1 brazo|un brazo/.test(p)&&!/cargada|arranque|tiempo/.test(p))z='sup';
+    if(!z){if(ZI.test(p))z='inf';else if(ZS.test(p))z='sup';}
+    if(t==='Accesorio'&&/cuadriceps|femoral|gemelo/.test(p))z='inf';
+    return {t,z};});
+  const r0=res.find(x=>x.t)||{t:'',z:''};g.tipo=r0.t;
+  const zs=[...new Set(res.map(x=>x.z).filter(Boolean))];
+  g.zona=zs.length>1?'full':(zs[0]||'');
+  const n=' '+full+' ',has=re=>re.test(n);
+  const I=[['Barra',/barra|trasera|cargada|segundo tiempo|2do tiempo|push press|rack/],['Mancuerna',/mancuerna|\bmanc\b|\bmc\b/],['Kettlebell',/kettlebell|\bkb\b|pesa rusa|goblet|swing/],
+    ['Disco',/disco/],['Banda',/banda|elastic|\bliga\b/],['Polea',/polea|cable|jalon/],['Máquina',/maquina|prensa|extension de cuadriceps|smith|camilla/],
+    ['Balón medicinal',/medball|\bmb\b|balon|pelota|lanzamiento/],['TRX',/trx/],['Fitball',/fitball/],['Cajón',/cajon/],['Landmine',/landmine/]];
+  I.forEach(([v,re])=>{if(has(re))g.impl.push(v);});
+  if(!g.impl.length&&has(/dominada|flexion|push up|plancha|nordic|copenhag|cophenag|salto|cmj|drop|fondos|bicho muerto|sprint|skipping|abdominal|estocada|carpa|sit up|twist|bulgar|step up|vallas|multisaltos|coordinacion|cambios? de direccion|alcances|puente de/))g.impl.push('Peso corporal');
   return g;
 }
 /* todos los ejercicios: los guardados + los de las rutinas + la lista base */
