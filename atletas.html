@@ -150,9 +150,11 @@ h3{font-family:var(--f-disp);font-weight:700;font-size:18px;text-transform:upper
 /* video */
 .vmini{position:fixed;right:16px;bottom:16px;z-index:300;width:min(420px,calc(100vw - 32px));background:#000;border-radius:12px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45);display:flex;flex-direction:column}
 .vmini iframe{width:100%;aspect-ratio:16/9;border:0;display:block;background:#000}
-.vmini.vert{width:min(260px,calc(100vw - 32px))}.vmini.vert iframe{aspect-ratio:9/16}
+.vmini.vert{width:auto;max-width:calc(100vw - 32px)}
+.vmini.vert iframe{aspect-ratio:auto;height:min(62vh,520px,calc((100vw - 32px) * 16 / 9));width:calc(min(62vh,520px,calc((100vw - 32px) * 16 / 9)) * 9 / 16)}
 .vmini.big{left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:min(900px,calc(100vw - 24px))}
-.vmini.big.vert{width:min(380px,calc(100vw - 24px))}.vmini.big.vert iframe{max-height:calc(100vh - 90px)}
+.vmini.big.vert{width:auto}
+.vmini.big.vert iframe{height:min(calc(100vh - 110px),calc((100vw - 24px) * 16 / 9));width:calc(min(calc(100vh - 110px),calc((100vw - 24px) * 16 / 9)) * 9 / 16)}
 .vmini-bar{display:flex;align-items:center;gap:4px;padding:6px 8px;background:#111;color:#eee;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .vmini-bar span{flex:1}
 .vmini-bar button,.vmini-bar a{background:none;border:0;color:#eee;font-size:15px;width:30px;height:28px;border-radius:6px;display:grid;place-items:center;text-decoration:none;cursor:pointer}
@@ -335,7 +337,7 @@ function vidInfo(u){
   u=String(u||'').trim();let m;
   if((m=u.match(/youtube\.com\/shorts\/([\w-]{6,})/)))return {src:'https://www.youtube.com/embed/'+m[1]+'?autoplay=1&rel=0&playsinline=1',thumb:'https://i.ytimg.com/vi/'+m[1]+'/mqdefault.jpg',vert:true};
   if((m=u.match(/youtu\.be\/([\w-]{6,})/)||u.match(/[?&]v=([\w-]{6,})/)||u.match(/youtube\.com\/(?:embed|live)\/([\w-]{6,})/)))return {src:'https://www.youtube.com/embed/'+m[1]+'?autoplay=1&rel=0&playsinline=1',thumb:'https://i.ytimg.com/vi/'+m[1]+'/mqdefault.jpg'};
-  if((m=u.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||u.match(/drive\.google\.com\/open\?id=([\w-]+)/)))return {src:'https://drive.google.com/file/d/'+m[1]+'/preview',thumb:'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w320'};
+  if((m=u.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||u.match(/drive\.google\.com\/open\?id=([\w-]+)/)))return {src:'https://drive.google.com/file/d/'+m[1]+'/preview',thumb:'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w320',vert:true,probe:true};
   if((m=u.match(/vimeo\.com\/(?:video\/)?(\d+)/)))return {src:'https://player.vimeo.com/video/'+m[1]+'?autoplay=1'};
   if((m=u.match(/instagram\.com\/(?:p|reel|reels|tv)\/([\w-]+)/)))return {src:'https://www.instagram.com/p/'+m[1]+'/embed',vert:true};
   return null;
@@ -351,6 +353,8 @@ function vidOpen(u){
   box.className='vmini'+(v.vert?' vert':'')+(window.innerWidth<=600?' big':'');
   box.innerHTML='<div class="vmini-bar"><span>Video</span><button type="button" data-vsize title="Agrandar / achicar">⤢</button><a href="'+esc(fixUrl(u))+'" target="_blank" rel="noopener" title="Abrir en otra pestaña">↗</a><button type="button" data-vclose title="Cerrar" aria-label="Cerrar video">✕</button></div>'+
     '<iframe src="'+esc(v.src)+'" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="Video del ejercicio"></iframe>';
+  /* videos de Drive: miramos la portada para saber si está filmado vertical u horizontal */
+  if(v.probe&&v.thumb){const im=new Image();im.onload=()=>{const b=document.getElementById('vmini');if(b&&im.naturalWidth&&im.naturalHeight)b.classList.toggle('vert',im.naturalHeight>im.naturalWidth);};im.src=v.thumb;}
 }
 document.addEventListener('click',e=>{
   const p=e.target.closest('[data-vplay]');if(p){e.preventDefault();e.stopPropagation();vidOpen(p.dataset.vplay);return;}
