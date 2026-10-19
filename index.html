@@ -608,6 +608,16 @@ body.drag-on{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .vmini.big{left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:min(900px,calc(100vw - 24px))}
 .vmini.big.vert{width:auto}
 .vmini.big.vert iframe{height:min(calc(100vh - 110px),calc((100vw - 24px) * 16 / 9));width:calc(min(calc(100vh - 110px),calc((100vw - 24px) * 16 / 9)) * 9 / 16)}
+.vmini-media{position:relative;background:#000}
+.vmini video{width:100%;aspect-ratio:16/9;display:block;background:#000;object-fit:contain}
+.vmini.vert video{aspect-ratio:auto;height:min(62vh,520px,calc((100vw - 32px) * 16 / 9));width:calc(min(62vh,520px,calc((100vw - 32px) * 16 / 9)) * 9 / 16)}
+.vmini.big.vert video{height:min(calc(100vh - 110px),calc((100vw - 24px) * 16 / 9));width:calc(min(calc(100vh - 110px),calc((100vw - 24px) * 16 / 9)) * 9 / 16)}
+.vmini-tap{position:absolute;inset:0;cursor:pointer;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
+.vmini-ico{font-size:30px;color:#fff;background:rgba(0,0,0,.45);width:64px;height:64px;border-radius:50%;display:grid;place-items:center;opacity:0;pointer-events:none}
+.vmini-ico.show{animation:vflash .7s ease-out}
+.vmini.paused .vmini-ico{opacity:1;animation:none}
+@keyframes vflash{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.25)}}
+.vmini-err{color:#ddd;padding:28px 18px;font-size:14px;text-align:center;min-width:240px}
 .vmini-bar{display:flex;align-items:center;gap:4px;padding:6px 8px;background:#111;color:#eee;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .vmini-bar span{flex:1}
 .vmini-bar button,.vmini-bar a{background:none;border:0;color:#eee;font-size:15px;width:30px;height:28px;border-radius:6px;display:grid;place-items:center;text-decoration:none;cursor:pointer}
@@ -3076,33 +3086,56 @@ function difUidsCheck(){if(RO||!S.jug.length)return;S.lesAll.filter(l=>l.cat===S
 function syncDifFor(jid){S.lesAll.filter(l=>l.jugador===jid&&l.rutina&&activeInj(l)).forEach(l=>syncDif(l.id,l));}
 
 /* ---------- videos: se ven adentro de la app, en una ventanita ---------- */
+function vidUrl(u){u=String(u||'').trim();return (/^https?:\/\//i.test(u)||!/^(videos\/|\.\/|\/)/.test(u))?fixUrl(u):u;}
 function vidInfo(u){
   u=String(u||'').trim();let m;
-  if((m=u.match(/youtube\.com\/shorts\/([\w-]{6,})/)))return {src:'https://www.youtube.com/embed/'+m[1]+'?autoplay=1&rel=0&playsinline=1',thumb:'https://i.ytimg.com/vi/'+m[1]+'/mqdefault.jpg',vert:true};
-  if((m=u.match(/youtu\.be\/([\w-]{6,})/)||u.match(/[?&]v=([\w-]{6,})/)||u.match(/youtube\.com\/(?:embed|live)\/([\w-]{6,})/)))return {src:'https://www.youtube.com/embed/'+m[1]+'?autoplay=1&rel=0&playsinline=1',thumb:'https://i.ytimg.com/vi/'+m[1]+'/mqdefault.jpg'};
+  /* YouTube: en bucle, sin sonido y SIN botones encima (tocar = pausa) */
+  const yt=(id,vert)=>({yt:id,src:'https://www.youtube.com/embed/'+id+'?autoplay=1&mute=1&controls=0&loop=1&playlist='+id+'&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&enablejsapi=1',thumb:'https://i.ytimg.com/vi/'+id+'/mqdefault.jpg',vert:!!vert});
+  if((m=u.match(/youtube\.com\/shorts\/([\w-]{6,})/)))return yt(m[1],true);
+  if((m=u.match(/youtu\.be\/([\w-]{6,})/)||u.match(/[?&]v=([\w-]{6,})/)||u.match(/youtube\.com\/(?:embed|live)\/([\w-]{6,})/)))return yt(m[1],false);
+  /* archivo de video directo (por ej. subido a la app): reproductor propio, sin botones */
+  if(/\.(mp4|m4v|mov|webm)(\?|#|$)/i.test(u))return {file:u};
   if((m=u.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||u.match(/drive\.google\.com\/open\?id=([\w-]+)/)))return {src:'https://drive.google.com/file/d/'+m[1]+'/preview',thumb:'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w320',vert:true,probe:true};
-  if((m=u.match(/vimeo\.com\/(?:video\/)?(\d+)/)))return {src:'https://player.vimeo.com/video/'+m[1]+'?autoplay=1'};
+  if((m=u.match(/vimeo\.com\/(?:video\/)?(\d+)/)))return {src:'https://player.vimeo.com/video/'+m[1]+'?autoplay=1&muted=1&loop=1&controls=0&playsinline=1'};
   if((m=u.match(/instagram\.com\/(?:p|reel|reels|tv)\/([\w-]+)/)))return {src:'https://www.instagram.com/p/'+m[1]+'/embed',vert:true};
   return null;
 }
 function vidBtn(u,cls){
-  const v=vidInfo(u);const href=esc(fixUrl(u));
+  const v=vidInfo(u);const href=esc(vidUrl(u));
   return '<button type="button" class="'+(cls||'vid')+(v&&v.thumb?' has-th':'')+'" data-vplay="'+href+'" title="Ver video">'+(v&&v.thumb?'<img class="vid-th" alt="" loading="lazy" src="'+esc(v.thumb)+'">':'')+'<span>▶ Video</span></button>';
 }
+function vidYT(func,args){const f=document.querySelector('#vmini iframe');if(f&&f.contentWindow)f.contentWindow.postMessage(JSON.stringify({event:'command',func:func,args:args||[]}),'*');}
 function vidOpen(u){
   const v=vidInfo(u);
-  if(!v){window.open(fixUrl(u),'_blank','noopener');return;}
+  if(!v){window.open(vidUrl(u),'_blank','noopener');return;}
   let box=document.getElementById('vmini');if(!box){box=document.createElement('div');box.id='vmini';document.body.appendChild(box);}
   box.className='vmini'+(v.vert?' vert':'')+(window.innerWidth<=600?' big':'');
-  box.innerHTML='<div class="vmini-bar"><span>Video</span><button type="button" data-vsize title="Agrandar / achicar">⤢</button><a href="'+esc(fixUrl(u))+'" target="_blank" rel="noopener" title="Abrir en otra pestaña">↗</a><button type="button" data-vclose title="Cerrar" aria-label="Cerrar video">✕</button></div>'+
-    '<iframe src="'+esc(v.src)+'" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="Video del ejercicio"></iframe>';
+  const own=v.yt||v.file;
+  const media=v.file
+    ?'<video src="'+esc(vidUrl(v.file))+'" autoplay muted loop playsinline webkit-playsinline preload="auto"></video>'
+    :'<iframe src="'+esc(v.src)+'" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="Video del ejercicio"></iframe>';
+  box.innerHTML='<div class="vmini-bar"><span>Video</span>'+(own?'<button type="button" data-vsnd title="Sonido">🔇</button>':'')+'<button type="button" data-vsize title="Agrandar / achicar">⤢</button><a href="'+esc(vidUrl(u))+'" target="_blank" rel="noopener" title="Abrir en otra pestaña">↗</a><button type="button" data-vclose title="Cerrar" aria-label="Cerrar video">✕</button></div>'+
+    '<div class="vmini-media">'+media+(own?'<div class="vmini-tap" data-vtap><span class="vmini-ico">❚❚</span></div>':'')+'</div>';
+  box._paused=false;box._muted=true;
+  if(v.file){const vd=box.querySelector('video');
+    vd.addEventListener('loadedmetadata',()=>{if(vd.videoWidth&&vd.videoHeight)box.classList.toggle('vert',vd.videoHeight>vd.videoWidth);});
+    vd.addEventListener('error',()=>{box.querySelector('.vmini-media').innerHTML='<div class="vmini-err">No se pudo cargar el video. Tocá ↗ para abrirlo.</div>';});}
+  if(v.yt){const f=box.querySelector('iframe');f.addEventListener('load',()=>{try{f.contentWindow.postMessage(JSON.stringify({event:'listening',id:1}),'*');}catch(e){}});}
   /* videos de Drive: miramos la portada para saber si está filmado vertical u horizontal */
   if(v.probe&&v.thumb){const im=new Image();im.onload=()=>{const b=document.getElementById('vmini');if(b&&im.naturalWidth&&im.naturalHeight)b.classList.toggle('vert',im.naturalHeight>im.naturalWidth);};im.src=v.thumb;}
 }
+function vidFlash(box,txt){const i=box.querySelector('.vmini-ico');if(!i)return;i.textContent=txt;i.classList.remove('show');void i.offsetWidth;i.classList.add('show');}
 document.addEventListener('click',e=>{
   const p=e.target.closest('[data-vplay]');if(p){e.preventDefault();e.stopPropagation();vidOpen(p.dataset.vplay);return;}
   if(e.target.closest('[data-vclose]')){const b=document.getElementById('vmini');if(b)b.remove();return;}
-  if(e.target.closest('[data-vsize]')){document.getElementById('vmini').classList.toggle('big');}
+  if(e.target.closest('[data-vsize]')){document.getElementById('vmini').classList.toggle('big');return;}
+  const box=document.getElementById('vmini');if(!box)return;
+  if(e.target.closest('[data-vtap]')){box._paused=!box._paused;const vd=box.querySelector('video');
+    if(vd){if(box._paused)vd.pause();else vd.play().catch(()=>{});}else vidYT(box._paused?'pauseVideo':'playVideo');
+    vidFlash(box,box._paused?'▶':'❚❚');box.classList.toggle('paused',box._paused);return;}
+  const s=e.target.closest('[data-vsnd]');if(s){box._muted=!box._muted;const vd=box.querySelector('video');
+    if(vd){vd.muted=box._muted;if(!box._muted)vd.play().catch(()=>{});}else vidYT(box._muted?'mute':'unMute');
+    s.textContent=box._muted?'🔇':'🔊';}
 },true);
 
 /* ---------- lo que anotaron los atletas, por ejercicio de la rutina ---------- */
