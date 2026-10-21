@@ -614,6 +614,30 @@ body.drag-on{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .dnav-b span{font-weight:700;font-size:13px;color:var(--ink-2);text-transform:capitalize;vertical-align:2px}
 .dnav-b:active{background:var(--accent-soft)}
 .dnav-empty{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;border:1.5px dashed var(--line);border-radius:10px;padding:28px 16px}
+/* objetivo del bloque y desplegable con sugerencias */
+.blk-obj{border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;font-weight:700;color:var(--ink-2);max-width:170px}
+.blk-obj.set{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.blk-hint{font-size:12.5px;color:var(--ink-2);background:var(--surface);border-left:3px solid var(--accent);border-radius:6px;padding:6px 10px}
+.exr.dose .ex-s::placeholder,.exr.dose .rep::placeholder,.exr.dose .ex-c::placeholder{font-style:italic;color:color-mix(in srgb,var(--ink-3) 70%,transparent)}
+.f-blk-o{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--accent-soft);color:var(--ink);border-radius:4px;padding:2px 6px}
+.cb-list{max-height:none!important;overflow:visible!important;padding:0!important;min-width:min(330px,calc(100vw - 40px))}
+.cb-head{padding:8px 10px;font-size:12px;color:var(--ink-2);border-bottom:1px solid var(--line);line-height:1.35}
+.cb-head b{color:var(--ink)}
+.cb-chips{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line)}
+.cb-list .cb-chip{display:inline-block;width:auto;min-height:0;border:1px solid var(--line);border-radius:20px;padding:3px 9px;font-size:11.5px;font-weight:700;text-transform:none;color:var(--ink-2);background:var(--surface)}
+.cb-list .cb-chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.cb-l{max-height:min(260px,45vh);overflow-y:auto;overscroll-behavior:contain;padding:3px}
+.cb-sec{padding:5px 8px 3px;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.cb-list [data-cbv]{display:flex!important;align-items:center;gap:8px}
+.cb-list [data-cbv] span{display:grid;line-height:1.2}
+.cb-list [data-cbv] small{font-size:10.5px;font-weight:500;color:var(--ink-3);text-transform:none}
+.cb-th{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;flex:none;color:#fff;font-style:normal;font-size:10px;font-weight:800;overflow:hidden}
+.cb-th img{width:100%;height:100%;object-fit:cover}
+.rol-b{font-style:normal;font-size:10.5px;font-weight:800;color:#fff!important;background:var(--rc)!important;border-radius:4px;padding:1px 6px}
+.rol-b.auto{opacity:.55}
+.ej-tags.auto i{font-style:italic;opacity:.8}
+.ej-chip.rc.on{background:var(--rc);border-color:var(--rc);color:#fff}
+.ej-ini{background:color-mix(in srgb,var(--rc,#9aa39d) 18%,var(--surface))!important;color:var(--rc,#9aa39d)!important}
 /* biblioteca de ejercicios */
 .ej-filt{display:grid;gap:8px;margin-bottom:12px}
 .ej-q{max-width:420px;width:100%}
@@ -778,7 +802,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 20 oct 2026 · TrainingPro · flechas entre días</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 21 oct 2026 · TrainingPro · objetivo del bloque y sugerencias</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1287,9 +1311,10 @@ function exRowHtml(e,blkSeries){
 function blockHtml(b,i){
   b=b||{};const ej=b.ejercicios&&b.ejercicios.length?b.ejercicios:[{},{}];
   return '<div class="blk">'+
-    '<div class="blk-h"><button type="button" class="blk-drag" aria-label="Mover bloque (arrastrá, o usá las flechas arriba/abajo)" title="Arrastrá para mover el bloque">⠿</button><input class="blk-name" aria-label="Nombre del bloque" value="'+esc(b.nombre||('Bloque '+(i+1)))+'">'+
+    '<div class="blk-h"><button type="button" class="blk-drag" aria-label="Mover bloque (arrastrá, o usá las flechas arriba/abajo)" title="Arrastrá para mover el bloque">⠿</button><input class="blk-name" aria-label="Nombre del bloque" value="'+esc(b.nombre||('Bloque '+(i+1)))+'">'+objSelHtml(b.obj||'')+
     '<label>Series <input class="blk-series" type="number" min="1" max="12" inputmode="numeric" value="'+esc(b.series||'')+'" placeholder="–"></label>'+
     '<button type="button" class="btn sm ghost" data-rmblk>Quitar bloque</button></div>'+
+    '<div class="blk-hint"'+(b.obj?'':' hidden')+'>'+esc(objHint(b.obj))+'</div>'+
     '<input class="blk-nota" aria-label="Nota del bloque" placeholder="Pausa, método, tempo… (opcional)" value="'+esc(b.nota||'')+'">'+
     '<div class="ex-head2" aria-hidden="true"><span>Ejercicio</span><span>Series</span><span>Reps</span><span>Carga</span></div>'+
     '<div class="blk-ex">'+ej.map(e=>exRowHtml(e,b.series)).join('')+'</div>'+
@@ -1380,6 +1405,7 @@ function readProg(r){
 function readBlocks(mw){
   return [...mw.querySelectorAll('.blk')].map(bk=>({
     nombre:bk.querySelector('.blk-name').value.trim(),
+    ...((bk.querySelector('.blk-obj')||{}).value?{obj:bk.querySelector('.blk-obj').value}:{}),
     series:bk.querySelector('.blk-series').value.trim(),
     nota:bk.querySelector('.blk-nota').value.trim(),
     ejercicios:[...bk.querySelectorAll('.exr')].map(r=>({
@@ -1399,7 +1425,7 @@ function saveToLibrary(bloques){
   bloques.forEach(b=>b.ejercicios.forEach(e=>{
     const k=slug(e.n);if(seen[k])return;seen[k]=1;
     const ex=S.lib.find(x=>x.id===k);
-    if(!ex)ejPut(k,Object.assign({nombre:e.n,link:e.link||''},ejGuess(e.n)));
+    if(!ex)ejPut(k,{nombre:e.n,link:e.link||''});
     else if((e.link&&!ex.link)||ex.nombre!==e.n||ex.oculto)ejPut(k,{nombre:e.n,link:ex.link||e.link||'',oculto:false});
   }));
 }
@@ -1458,7 +1484,7 @@ function parseRoutineText(txt){
 
 /* ---------- contenido compartido: sesión y rutina ---------- */
 function contentHtml(s,tipo,opts){
-  opts=opts||{};CUR_WEEKS=opts.weeks||0;const lib=libMap();const bloques=toBloques(s,tipo);
+  opts=opts||{};CUR_WEEKS=opts.weeks||0;CUR_FORM=!!opts.form;const lib=libMap();const bloques=toBloques(s,tipo);
   let b='<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="s_obj">Objetivo'+(opts.rutina?'':' de la sesión')+'</label><input id="s_obj" value="'+esc(s.objetivo||'')+'" placeholder="'+(tipo==='gym'?'Ej: fuerza máxima tren inferior':'Ej: resistencia intermitente + velocidad')+'"></div>'+
      (opts.rutina?'':'<div class="field"><label for="s_hora">Hora</label><input id="s_hora" type="time" value="'+esc(s.hora||'')+'"></div>')+
      '<div class="field"><label for="s_dur">Duración (min)</label><input id="s_dur" type="number" min="0" inputmode="numeric" value="'+esc(s.duracion||'')+'"></div>'+
@@ -1478,19 +1504,40 @@ function contentHtml(s,tipo,opts){
   b+='<div class="field"><label for="s_not">Notas / observaciones</label><textarea id="s_not">'+esc(s.notas||'')+'</textarea></div>';
   return b;
 }
-/* desplegable de ejercicios: la flecha muestra todos; escribiendo filtra; se ven ~4 y el resto con scroll */
-const CB={box:null,inp:null,i:-1,
-  names(){return [...new Set(Object.values(libMap()).filter(x=>!x.oculto).map(x=>x.nombre))].sort((a,b)=>a.localeCompare(b,'es'));},
-  open(inp,all){this.close();this.inp=inp;const q=all?'':normTxt(inp.value);
-    const L=this.names().filter(n=>!q||normTxt(n).includes(q));
-    const box=document.createElement('div');box.className='cb-list';box.setAttribute('role','listbox');
+/* desplegable de ejercicios: la flecha muestra todos; escribiendo filtra. Si el bloque tiene objetivo, arriba van las sugerencias */
+const CB={box:null,inp:null,i:-1,chip:'',
+  open(inp,all){
+    const same=this.inp===inp&&this.box;
+    if(!same){this.close();this.inp=inp;const c=rowCtx(inp.closest('.exr'));this.chip=c.obj?'sug':'all';}
+    this.all=all;this.render();},
+  render(){
+    const inp=this.inp;if(!inp)return;
+    const ctx=rowCtx(inp.closest('.exr'));const q=this.all?'':normTxt(inp.value);
+    const list=ejAll();const match=e=>!q||normTxt(e.nombre).includes(q);
+    const used=new Set(ctx.prev.map(p=>p.id));
+    let secs;
+    if(this.chip==='sug'&&ctx.obj){secs=ejSuggest(ctx.obj,ctx.idx,ctx.prev,list);}
+    else if(this.chip&&this.chip!=='all'&&this.chip!=='sug'){const arr=list.filter(e=>e.rol===this.chip&&!used.has(e.id));const last=ctx.prev[ctx.prev.length-1];
+      const same=last?arr.filter(e=>e.pat===last.pat):[];secs=same.length?[[ROL[this.chip]+' · mismo patrón',same],[ROL[this.chip]+' · otros',arr.filter(e=>!same.includes(e))]]:[[ROL[this.chip],arr]];}
+    else secs=[['',list]];
+    secs=secs.map(([t,a])=>[t,a.filter(match)]).filter(s=>s[1].length);
+    if(q&&this.chip!=='all'){const shown=new Set();secs.forEach(s=>s[1].forEach(e=>shown.add(e.id)));const rest=list.filter(e=>match(e)&&!shown.has(e.id));if(rest.length)secs.push(['Otros que coinciden',rest]);}
     const hl=n=>{if(!q)return esc(n);const k=normTxt(n).indexOf(q);return k<0?esc(n):esc(n.slice(0,k))+'<mark>'+esc(n.slice(k,k+q.length))+'</mark>'+esc(n.slice(k+q.length));};
-    box.innerHTML=L.length?L.map(n=>'<button type="button" role="option" data-cbv="'+esc(n)+'">'+hl(n)+'</button>').join(''):'<div class="cb-empty">No está en la lista: se guarda como ejercicio nuevo.</div>';
-    box.addEventListener('mousedown',e=>e.preventDefault());
-    box.addEventListener('click',e=>{const b=e.target.closest('[data-cbv]');if(b)this.pick(b.dataset.cbv);});
-    inp.parentElement.appendChild(box);this.box=box;this.i=-1;inp.setAttribute('aria-expanded','true');},
+    const last=ctx.prev[ctx.prev.length-1];
+    const head=ctx.obj?(last?'Después de <b>'+esc(last.nombre)+'</b>'+(last.pat?' · '+esc(patName(last.pat).toLowerCase()):''):'Primer ejercicio · <b>'+esc(OBJS[ctx.obj].t)+'</b>')+(CUR_FORM?' · formativas':''):'';
+    const chips=(ctx.obj?[['sug','Sugeridos']]:[]).concat(ROLS.filter(r=>r!=='m').map(r=>[r,ROL[r]]),[['all','Todos']]);
+    const it=e=>'<button type="button" role="option" data-cbv="'+esc(e.nombre)+'"><i class="cb-th" style="background:'+ROLC[e.rol||'x']+'">'+(EJIMG.m[e.id]?'<img alt="" src="'+esc(EJIMG.m[e.id])+'">':esc(e.nombre.split(/\s+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('')))+'</i><span>'+hl(e.nombre)+(e.rol?'<small>'+esc(ROL[e.rol])+(e.pat?' · '+esc(patName(e.pat)):'')+'</small>':'')+'</span></button>';
+    let box=this.box;
+    if(!box){box=document.createElement('div');box.className='cb-list';box.setAttribute('role','listbox');
+      box.addEventListener('mousedown',e=>e.preventDefault());
+      box.addEventListener('click',e=>{const c=e.target.closest('[data-cbchip]');if(c){e.stopPropagation();this.chip=c.dataset.cbchip;this.all=false;this.render();this.inp&&this.inp.focus();return;}
+        const b=e.target.closest('[data-cbv]');if(b)this.pick(b.dataset.cbv);});
+      inp.parentElement.appendChild(box);this.box=box;inp.setAttribute('aria-expanded','true');}
+    box.innerHTML=(head?'<div class="cb-head">'+head+'</div>':'')+'<div class="cb-chips">'+chips.map(([k,t])=>'<button type="button" class="cb-chip'+(this.chip===k?' on':'')+'" data-cbchip="'+k+'">'+t+'</button>').join('')+'</div>'+
+      '<div class="cb-l">'+(secs.length?secs.map(([t,a])=>(t?'<div class="cb-sec">'+esc(t)+'</div>':'')+a.map(it).join('')).join(''):'<div class="cb-empty">'+(q?'No está en la lista: se guarda como ejercicio nuevo.':'No hay ejercicios acá. Probá en <b>Todos</b>.')+'</div>')+'</div>';
+    this.i=-1;},
   close(){if(this.box)this.box.remove();if(this.inp)this.inp.setAttribute('aria-expanded','false');this.box=null;this.inp=null;this.i=-1;},
-  pick(v){const inp=this.inp;if(!inp)return;inp.value=v;this.close();inp.dispatchEvent(new Event('change',{bubbles:true}));inp.dispatchEvent(new Event('input',{bubbles:true}));
+  pick(v){const inp=this.inp;if(!inp)return;inp.value=v;this.close();inp.dispatchEvent(new Event('change',{bubbles:true}));inp.dispatchEvent(new Event('input',{bubbles:true}));CB.close();
     const nx=inp.closest('.exr').querySelector('.ex-s');if(nx)nx.focus();},
   move(d){if(!this.box)return;const bs=[...this.box.querySelectorAll('[data-cbv]')];if(!bs.length)return;
     this.i=(this.i+d+bs.length)%bs.length;bs.forEach((b,k)=>b.classList.toggle('on',k===this.i));bs[this.i].scrollIntoView({block:'nearest'});}
@@ -1508,7 +1555,7 @@ document.addEventListener('click',e=>{const a=e.target.closest('.cb-arr');
   if(a){const inp=a.parentElement.querySelector('.ex-n');if(CB.box&&CB.inp===inp){CB.close();return;}inp.focus();CB.open(inp,true);return;}
   if(CB.box&&!e.target.closest('.cb'))CB.close();});
 function wireContent(mw){
-  const lib=libMap();
+  const lib=libMap();wireDose(mw);
   mw.addEventListener('click',e=>{
     const t=e.target;
     if(t.closest('[data-addblk]')){const blocks=mw.querySelector('#blocks');blocks.insertAdjacentHTML('beforeend',blockHtml({ejercicios:[{},{}]},blocks.children.length));return;}
@@ -1741,7 +1788,7 @@ function fichaHtml(s,tipo,fecha,rut){
     h+='<div class="f-blocks">'+bloques.map((b,bi)=>{
       const L=String.fromCharCode(65+bi);
       const ej=(b.ejercicios||[]).filter(e=>e.n);
-      return '<div class="f-blk"><div class="f-blk-h"><span class="f-blk-l">'+L+'</span><span class="f-blk-n">'+esc(b.nombre||('Bloque '+(bi+1)))+'</span>'+(b.series?'<span class="f-blk-s">'+esc(b.series)+' series</span>':'')+'</div>'+
+      return '<div class="f-blk"><div class="f-blk-h"><span class="f-blk-l">'+L+'</span><span class="f-blk-n">'+esc(b.nombre||('Bloque '+(bi+1)))+'</span>'+(b.obj&&OBJS[b.obj]?'<span class="f-blk-o">'+esc(OBJS[b.obj].t)+'</span>':'')+(b.series?'<span class="f-blk-s">'+esc(b.series)+' series</span>':'')+'</div>'+
         (b.nota?'<div class="f-blk-nota">'+esc(b.nota)+'</div>':'')+
         ej.map((e,ei)=>'<div class="f-ex"><span class="f-ex-i">'+L+(ei+1)+'</span><span class="f-ex-n">'+(RO||!ATLCTX?esc(e.n):'<button type="button" class="atlex-b" data-atlex="'+esc(e.n)+'">'+esc(e.n)+atlBadge(e.n)+'</button>')+
           (e.link?' '+vidBtn(e.link):'')+(e.obs?'<i class="f-ex-obs">'+esc(e.obs)+'</i>':'')+'</span>'+
@@ -1833,7 +1880,7 @@ function openDay(fecha,tipo,edit,nav){
     if(rut&&exists) b+='<div class="rut-note">Este día está modificado a partir de la rutina <b>'+esc(rut.nombre)+'</b>.<div class="rut-acts"><button type="button" class="btn sm" id="backRut">Volver a la rutina original</button><button type="button" class="btn sm" id="editRut">Editar la rutina</button></div></div>';
     const dr=Draft.get('ses-'+docId);
     if(dr){s=Object.assign({},s,dr.content);b+=draftNote(dr.t);}
-    b+=contentHtml(s,tipo);
+    b+=contentHtml(s,tipo,{form:catIsForm(S.cat)});
     foot='<div class="modal-f">'+(exists&&!rut?'<button class="btn danger" id="delSes">Borrar sesión</button>':'')+'<button class="btn" id="goAtt">Tomar asistencia</button><div class="grow"></div><button class="btn" '+(exists||rut?'id="toFicha"':'data-close')+'>Cancelar</button><button class="btn pri" id="saveSes">Guardar</button></div>';
   }
   openModal(modalHead(catN,fmtD(fecha,{weekday:'long',day:'numeric',month:'long'}))+'<div class="modal-b">'+b+'</div>'+foot,mw=>{
@@ -2023,6 +2070,9 @@ function openRut(id,preset,after){
   if(!days.length)days.push({nombre:'Día 1'});
   let cur=dr&&dr.cur<days.length?dr.cur:0;
   const users=r0?S.asigAll.filter(a=>a.rutina===r0.id&&asigState(a)!=='fin').map(a=>catName(a.cat)):[];
+  /* dosis de formativas si la rutina es para una formativa (o solo la usan formativas) */
+  const ucats=r0?[...new Set(S.asigAll.filter(a=>a.rutina===r0.id&&asigState(a)!=='fin').map(a=>a.cat))]:[];
+  const RFORM=after&&after.cat?catIsForm(after.cat):(ucats.length>0&&ucats.every(catIsForm));
   const b=(dr?draftNote(dr.t):'')+(users.length>1?'<div class="rut-note">La usan <b>'+users.map(esc).join(', ')+'</b>. Lo que cambies acá se aplica a todas. Si una categoría necesita algo distinto, usá <b>Duplicar</b> en la biblioteca.</div>':'')+
     '<label class="sw sw-sm"><input type="checkbox" id="r_borr"'+(r.borrador?' checked':'')+'><i></i><span><b>Todavía la estoy armando</b><span class="tiny">Queda en “Pendientes” en la biblioteca hasta que la destildes.</span></span></label>'+
     '<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="r_n">Nombre de la rutina</label><input id="r_n" value="'+esc(r.nombre||'')+'" placeholder="Ej: Fuerza · Mesociclo 1"></div>'+
@@ -2049,7 +2099,7 @@ function openRut(id,preset,after){
     const drawPanel=()=>{
       const d=days[cur];
       panel.innerHTML='<div class="day-head"><div class="field"><label for="d_n">Nombre del día</label><input id="d_n" value="'+esc(d.nombre||'')+'" placeholder="Ej: Día 1 · Tren inferior"></div></div>'+
-        contentHtml(d,tipo,{rutina:true,weeks:+q('r_w').value||4})+
+        contentHtml(d,tipo,{rutina:true,weeks:+q('r_w').value||4,form:RFORM})+
         '<div class="day-foot"><button type="button" class="btn sm" id="d_copy">Duplicar este día</button>'+(days.length>1?'<button type="button" class="btn sm danger" id="d_rm">Quitar este día</button>':'')+'</div>';
       panel.querySelector('#d_n').oninput=()=>{saveCur();drawTabs();};
       panel.querySelector('#d_copy').onclick=()=>{saveCur();const c=JSON.parse(JSON.stringify(days[cur]));c.nombre='Día '+(days.length+1);days.push(c);cur=days.length-1;drawTabs();drawPanel();toast('Día duplicado');};
@@ -3221,6 +3271,144 @@ document.addEventListener('click',e=>{
     s.textContent=box._muted?'🔇':'🔊';}
 },true);
 
+/* ================= rol + patrón de cada ejercicio, objetivo del bloque y sugerencias ================= */
+const ROL={b:'Básico',s:'Secundario',e:'Explosivo',a:'Accesorio',p:'Prevención',k:'Core',m:'Movilidad'};
+const ROLS=['b','s','e','a','p','k','m'];
+const ROLC={b:'#2f6fd6',s:'#3f9a62',e:'#e8590c',a:'#7950f2',p:'#c2255c',k:'#5c6b62',m:'#868e96',x:'#9aa39d'};
+const PATS=[['rod','Rodilla dominante'],['cad','Cadera dominante'],['emh','Empuje horizontal'],['emv','Empuje vertical'],['trh','Tracción horizontal'],['trv','Tracción vertical'],['core','Core'],['rot','Rotación'],['car','Carrera / sprint'],['tob','Tobillo / pie'],['adu','Aductor'],['hom','Hombro']];
+const patName=k=>(PATS.find(p=>p[0]===k)||['',''])[1];
+/* adivina rol, patrón, unilateral e implemento por el nombre (si la etiqueta no está guardada) */
+const EJG=new Map();
+function ejGuess2(nombre){
+  if(EJG.has(nombre))return EJG.get(nombre);
+  const old=ejGuess(nombre);const n=' '+normTxt(nombre)+' ';const first=' '+normTxt(String(nombre).split('+')[0])+' ';
+  const has=re=>re.test(first);const t=old.tipo;
+  let rol='',pat='';
+  const uni=/bulgar|estocada|zancada|split|step up|subida|subir|una pierna|1 pierna|un brazo|1 brazo|alternad|unilateral|a un pie|\b1pp\b|\b1bb\b|asimetric/.test(first);
+  const barra=/barra|trap bar|hexagonal/.test(first)||/sentadilla trasera|sentadilla frontal|banco plano|press militar|hip thrust|peso muerto/.test(first)&&!/mancuerna|manc|kettlebell|disco|banda|1 pierna|una pierna|asimetric|rumano/.test(first);
+  if(t==='Potencia'){rol='e';pat=has(/push press|sobre cabeza|overhead|jerk/)?'emv':has(/pecho|chest/)?'emh':has(/rotacion/)?'rot':'cad';}
+  else if(t==='Pliometría'){rol='e';pat=has(/flexion|despegue/)?'emh':has(/horizontal|bound|largo/)?'cad':'rod';}
+  else if(t==='Velocidad / carrera'){rol='e';pat='car';}
+  else if(t==='Unilateral'){rol='s';pat=has(/peso muerto|hip thrust|puente/)?'cad':'rod';}
+  else if(t==='Sentadilla'){rol=uni||!barra?'s':'b';pat='rod';}
+  else if(t==='Bisagra'){pat='cad';rol=has(/swing/)?'e':has(/curl femoral/)?'a':(barra&&!uni&&!has(/rumano/))?'b':'s';}
+  else if(t==='Empuje'){pat=has(/militar|hombro|arnold|landmine|vertical|push press/)?'emv':'emh';rol=has(/aperturas/)?'a':(has(/banco plano|banco inclinado|press militar/)&&!has(/mancuerna|manc|un brazo|1 brazo|alternad/))?'b':'s';}
+  else if(t==='Tracción'){pat=has(/dominada|jalon|chin|pull down|vertical|colgado/)?'trv':'trh';rol=has(/face pull/)?'a':(has(/dominada/)&&!has(/australian|asistid/))||has(/remo con barra/)?'b':'s';}
+  else if(t==='Core'){rol='k';pat=has(/rotacion|twist|rotaciones/)?'rot':'core';}
+  else if(t==='Movilidad'){rol='m';pat=has(/tobillo|gemelo/)?'tob':has(/hombro|toracic|apertura/)?'hom':'cad';}
+  else if(t==='Prevención'){rol='p';pat=has(/aductor|copenh|cophen/)?'adu':has(/gemelo|soleo|tobillo/)?'tob':has(/espinal|manguito|rotador|y t a|hombro/)?'hom':'cad';}
+  else if(t==='Accesorio'){rol='a';pat=has(/biceps|curl de biceps|vuelos posteriores|pajaro/)?'trh':has(/triceps|frances/)?'emh':has(/vuelo/)?'emv':has(/pullover/)?'trv':has(/cuadriceps/)?'rod':has(/femoral/)?'cad':has(/gemelo/)?'tob':'';}
+  const I=[['Barra',/barra|trasera|cargada|segundo tiempo|2do tiempo|push press|rack/],['Mancuerna',/mancuerna|\bmanc\b|\bmc\b/],['Kettlebell',/kettlebell|\bkb\b|pesa rusa|goblet|swing/],['Disco',/disco/],['Banda',/banda|elastic|\bliga\b/],['Polea',/polea|cable|jalon/],['Máquina',/maquina|prensa|extension de cuadriceps|smith|camilla/],['Balón medicinal',/medball|\bmb\b|balon|pelota|lanzamiento/],['TRX',/trx/],['Fitball',/fitball/],['Cajón',/cajon/],['Landmine',/landmine/]];
+  const impl=I.filter(([v,re])=>re.test(n)).map(x=>x[0]);
+  if(!impl.length&&/dominada|flexion|push up|plancha|nordic|copenhag|cophenag|salto|cmj|drop|fondos|bicho muerto|sprint|skipping|abdominal|estocada|carpa|sit up|twist|bulgar|step up|vallas|multisaltos|coordinacion|alcances|puente de/.test(n))impl.push('Peso corporal');
+  const g={rol,pat,uni,impl};EJG.set(nombre,g);return g;
+}
+/* etiquetas efectivas: lo guardado manda; si falta, lo adivinado (y queda marcado como "auto") */
+function ejEff(e){
+  const g=ejGuess2(e.nombre);
+  e.auto=!e.rol;e.rol=e.rol||g.rol;e.pat=e.pat||g.pat;e.uni=(e.uni===true||e.uni===false)?e.uni:g.uni;
+  if(!(e.impl||[]).length){e.impl=g.impl;e.implAuto=true;}
+  return e;
+}
+function ejByName(n){const k=slug(n);const e=ejAll(true).find(x=>x.id===k);return e||ejEff({id:k,nombre:String(n).toLocaleUpperCase('es'),impl:[]});}
+
+/* ---- objetivo del bloque ---- */
+const OBJS={
+  pot:{t:'Potencia',h:'Básico pesado → pausa activa (opcional) → transferencia explosiva del mismo patrón.',hf:'Formativas: saltos y aterrizajes → patrón técnico → core. Sin contrastes pesados.'},
+  fmax:{t:'Fuerza máxima',h:'Básico bilateral primero, pausas largas. En la pausa: un correctivo o core.',hf:'Formativas: el básico con técnica, más reps y sin %.'},
+  fh:{t:'Fuerza-hipertrofia',h:'Secundarios / unilaterales en bi-serie que no se pisen (rodilla + tracción, cadera + empuje).'},
+  acc:{t:'Accesorios',h:'Analíticos al final: más reps, pausa corta.'},
+  prev:{t:'Prevención',h:'Rodilla, tobillo, hombro, aductor, isquios.'},
+  act:{t:'Activación',h:'Poco volumen: 2-3 explosivos + core. Ideal el día antes del partido.'}
+};
+let CUR_FORM=false; /* el editor abierto es de una formativa (U13-U17) */
+function catIsForm(id){const c=S.cats.find(x=>x.id===id);return !!c&&/^u1[0-7]/i.test(String(c.grupo||c.nombre||'').trim());}
+function objSelHtml(v){return '<select class="blk-obj" aria-label="Objetivo del bloque" title="Objetivo del bloque (opcional)"><option value="">Objetivo…</option>'+Object.keys(OBJS).map(k=>'<option value="'+k+'"'+(k===v?' selected':'')+'>'+OBJS[k].t+'</option>').join('')+'</select>';}
+function objHint(v){const o=OBJS[v];if(!o)return '';return (CUR_FORM&&o.hf)?o.hf:o.h;}
+/* dosis sugerida [series, reps, carga] */
+function ejDose(obj,r){
+  const F=CUR_FORM;
+  const D={
+    pot:{b:F?['3','6','técnica']:['4','3','80%'],s:F?['3','8','técnica']:['4','4','70%'],e:F?['3','5','aterrizaje']:['4','4','máx. vel.'],k:['2','8','pausa activa'],m:['2','8','pausa activa'],p:['2','8','pausa activa']},
+    fmax:{b:F?['4','6','RIR 3']:['4','3','85%'],s:F?['3','8','RIR 3']:['3','5','RIR 2'],k:['2','8','pausa activa'],m:['2','8','pausa activa'],p:['2','8','pausa activa']},
+    fh:{b:F?['3','10','RIR 3']:['4','6','75%'],s:F?['3','10','RIR 3']:['4','8','RIR 2'],k:['3','10',''],a:['3','12','RIR 1']},
+    acc:{a:['3','12','RIR 1'],s:['3','12','RIR 1'],p:['3','10',''],k:['3','10','']},
+    prev:{p:['3','8','lento 3"'],a:['3','10',''],k:['3','8',''],m:['2','8','']},
+    act:{e:F?['3','3','aterrizaje']:['3','3','70%'],b:['3','3','70%'],k:['2','6','']}
+  };
+  const o=D[obj];if(!o)return null;return o[r]||null;
+}
+function ejExpected(obj,idx,prev){
+  const last=prev[prev.length-1];
+  if(obj==='pot'){if(CUR_FORM)return idx===0?'e':idx===1?'s':'k';if(idx===0)return 'b';if(last&&['b','s','k','m','p'].includes(last.rol))return 'e';return 'b';}
+  if(obj==='fmax'){if(idx===0)return 'b';if(last&&last.rol==='b')return 'k';return 'b';}
+  if(obj==='fh')return 's';if(obj==='acc')return 'a';if(obj==='prev')return 'p';if(obj==='act')return idx<2?'e':'k';return '';
+}
+const EJPAIR={rod:['trh','trv'],cad:['emh','emv'],emh:['cad','rod'],emv:['cad','rod'],trh:['rod','cad'],trv:['rod','cad']};
+const LEGS=['rod','cad'],UPPER=['emh','emv','trh','trv'];
+/* secciones de sugerencias según objetivo, lugar en el bloque y lo anterior */
+function ejSuggest(obj,idx,prev,all){
+  const used=new Set(prev.map(p=>p.id));const ok=e=>!used.has(e.id);
+  const last=prev[prev.length-1];const lastB=[...prev].reverse().find(p=>p.rol==='b'||p.rol==='s');
+  const S2=[];const add=(t,arr)=>{arr=arr.filter(ok);if(arr.length)S2.push([t,arr]);};
+  const role=r=>all.filter(e=>e.rol===r);const pausa=()=>role('k').concat(role('m'),role('p'));
+  if(obj==='pot'){
+    if(CUR_FORM){
+      if(!last){add('Saltos y aterrizajes',role('e').filter(e=>LEGS.includes(e.pat)));add('Core',role('k'));}
+      else if(last.rol==='e'){add('Patrón técnico del mismo grupo',all.filter(e=>(e.rol==='s'||e.rol==='b')&&e.pat===last.pat));add('Patrón técnico (otros)',role('s').filter(e=>e.pat!==last.pat));}
+      else{add('Core',role('k'));add('Saltos',role('e').filter(e=>LEGS.includes(e.pat)));}
+    }else if(!last||!lastB){add('Básicos',role('b'));add('Secundarios',role('s'));add('Explosivos',role('e'));}
+    else if(last.rol==='b'||last.rol==='s'){
+      add('Transferencia · mismo patrón ('+patName(last.pat).toLowerCase()+')',all.filter(e=>e.rol==='e'&&e.pat===last.pat));
+      add('Pausa activa',pausa());
+      add('Explosivos parecidos',all.filter(e=>e.rol==='e'&&e.pat!==last.pat&&(LEGS.includes(last.pat)?LEGS.includes(e.pat):UPPER.includes(e.pat))));
+    }else if(['k','m','p'].includes(last.rol)){
+      add('Transferencia del básico ('+lastB.nombre+')',all.filter(e=>e.rol==='e'&&e.pat===lastB.pat));
+      add('Otro básico',role('b').filter(e=>e.pat!==lastB.pat));
+    }else{add('Otro básico (siguiente par)',role('b').filter(e=>e.pat!==lastB.pat));add('Pausa activa',pausa());}
+  }else if(obj==='fmax'){
+    if(!last){add('Básicos',role('b'));add('Secundarios',role('s'));}
+    else if(last.rol==='b'){add('Pausa activa',pausa());add('Básico de otro patrón',role('b').filter(e=>e.pat!==last.pat));}
+    else{const up=new Set(prev.filter(p=>p.rol==='b').map(p=>p.pat));add('Básico de otro patrón',role('b').filter(e=>!up.has(e.pat)));add('Secundarios',role('s'));}
+  }else if(obj==='fh'){
+    if(!last){add('Secundarios',role('s'));add('Básicos',role('b'));}
+    else{const pr=EJPAIR[last.pat]||[];add('Para la bi-serie (no pisa '+(patName(last.pat)||'el anterior').toLowerCase()+')',all.filter(e=>(e.rol==='s'||e.rol==='b')&&pr.includes(e.pat)));add('Core',role('k'));add('Otros secundarios',role('s').filter(e=>e.pat!==last.pat&&!pr.includes(e.pat)));}
+  }else if(obj==='acc'){add('Accesorios'+(last?' (otra zona)':''),role('a').filter(e=>!last||e.pat!==last.pat));add('Prevención',role('p'));add('Core',role('k'));}
+  else if(obj==='prev'){add('Prevención'+(last?' (otra zona)':''),role('p').filter(e=>!last||e.pat!==last.pat));add('Core',role('k'));add('Movilidad',role('m'));}
+  else if(obj==='act'){add('Explosivos (poco volumen)',role('e').filter(e=>!last||e.pat!==last.pat));add('Core',role('k'));}
+  return S2;
+}
+/* contexto de una fila del editor */
+function rowCtx(row){
+  const bk=row.closest('.blk');if(!bk)return {obj:'',idx:0,prev:[]};
+  const rows=[...bk.querySelectorAll('.exr')];const idx=rows.indexOf(row);
+  const prev=rows.slice(0,idx).map(r=>r.querySelector('.ex-n').value.trim()).filter(Boolean).map(ejByName);
+  return {obj:(bk.querySelector('.blk-obj')||{}).value||'',idx,prev,bk};
+}
+/* dosis en gris (placeholder): no se guarda, solo guía */
+function doseBlock(bk){
+  const objSel=bk.querySelector('.blk-obj');const obj=objSel?objSel.value:'';
+  const h=bk.querySelector('.blk-hint');if(h){h.textContent=objHint(obj);h.hidden=!obj;}
+  if(objSel)objSel.classList.toggle('set',!!obj);
+  const bs=bk.querySelector('.blk-series').value;
+  const rows=[...bk.querySelectorAll('.exr')];const prev=[];
+  rows.forEach((r,i)=>{const nm=r.querySelector('.ex-n').value.trim();const e=nm?ejByName(nm):null;
+    const rol=e&&e.rol?e.rol:ejExpected(obj,i,prev);const d=obj?ejDose(obj,rol):null;
+    r.querySelector('.ex-s').placeholder=bs||(d&&d[0])||'Ser.';
+    if(r.dataset.dist!=='1'){const ri=r.querySelector('.reps-in input');if(ri)ri.placeholder=(d&&d[1])||'Reps';}
+    r.querySelector('.ex-c').placeholder=(d&&d[2])||'Carga';
+    r.classList.toggle('dose',!!d);
+    if(e)prev.push(e);});
+}
+function doseAll(root){(root||document).querySelectorAll('#blocks .blk').forEach(doseBlock);}
+function wireDose(mw){
+  let t;const later=()=>{clearTimeout(t);t=setTimeout(()=>doseAll(mw),120);};
+  mw.addEventListener('change',e=>{if(e.target.matches('.blk-obj,.ex-n,.blk-series'))doseAll(mw);});
+  mw.addEventListener('input',e=>{if(e.target.matches('.ex-n,.blk-series'))later();});
+  new MutationObserver(later).observe(mw,{childList:true,subtree:true});
+  doseAll(mw);
+}
+
 /* ================= biblioteca de EJERCICIOS ================= */
 const EJ_ZONAS=[['inf','Tren inferior'],['sup','Tren superior'],['core','Core'],['full','Cuerpo completo']];
 const EJ_TIPOS=['Sentadilla','Bisagra','Unilateral','Empuje','Tracción','Pliometría','Potencia','Core','Movilidad','Prevención','Velocidad / carrera','Accesorio'];
@@ -3270,24 +3458,29 @@ function ejGuess(nombre){
   return g;
 }
 /* todos los ejercicios: los guardados + los de las rutinas + la lista base */
+const EJC={t:0,a:null,h:null};
 function ejAll(withHidden){
+  if(Date.now()-EJC.t<800&&EJC.a)return withHidden?EJC.h:EJC.a;
   const m={};
-  const add=(id,d)=>{m[id]=Object.assign({id,nombre:'',link:'',zona:'',tipo:'',impl:[],uso:0},m[id]||{},d);};
+  const add=(id,d)=>{m[id]=Object.assign({id,nombre:'',link:'',impl:[],uso:0},m[id]||{},d);};
   DEFAULT_LIB.forEach(n=>add(slug(n),{nombre:n.toLocaleUpperCase('es')}));
   const uso={};
   S.rutAll.forEach(r=>{if(r.archivada)return;const seen={};rutDays(r).forEach(d=>(d.bloques||[]).forEach(b=>(b.ejercicios||[]).forEach(e=>{
     if(!e.n)return;const k=slug(e.n);if(seen[k])return;seen[k]=1;uso[k]=(uso[k]||0)+1;
     if(!m[k])add(k,{nombre:String(e.n).toLocaleUpperCase('es'),link:e.link||''});else if(!m[k].link&&e.link)m[k].link=e.link;})));});
-  S.lib.forEach(x=>{if(!x.nombre)return;const d=Object.assign({},x);d.nombre=String(x.nombre).toLocaleUpperCase('es');d.impl=Array.isArray(x.impl)?x.impl:[];
+  S.lib.forEach(x=>{if(!x.nombre)return;const d=Object.assign({},x);d.nombre=String(x.nombre).toLocaleUpperCase('es');d.impl=Array.isArray(x.impl)?x.impl.slice():[];
     if(!d.link&&m[x.id]&&m[x.id].link)d.link=m[x.id].link;add(x.id,d);});
   Object.keys(uso).forEach(k=>{if(m[k])m[k].uso=uso[k];});
-  const arr=Object.values(m).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
-  return withHidden?arr:arr.filter(e=>!e.oculto);
+  const arr=Object.values(m).map(ejEff).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  EJC.t=Date.now();EJC.h=arr;EJC.a=arr.filter(e=>!e.oculto);
+  return withHidden?EJC.h:EJC.a;
 }
-/* guardar sin pisar lo que ya tenía (etiquetas, foto, 1RM del testeo…) */
+/* guardar sin pisar lo que ya tenía (etiquetas, foto, 1RM del testeo…); null = borrar ese dato */
 function ejPut(id,patch){
   const cur=S.lib.find(x=>x.id===id)||{};const d=Object.assign({},cur,patch);delete d.id;
+  Object.keys(d).forEach(k=>{if(d[k]===null)delete d[k];});
   const i=S.lib.findIndex(x=>x.id===id);if(i>=0)S.lib[i]=Object.assign({id},d);else S.lib.push(Object.assign({id},d));
+  EJC.t=0;
   return Store.put('ejercicios',id,d);
 }
 /* fotos: van aparte (colección ejImg) y se bajan recién cuando abrís la biblioteca, así la app arranca igual de rápido */
@@ -3298,8 +3491,8 @@ function ejImgStart(){if(EJIMG.on)return;EJIMG.on=true;
 function ejThumb(e,cls){
   const own=EJIMG.m[e.id];const v=e.link?vidInfo(e.link):null;const src=own||(v&&v.thumb)||'';
   if(src)return '<span class="'+(cls||'ej-th')+'"><img alt="" loading="lazy" src="'+esc(src)+'">'+(!own&&v?'<i class="ej-vb">▶</i>':'')+'</span>';
-  const ini=e.nombre.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('');
-  return '<span class="'+(cls||'ej-th')+' ej-ini" data-z="'+esc(e.zona||'')+'">'+esc(ini)+'</span>';
+  const ini=e.nombre.split(/\s+/).filter(w=>w.length>2||/^\d/.test(w)).slice(0,2).map(w=>w[0]).join('')||e.nombre.slice(0,2);
+  return '<span class="'+(cls||'ej-th')+' ej-ini" style="--rc:'+(ROLC[e.rol]||ROLC.x)+'">'+esc(ini)+'</span>';
 }
 /* achica la foto a 360 px (pesa ~15-30 KB) para guardarla gratis */
 function ejShrink(file){return new Promise((res,rej)=>{
@@ -3311,36 +3504,37 @@ function ejShrink(file){return new Promise((res,rej)=>{
 /* filtros (los usa la biblioteca y el panel del editor) */
 function ejFilter(list,f){
   const q=normTxt(f.q||'');
-  return list.filter(e=>(!q||normTxt(e.nombre).includes(q))&&(!f.zona||e.zona===f.zona)&&(!f.tipo||e.tipo===f.tipo)&&(!f.impl||(e.impl||[]).includes(f.impl))&&(!f.sin||(!e.zona&&!e.tipo&&!(e.impl||[]).length)));
+  return list.filter(e=>(!q||normTxt(e.nombre).includes(q))&&(!f.rol||e.rol===f.rol)&&(!f.pat||e.pat===f.pat)&&(!f.impl||(e.impl||[]).includes(f.impl))&&(!f.sin||e.auto));
 }
+const rolBadge=(r,auto)=>r?'<i class="rol-b'+(auto?' auto':'')+'" style="--rc:'+ROLC[r]+'">'+esc(ROL[r])+'</i>':'';
 function ejFiltersHtml(f,list){
-  const cnt=k=>list.filter(e=>e.zona===k).length;
+  const cnt=k=>list.filter(e=>e.rol===k).length;
   return '<div class="ej-filt"><input class="inp ej-q" data-ejq placeholder="Buscar ejercicio…" value="'+esc(f.q||'')+'" autocomplete="off">'+
-    '<div class="ej-chips"><button type="button" class="ej-chip'+(!f.zona?' on':'')+'" data-ejz="">Todo</button>'+EJ_ZONAS.map(z=>'<button type="button" class="ej-chip'+(f.zona===z[0]?' on':'')+'" data-ejz="'+z[0]+'">'+z[1]+' <small>'+cnt(z[0])+'</small></button>').join('')+'</div>'+
-    '<div class="ej-sels"><select class="inp" data-ejt aria-label="Tipo"><option value="">Tipo: todos</option>'+EJ_TIPOS.map(t=>'<option'+(f.tipo===t?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select>'+
+    '<div class="ej-chips"><button type="button" class="ej-chip'+(!f.rol?' on':'')+'" data-ejr="">Todo</button>'+ROLS.map(r=>'<button type="button" class="ej-chip rc'+(f.rol===r?' on':'')+'" style="--rc:'+ROLC[r]+'" data-ejr="'+r+'">'+ROL[r]+' <small>'+cnt(r)+'</small></button>').join('')+'</div>'+
+    '<div class="ej-sels"><select class="inp" data-ejp aria-label="Patrón"><option value="">Patrón: todos</option>'+PATS.map(p=>'<option value="'+p[0]+'"'+(f.pat===p[0]?' selected':'')+'>'+esc(p[1])+'</option>').join('')+'</select>'+
     '<select class="inp" data-eji aria-label="Implemento"><option value="">Implemento: todos</option>'+EJ_IMPL.map(t=>'<option'+(f.impl===t?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select>'+
-    ((f.q||f.zona||f.tipo||f.impl||f.sin)?'<button type="button" class="btn sm ghost" data-ejclr>Limpiar filtros</button>':'')+'</div></div>';
+    ((f.q||f.rol||f.pat||f.impl||f.sin)?'<button type="button" class="btn sm ghost" data-ejclr>Limpiar filtros</button>':'')+'</div></div>';
 }
 /* un mismo manejador de filtros para la vista y el panel */
 function ejFiltEvents(root,f,redraw){
   root.addEventListener('input',e=>{if(e.target.matches('[data-ejq]')){f.q=e.target.value;redraw(true);}});
-  root.addEventListener('change',e=>{if(e.target.matches('[data-ejt]')){f.tipo=e.target.value;redraw();}if(e.target.matches('[data-eji]')){f.impl=e.target.value;redraw();}});
-  root.addEventListener('click',e=>{const z=e.target.closest('[data-ejz]');if(z){f.zona=z.dataset.ejz;redraw();return;}
-    if(e.target.closest('[data-ejclr]')){f.q='';f.zona='';f.tipo='';f.impl='';f.sin=false;redraw();return;}
+  root.addEventListener('change',e=>{if(e.target.matches('[data-ejp]')){f.pat=e.target.value;redraw();}if(e.target.matches('[data-eji]')){f.impl=e.target.value;redraw();}});
+  root.addEventListener('click',e=>{const z=e.target.closest('[data-ejr]');if(z){f.rol=z.dataset.ejr;redraw();return;}
+    if(e.target.closest('[data-ejclr]')){f.q='';f.rol='';f.pat='';f.impl='';f.sin=false;redraw();return;}
     if(e.target.closest('[data-ejsin]')){f.sin=!f.sin;redraw();}});
 }
-S.ejF={q:'',zona:'',tipo:'',impl:'',sin:false};
+S.ejF={q:'',rol:'',pat:'',impl:'',sin:false};
 function vEjs(){
   ejImgStart();
   const all=ejAll(),f=S.ejF,list=ejFilter(all,f);
-  const sin=all.filter(e=>!e.zona&&!e.tipo&&!(e.impl||[]).length).length;
+  const auto=all.filter(e=>e.auto).length;
   let h='<div class="bar" style="margin-top:14px"><div class="grow"><p class="tiny" style="margin:0">'+all.length+' ejercicios · tocá uno para ver o cargar foto, video y etiquetas</p></div>'+
     (RO?'':'<button class="btn pri" data-ejnew>+ Nuevo ejercicio</button>')+'</div>';
   h+=ejFiltersHtml(f,all);
-  if(sin&&!RO)h+='<div class="ej-auto"><span><b>'+sin+'</b> sin etiquetas.</span><button type="button" class="btn sm" data-ejauto>Completar automáticamente</button><button type="button" class="btn sm ghost" data-ejsin>'+(f.sin?'Ver todos':'Ver solo esos')+'</button></div>';
+  if(auto&&!RO)h+='<div class="ej-auto"><span><b>'+auto+'</b> con etiquetas que puso la app según el nombre (en gris). Si alguna no te convence, tocá el ejercicio y corregila.</span><button type="button" class="btn sm ghost" data-ejsin>'+(f.sin?'Ver todos':'Ver solo esos')+'</button></div>';
   if(!list.length)return h+'<p class="muted" style="margin-top:14px">No hay ejercicios con esos filtros.</p>';
   h+='<div class="ej-grid">'+list.map(e=>'<button type="button" class="ej-card" data-ejopen="'+esc(e.id)+'">'+ejThumb(e)+
-    '<b>'+esc(e.nombre)+'</b><span class="ej-tags">'+[zonaName(e.zona),e.tipo].concat(e.impl||[]).filter(Boolean).map(t=>'<i>'+esc(t)+'</i>').join('')+'</span>'+
+    '<b>'+esc(e.nombre)+'</b><span class="ej-tags'+(e.auto?' auto':'')+'">'+rolBadge(e.rol,e.auto)+[patName(e.pat),e.uni?'Unilateral':''].concat(e.impl||[]).filter(Boolean).map(t=>'<i>'+esc(t)+'</i>').join('')+'</span>'+
     (e.uso?'<small class="ej-uso">'+e.uso+(e.uso===1?' rutina':' rutinas')+'</small>':'')+'</button>').join('')+'</div>';
   return h;
 }
@@ -3353,18 +3547,15 @@ $('#view').addEventListener('click',e=>{
   if(S.view!=='ejs')return;
   const o=e.target.closest('[data-ejopen]');if(o)return openEj(o.dataset.ejopen);
   if(e.target.closest('[data-ejnew]'))return RO?roMsg():openEj(null);
-  if(e.target.closest('[data-ejauto]')){if(RO)return roMsg();
-    const todo=ejAll().filter(x=>!x.zona&&!x.tipo&&!(x.impl||[]).length);let n=0;
-    todo.forEach(x=>{const g=ejGuess(x.nombre);if(!g.zona&&!g.tipo&&!g.impl.length)return;n++;ejPut(x.id,Object.assign({nombre:x.nombre,link:x.link||''},g));});
-    ejRedrawView();toast(n?'Listo: etiqueté '+n+' ejercicios. Revisá los que quieras.':'No pude adivinar ninguno: etiquetalos a mano.');}
 });
 
 /* ficha del ejercicio */
 function openEj(id,onSaved){
   const e0=id?ejAll(true).find(x=>x.id===id):null;
-  const e=e0?Object.assign({},e0):{id:'',nombre:'',link:'',zona:'',tipo:'',impl:[]};
-  const guess=(!e.zona&&!e.tipo&&!(e.impl||[]).length&&e.nombre)?ejGuess(e.nombre):null;
-  const st={zona:guess?guess.zona:e.zona,tipo:guess?guess.tipo:e.tipo,impl:(guess?guess.impl:e.impl||[]).slice(),img:EJIMG.m[e.id]||'',imgCh:false};
+  const e=e0?Object.assign({},e0):{id:'',nombre:'',link:'',impl:[],rol:'',pat:'',uni:false};
+  const auto=!!(e0&&e0.auto);
+  const st={rol:e.rol||'',pat:e.pat||'',uni:!!e.uni,impl:(e.impl||[]).slice(),img:EJIMG.m[e.id]||'',imgCh:false};
+  const chip=(attr,v,on,txt,col)=>'<button type="button" class="ej-chip'+(col?' rc':'')+(on?' on':'')+'"'+(col?' style="--rc:'+col+'"':'')+' '+attr+'="'+esc(v)+'">'+esc(txt)+'</button>';
   const draw=()=>{
     const th=st.img?'<img alt="" src="'+esc(st.img)+'">':(e.link&&vidInfo(e.link)&&vidInfo(e.link).thumb?'<img alt="" src="'+esc(vidInfo(e.link).thumb)+'"><small>portada del video</small>':'<span>Sin foto</span>');
     return '<div class="ej-ficha"><div class="ej-ph">'+th+'</div><div class="ej-phb">'+
@@ -3372,10 +3563,10 @@ function openEj(id,onSaved){
       (e.link?'<button type="button" class="btn sm" data-vplay="'+esc(fixUrl(e.link))+'">▶ Ver video</button>':'')+'</div></div>'+
       '<div class="field"><label for="ej_n">Nombre</label><input id="ej_n" value="'+esc(e.nombre)+'" placeholder="Ej: SENTADILLA TRASERA" style="text-transform:uppercase"></div>'+
       '<div class="field"><label for="ej_l">Link de video (YouTube o Drive)</label><input id="ej_l" type="url" inputmode="url" value="'+esc(e.link||'')+'" placeholder="Pegá el link"></div>'+
-      (guess?'<p class="tiny ej-sug">Te sugerí etiquetas según el nombre. Revisalas y guardá.</p>':'')+
-      '<div class="field"><label>Zona del cuerpo</label><div class="ej-chips">'+EJ_ZONAS.map(z=>'<button type="button" class="ej-chip'+(st.zona===z[0]?' on':'')+'" data-fz="'+z[0]+'">'+z[1]+'</button>').join('')+'</div></div>'+
-      '<div class="field"><label>Tipo / patrón</label><div class="ej-chips">'+EJ_TIPOS.map(t=>'<button type="button" class="ej-chip'+(st.tipo===t?' on':'')+'" data-ft="'+esc(t)+'">'+esc(t)+'</button>').join('')+'</div></div>'+
-      '<div class="field"><label>Implemento <small class="tiny">(podés marcar varios)</small></label><div class="ej-chips">'+EJ_IMPL.map(t=>'<button type="button" class="ej-chip'+(st.impl.includes(t)?' on':'')+'" data-fi="'+esc(t)+'">'+esc(t)+'</button>').join('')+'</div></div>'+
+      (auto?'<p class="tiny ej-sug">Estas etiquetas las puso la app según el nombre. Revisalas y tocá Guardar.</p>':'')+
+      '<div class="field"><label>Rol en la sesión</label><div class="ej-chips">'+ROLS.map(r=>chip('data-fr',r,st.rol===r,ROL[r],ROLC[r])).join('')+'</div></div>'+
+      '<div class="field"><label>Patrón de movimiento</label><div class="ej-chips">'+PATS.map(p=>chip('data-fp',p[0],st.pat===p[0],p[1])).join('')+chip('data-fu','1',st.uni,'Unilateral / a una pierna')+'</div></div>'+
+      '<div class="field"><label>Implemento <small class="tiny">(podés marcar varios)</small></label><div class="ej-chips">'+EJ_IMPL.map(t=>chip('data-fi',t,st.impl.includes(t),t)).join('')+'</div></div>'+
       (e.uso?'<p class="tiny">Está en '+e.uso+(e.uso===1?' rutina.':' rutinas.')+'</p>':'');
   };
   const foot='<div class="modal-f">'+(e0&&!RO?'<button class="btn danger" id="ej_del">Sacar de la biblioteca</button>':'')+'<div class="grow"></div><button class="btn" data-close>Cancelar</button>'+(RO?'':'<button class="btn pri" id="ej_save">Guardar</button>')+'</div>';
@@ -3384,8 +3575,9 @@ function openEj(id,onSaved){
     const keep=()=>{e.nombre=body.querySelector('#ej_n').value;e.link=body.querySelector('#ej_l').value;};
     const redraw=()=>{keep();body.innerHTML=draw();};
     body.addEventListener('click',ev=>{const t=ev.target;
-      const z=t.closest('[data-fz]');if(z){st.zona=st.zona===z.dataset.fz?'':z.dataset.fz;return redraw();}
-      const ty=t.closest('[data-ft]');if(ty){st.tipo=st.tipo===ty.dataset.ft?'':ty.dataset.ft;return redraw();}
+      const r=t.closest('[data-fr]');if(r){st.rol=st.rol===r.dataset.fr?'':r.dataset.fr;return redraw();}
+      const p=t.closest('[data-fp]');if(p){st.pat=st.pat===p.dataset.fp?'':p.dataset.fp;return redraw();}
+      if(t.closest('[data-fu]')){st.uni=!st.uni;return redraw();}
       const im=t.closest('[data-fi]');if(im){const v=im.dataset.fi;st.impl=st.impl.includes(v)?st.impl.filter(x=>x!==v):st.impl.concat(v);return redraw();}
       if(t.closest('#ej_fx')){st.img='';st.imgCh=true;return redraw();}
     });
@@ -3400,7 +3592,7 @@ function openEj(id,onSaved){
       let nid=e.id||slug(n);
       /* si le cambiaste el nombre, queda como ejercicio nuevo y el viejo se oculta */
       if(e0&&slug(n)!==e.id){nid=slug(n);ejPut(e.id,{oculto:true});if(EJIMG.m[e.id]&&!st.imgCh){st.imgCh=true;}}
-      ejPut(nid,Object.assign({},{nombre:n,link:e.link.trim(),zona:st.zona,tipo:st.tipo,impl:st.impl,oculto:false,foto:!!st.img}));
+      ejPut(nid,{nombre:n,link:e.link.trim(),rol:st.rol,pat:st.pat,uni:st.uni,impl:st.impl,oculto:false,foto:!!st.img,zona:null,tipo:null});
       if(st.imgCh){if(st.img){EJIMG.m[nid]=st.img;Store.put('ejImg',nid,{d:st.img});}else{delete EJIMG.m[nid];Store.remove('ejImg',nid);}}
       closeModal();ejRedrawView();if(EJP.box)EJP.draw();toast('Ejercicio guardado');if(onSaved)onSaved(nid);
     };
@@ -3408,7 +3600,7 @@ function openEj(id,onSaved){
 }
 
 /* ---------- panel de la biblioteca adentro del editor: tocás y se agrega al bloque ---------- */
-const EJP={box:null,f:{q:'',zona:'',tipo:'',impl:'',sin:false},blk:null,
+const EJP={box:null,f:{q:'',rol:'',pat:'',impl:'',sin:false},blk:null,
   blocks(){const mw=$('#mw');return mw?[...mw.querySelectorAll('#blocks .blk')]:[];},
   open(){const mw=$('#mw');if(!mw)return;ejImgStart();this.close();
     const bs=this.blocks();if(!this.blk||!bs.includes(this.blk))this.blk=bs[bs.length-1]||null;
@@ -3430,7 +3622,7 @@ const EJP={box:null,f:{q:'',zona:'',tipo:'',impl:'',sin:false},blk:null,
     const fo=keepFocus&&document.activeElement&&document.activeElement.matches('.ejp [data-ejq]');
     this.box.querySelector('.ejp-f').innerHTML=ejFiltersHtml(this.f,all);
     if(fo){const i=this.box.querySelector('[data-ejq]');i.focus();i.setSelectionRange(i.value.length,i.value.length);}
-    this.box.querySelector('.ejp-l').innerHTML=list.length?list.map(e=>'<button type="button" class="ejp-it" data-ejadd="'+esc(e.id)+'">'+ejThumb(e,'ej-th sm')+'<span class="ejp-tx"><b>'+esc(e.nombre)+'</b><small>'+[zonaName(e.zona),e.tipo].filter(Boolean).map(esc).join(' · ')+'</small></span><i class="ejp-plus">+</i></button>').join(''):'<p class="muted" style="padding:10px">No hay ejercicios con esos filtros.</p>';},
+    this.box.querySelector('.ejp-l').innerHTML=list.length?list.map(e=>'<button type="button" class="ejp-it" data-ejadd="'+esc(e.id)+'">'+ejThumb(e,'ej-th sm')+'<span class="ejp-tx"><b>'+esc(e.nombre)+'</b><small>'+[e.rol?ROL[e.rol]:'',patName(e.pat)].filter(Boolean).map(esc).join(' · ')+'</small></span><i class="ejp-plus">+</i></button>').join(''):'<p class="muted" style="padding:10px">No hay ejercicios con esos filtros.</p>';},
   add(id){const e=ejAll(true).find(x=>x.id===id);if(!e)return;
     let bk=this.blk;if(!bk||!document.contains(bk)){const bs=this.blocks();bk=bs[bs.length-1];}
     if(!bk){const add=$('#mw [data-addblk]');if(add){add.click();bk=this.blocks().pop();}}
@@ -3483,8 +3675,8 @@ function startData(){
   Store.watch('categorias',null,null,a=>{S.cats=a;S.catsLoaded=true;bootOff();
     if(!S.cat||!a.find(c=>c.id===S.cat)||!catUnsubs.length)selectCat(S.cat);else{renderNav();render();}});
   Store.watch('lesiones',null,null,a=>{S.lesAll=a;renderNav();render();});
-  Store.watch('ejercicios',null,null,a=>{S.lib=a;migMayus('ejercicios',a);});
-  Store.watch('rutinas',null,null,a=>{S.rutAll=a;renderNav();render();migMayus('rutinas',a);});
+  Store.watch('ejercicios',null,null,a=>{S.lib=a;EJC.t=0;migMayus('ejercicios',a);if(S.view==='ejs'&&!$('#mw'))render();});
+  Store.watch('rutinas',null,null,a=>{S.rutAll=a;EJC.t=0;renderNav();render();migMayus('rutinas',a);});
   Store.watch('asignaciones',null,null,a=>{S.asigAll=a.filter(x=>!x.dif);S.asigDif=a.filter(x=>x.dif);render();});
   Store.watch('ideales',null,null,a=>{S.ideales=a;render();});
   Store.watch('testeosLista',null,null,a=>{S.testList=a;render();});
