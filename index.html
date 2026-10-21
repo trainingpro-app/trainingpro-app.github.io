@@ -802,7 +802,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 21 oct 2026 · TrainingPro · objetivo del bloque y sugerencias</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 21 oct 2026 · TrainingPro · links de MuscleWiki</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1771,6 +1771,8 @@ function prescripcion(e,b){
   return '';
 }
 function fichaText(t,label){return t?'<div class="f-sec"><div class="f-lbl">'+label+'</div><div class="f-txt">'+esc(t)+'</div></div>':'';}
+/* si el ejercicio de la rutina no tiene video, usa el link guardado en la biblioteca */
+function libLinkOf(n){const k=slug(n||'');const x=S.lib.find(y=>y.id===k);return x&&x.link||'';}
 function fichaHtml(s,tipo,fecha,rut){
   const meta=[];
   if(s.hora)meta.push('<span><small>Hora</small><b>'+esc(s.hora)+'</b></span>');
@@ -1791,7 +1793,7 @@ function fichaHtml(s,tipo,fecha,rut){
       return '<div class="f-blk"><div class="f-blk-h"><span class="f-blk-l">'+L+'</span><span class="f-blk-n">'+esc(b.nombre||('Bloque '+(bi+1)))+'</span>'+(b.obj&&OBJS[b.obj]?'<span class="f-blk-o">'+esc(OBJS[b.obj].t)+'</span>':'')+(b.series?'<span class="f-blk-s">'+esc(b.series)+' series</span>':'')+'</div>'+
         (b.nota?'<div class="f-blk-nota">'+esc(b.nota)+'</div>':'')+
         ej.map((e,ei)=>'<div class="f-ex"><span class="f-ex-i">'+L+(ei+1)+'</span><span class="f-ex-n">'+(RO||!ATLCTX?esc(e.n):'<button type="button" class="atlex-b" data-atlex="'+esc(e.n)+'">'+esc(e.n)+atlBadge(e.n)+'</button>')+
-          (e.link?' '+vidBtn(e.link):'')+(e.obs?'<i class="f-ex-obs">'+esc(e.obs)+'</i>':'')+'</span>'+
+          (()=>{const lk=e.link||libLinkOf(e.n);return lk?' '+vidBtn(lk):'';})()+(e.obs?'<i class="f-ex-obs">'+esc(e.obs)+'</i>':'')+'</span>'+
           '<span class="f-ex-p'+(e.progW?' prog':'')+'"'+(e.progW?' title="Cambia esta semana"':'')+'>'+prescripcion(e,b)+'</span><span class="f-ex-c">'+(e.c?esc(e.c):'')+(fecha&&parseLoad(e.c)?'<button type="button" class="ld-btn" data-loads="'+bi+':'+ei+'" data-lday="'+fecha+'" data-ltipo="'+tipo+'">kg por jugador</button>':'')+'</span></div>').join('')+
       '</div>';
     }).join('')+'</div>';
@@ -3235,7 +3237,8 @@ function vidInfo(u){
 }
 function vidBtn(u,cls){
   const v=vidInfo(u);const href=esc(vidUrl(u));
-  return '<button type="button" class="'+(cls||'vid')+(v&&v.thumb?' has-th':'')+'" data-vplay="'+href+'" title="Ver video">'+(v&&v.thumb?'<img class="vid-th" alt="" loading="lazy" src="'+esc(v.thumb)+'">':'')+'<span>▶ Video</span></button>';
+  const mw=/musclewiki\.com/i.test(u);
+  return '<button type="button" class="'+(cls||'vid')+(v&&v.thumb?' has-th':'')+'" data-vplay="'+href+'" title="'+(mw?'Abrir en MuscleWiki':'Ver video')+'">'+(v&&v.thumb?'<img class="vid-th" alt="" loading="lazy" src="'+esc(v.thumb)+'">':'')+'<span>'+(mw?'MuscleWiki ↗':'▶ Video')+'</span></button>';
 }
 function vidYT(func,args){const f=document.querySelector('#vmini iframe');if(f&&f.contentWindow)f.contentWindow.postMessage(JSON.stringify({event:'command',func:func,args:args||[]}),'*');}
 function vidOpen(u){
@@ -3560,7 +3563,7 @@ function openEj(id,onSaved){
     const th=st.img?'<img alt="" src="'+esc(st.img)+'">':(e.link&&vidInfo(e.link)&&vidInfo(e.link).thumb?'<img alt="" src="'+esc(vidInfo(e.link).thumb)+'"><small>portada del video</small>':'<span>Sin foto</span>');
     return '<div class="ej-ficha"><div class="ej-ph">'+th+'</div><div class="ej-phb">'+
       (RO?'':'<label class="btn sm">'+(st.img?'Cambiar foto':'Subir foto')+'<input type="file" accept="image/*" id="ej_f" hidden></label>'+(st.img?'<button type="button" class="btn sm ghost" id="ej_fx">Quitar foto</button>':''))+
-      (e.link?'<button type="button" class="btn sm" data-vplay="'+esc(fixUrl(e.link))+'">▶ Ver video</button>':'')+'</div></div>'+
+      (e.link?'<button type="button" class="btn sm" data-vplay="'+esc(fixUrl(e.link))+'">'+(/musclewiki\.com/i.test(e.link)?'Ver en MuscleWiki ↗':'▶ Ver video')+'</button>':'')+'</div></div>'+
       '<div class="field"><label for="ej_n">Nombre</label><input id="ej_n" value="'+esc(e.nombre)+'" placeholder="Ej: SENTADILLA TRASERA" style="text-transform:uppercase"></div>'+
       '<div class="field"><label for="ej_l">Link de video (YouTube o Drive)</label><input id="ej_l" type="url" inputmode="url" value="'+esc(e.link||'')+'" placeholder="Pegá el link"></div>'+
       (auto?'<p class="tiny ej-sug">Estas etiquetas las puso la app según el nombre. Revisalas y tocá Guardar.</p>':'')+
