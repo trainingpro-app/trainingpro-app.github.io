@@ -638,6 +638,9 @@ body.drag-on{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .ej-tags.auto i{font-style:italic;opacity:.8}
 .ej-chip.rc.on{background:var(--rc);border-color:var(--rc);color:#fff}
 .ej-ini{background:color-mix(in srgb,var(--rc,#9aa39d) 18%,var(--surface))!important;color:var(--rc,#9aa39d)!important}
+.dtab{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#dayTabs{scroll-margin-top:120px}
+.dtab.dragging{outline:2px solid var(--accent);box-shadow:var(--shadow);opacity:.9;transform:scale(1.04)}
 /* biblioteca de ejercicios */
 .ej-filt{display:grid;gap:8px;margin-bottom:12px}
 .ej-q{max-width:420px;width:100%}
@@ -802,7 +805,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 21 oct 2026 · TrainingPro · links de MuscleWiki</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 27 oct 2026 · TrainingPro · arrastrar días</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2095,19 +2098,43 @@ function openRut(id,preset,after){
       if(tipo!=='cancha'){delete d.principal;delete d.calma;}
     };
     const drawTabs=()=>{
-      tabs.innerHTML=days.map((d,i)=>'<button type="button" class="dtab'+(i===cur?' on':'')+'" data-dtab="'+i+'"><b>'+esc(d.nombre||('Día '+(i+1)))+'</b><small>'+((d.bloques||[]).reduce((t,b)=>t+(b.ejercicios||[]).length,0))+' ejercicios</small></button>').join('')+
+      tabs.innerHTML=days.map((d,i)=>'<button type="button" class="dtab'+(i===cur?' on':'')+'" data-dtab="'+i+'" title="Tocá para abrir · arrastrá para cambiar el orden"><b>'+esc(d.nombre||('Día '+(i+1)))+'</b><small>'+((d.bloques||[]).reduce((t,b)=>t+(b.ejercicios||[]).length,0))+' ejercicios</small></button>').join('')+
         '<button type="button" class="dtab add" data-dadd>+ Agregar día</button>';
     };
     const drawPanel=()=>{
       const d=days[cur];
       panel.innerHTML='<div class="day-head"><div class="field"><label for="d_n">Nombre del día</label><input id="d_n" value="'+esc(d.nombre||'')+'" placeholder="Ej: Día 1 · Tren inferior"></div></div>'+
         contentHtml(d,tipo,{rutina:true,weeks:+q('r_w').value||4,form:RFORM})+
-        '<div class="day-foot"><button type="button" class="btn sm" id="d_copy">Duplicar este día</button>'+(days.length>1?'<button type="button" class="btn sm danger" id="d_rm">Quitar este día</button>':'')+'</div>';
+        '<div class="day-foot"><button type="button" class="btn sm" id="d_ins">+ Día nuevo después de este</button><button type="button" class="btn sm" id="d_copy">Duplicar este día</button>'+(days.length>1?'<button type="button" class="btn sm danger" id="d_rm">Quitar este día</button>':'')+'</div>';
       panel.querySelector('#d_n').oninput=()=>{saveCur();drawTabs();};
-      panel.querySelector('#d_copy').onclick=()=>{saveCur();const c=JSON.parse(JSON.stringify(days[cur]));c.nombre='Día '+(days.length+1);days.push(c);cur=days.length-1;drawTabs();drawPanel();toast('Día duplicado');};
-      const rm=panel.querySelector('#d_rm');if(rm)armDelete(rm,()=>{days.splice(cur,1);cur=Math.max(0,cur-1);drawTabs();drawPanel();});
+      panel.querySelector('#d_copy').onclick=()=>{saveCur();const c=JSON.parse(JSON.stringify(days[cur]));c.nombre='Día '+(cur+2);days.splice(cur+1,0,c);cur=cur+1;renum();drawTabs();drawPanel();toast('Día duplicado (quedó al lado)');tabs.scrollIntoView({block:'start',behavior:'smooth'});};
+      panel.querySelector('#d_ins').onclick=()=>{saveCur();days.splice(cur+1,0,{nombre:'Día '+(cur+2)});cur=cur+1;renum();drawTabs();drawPanel();toast('Día nuevo agregado');tabs.dispatchEvent(new Event('input',{bubbles:true}));tabs.scrollIntoView({block:'start',behavior:'smooth'});};
+      const rm=panel.querySelector('#d_rm');if(rm)armDelete(rm,()=>{days.splice(cur,1);cur=Math.max(0,cur-1);renum();drawTabs();drawPanel();tabs.dispatchEvent(new Event('input',{bubbles:true}));});
     };
+    /* los días que se llaman "Día N" se renumeran solos según el orden */
+    const renum=()=>days.forEach((d,i)=>{if(!d.nombre||/^d[ií]a\s*\d+$/i.test(String(d.nombre).trim()))d.nombre='Día '+(i+1);});
+    /* arrastrar días para cambiar el orden (mouse: arrastrar; dedo: mantener apretado y mover) */
+    const DT={t:null,on:false,x:0,y:0,tm:0,skip:false};
+    const dtStart=()=>{DT.on=true;DT.t.classList.add('dragging');document.body.classList.add('drag-on');if(navigator.vibrate)try{navigator.vibrate(15);}catch(e){}};
+    tabs.addEventListener('pointerdown',e=>{const t=e.target.closest('[data-dtab]');if(!t||e.button>0)return;
+      DT.t=t;DT.on=false;DT.x=e.clientX;DT.y=e.clientY;clearTimeout(DT.tm);
+      if(e.pointerType!=='mouse')DT.tm=setTimeout(()=>{if(DT.t===t)dtStart();},350);});
+    document.addEventListener('pointermove',e=>{if(!DT.t)return;
+      if(!DT.on){const far=Math.abs(e.clientX-DT.x)+Math.abs(e.clientY-DT.y);
+        if(e.pointerType==='mouse'&&far>6)dtStart();else if(e.pointerType!=='mouse'&&far>10){clearTimeout(DT.tm);DT.t=null;}return;}
+      e.preventDefault();
+      const el=document.elementFromPoint(e.clientX,e.clientY);const o=el&&el.closest&&el.closest('#dayTabs [data-dtab]');
+      if(o&&o!==DT.t){const r=o.getBoundingClientRect();const after=e.clientX>r.left+r.width/2;if(after)o.after(DT.t);else o.before(DT.t);}});
+    tabs.addEventListener('touchmove',e=>{if(DT.on)e.preventDefault();},{passive:false});
+    const dtEnd=()=>{clearTimeout(DT.tm);if(!DT.t)return;const t=DT.t;DT.t=null;if(!DT.on)return;DT.on=false;
+      t.classList.remove('dragging');document.body.classList.remove('drag-on');DT.skip=true;setTimeout(()=>{DT.skip=false;},50);
+      const order=[...tabs.querySelectorAll('[data-dtab]')].map(x=>+x.dataset.dtab);
+      if(order.every((v,i)=>v===i)){drawTabs();return;}
+      saveCur();const curDay=days[cur];const nd=order.map(i=>days[i]);days.length=0;nd.forEach(d=>days.push(d));cur=days.indexOf(curDay);
+      renum();drawTabs();drawPanel();toast('Orden de los días cambiado');tabs.dispatchEvent(new Event('input',{bubbles:true}));};
+    document.addEventListener('pointerup',dtEnd);document.addEventListener('pointercancel',dtEnd);
     tabs.addEventListener('click',e=>{
+      if(DT.skip){e.preventDefault();return;}
       const t=e.target.closest('[data-dtab],[data-dadd]');if(!t)return;
       saveCur();
       if(t.dataset.dadd!=null){days.push({nombre:'Día '+(days.length+1)});cur=days.length-1;}
