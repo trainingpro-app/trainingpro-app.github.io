@@ -805,7 +805,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 27 oct 2026 · TrainingPro · arrastrar días</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 27 oct 2026 · TrainingPro · rutina individual</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1855,7 +1855,9 @@ function openDay(fecha,tipo,edit,nav){
      ATLCTX={desde:wk,hasta:addDays(wk,6),sem:rut&&asg?weekIdx(asg,fecha)+1:null,back:()=>openDay(fecha,tipo)};}
     fb+=fichaHtml(s,tipo,fecha,rut);ATLCTX_LAST=ATLCTX;ATLCTX=null;
     {const dl=lesOf().filter(l=>activeInj(l)&&l.rutina&&rutById(l.rutina));
-     if(dl.length)fb+='<div class="rut-note"><span><b>Trabajo diferenciado:</b> '+dl.map(l=>esc(jugName(l.jugador))+(rutById(l.rutina).dif?'':' ('+esc(rutById(l.rutina).nombre)+')')).join(' · ')+'</span></div>';}
+     if(dl.length)fb+='<div class="rut-note"><span><b>Trabajo diferenciado:</b> '+dl.map(l=>esc(jugName(l.jugador))+(rutById(l.rutina).dif?'':' ('+esc(rutById(l.rutina).nombre)+')')).join(' · ')+'</span></div>';
+     const il=S.asigDif.filter(a=>a.ind&&a.cat==='dif:'+S.cat&&a.desde<=fecha&&(!a.hasta||a.hasta>=fecha)&&rutById(a.rutina));
+     if(il.length)fb+='<div class="rut-note"><span><b>Rutina individual:</b> '+il.map(a=>esc(jugName(a.jugador))+' ('+esc(rutById(a.rutina).nombre)+')').join(' · ')+'</span></div>';}
     if(rut&&exists)fb+='<p class="tiny" style="margin:0">Este día está modificado a partir de la rutina.</p>';
     const ff='<div class="modal-f">'+(rut&&!exists?'<button class="btn" id="suspend">Suspender este día</button>':'')+(rut&&exists?'<button class="btn" id="backRut">Volver a la rutina original</button>':'')+
       '<div class="grow"></div>'+(toBloques(s,tipo).some(b=>(b.ejercicios||[]).some(e=>e.n&&parseLoad(e.c)))?'<button class="btn" id="toLoads">Cargas por jugador</button>':'')+'<button class="btn" id="goAtt">Tomar asistencia</button><button class="btn pri" id="toEdit">Editar</button></div>';
@@ -2995,7 +2997,7 @@ function vRoster(){
   const st=attStats();
   let h='<div class="grid2"><div><div class="bar"><h2>Plantel</h2><span class="muted">'+S.jug.length+' jugadores</span></div>';
   h+=S.jug.length?'<div class="roster" style="grid-template-columns:1fr">'+sortedJug().map(j=>{const inj=lesOf().find(l=>l.jugador===j.id&&activeInj(l));const p=(st[j.id]||{}).pct;
-    return '<div class="pl"><span class="dor">'+esc(j.dorsal||'·')+'</span><div class="info"><div class="nm">'+esc(j.nombre)+'</div><div class="tiny">'+esc(j.pos||'Sin posición')+(p!=null?' · '+p+'% asist.':'')+'</div></div>'+(inj?'<span class="pill bad">lesión</span>':'')+'<button class="btn sm ghost" data-editj="'+esc(j.id)+'">'+(RO?'Ver':'Editar')+'</button></div>';}).join('')+'</div>'
+    return '<div class="pl"><span class="dor">'+esc(j.dorsal||'·')+'</span><div class="info"><div class="nm">'+esc(j.nombre)+'</div><div class="tiny">'+esc(j.pos||'Sin posición')+(p!=null?' · '+p+'% asist.':'')+'</div></div>'+(inj?'<span class="pill bad">lesión</span>':'')+(indOf(j.id)?'<span class="pill neutral" title="Hace una rutina individual">rutina individual</span>':'')+'<button class="btn sm ghost" data-editj="'+esc(j.id)+'">'+(RO?'Ver':'Editar')+'</button></div>';}).join('')+'</div>'
     :'<div class="empty"><b>Plantel vacío</b>Sumá jugadores con el formulario, o pegá una lista entera.</div>';
   h+='</div><div style="display:grid;gap:16px"><form class="panel" id="plForm"><h3>Sumar jugador</h3><div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="p_n">Nombre y apellido</label><input id="p_n" required></div><div class="field"><label for="p_p">Posición</label><select id="p_p"><option></option><option>Arquero/a</option><option>Defensor/a</option><option>Mediocampista</option><option>Delantero/a</option></select></div><div class="field"><label for="p_d">Dorsal</label><input id="p_d" inputmode="numeric"></div></div><button class="btn pri" style="margin-top:12px" type="submit">Sumar</button></form>'+
     '<form class="panel" id="bulkForm"><h3>Pegar lista</h3><div class="field"><label for="p_bulk">Un jugador por línea (el DNI al final es opcional)</label><textarea id="p_bulk" placeholder="Juana Pérez 45123456&#10;Sofía Gómez 44.987.321&#10;…" style="min-height:120px"></textarea></div><button class="btn" style="margin-top:10px" type="submit">Sumar todos</button></form></div></div>';
@@ -3005,12 +3007,22 @@ function openPlayer(id){
   const j=S.jug.find(x=>x.id===id);if(!j)return;
   const jd=dniOf(id);
   const b='<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="e_n">Nombre y apellido</label><input id="e_n" value="'+esc(j.nombre)+'"></div><div class="field"><label for="e_p">Posición</label><input id="e_p" value="'+esc(j.pos||'')+'"></div><div class="field"><label for="e_d">Dorsal</label><input id="e_d" value="'+esc(j.dorsal||'')+'"></div><div class="field ro-hide"><label for="e_dni">DNI (solo para emparejar con su app)</label><input id="e_dni" inputmode="numeric" autocomplete="off" placeholder="'+(jd.dniFin?'Cargado: …'+esc(jd.dniFin)+' (escribí otro para cambiarlo)':'Ej: 45123456')+'"></div><div class="field"><label for="e_nac">Fecha de nacimiento</label><input type="date" id="e_nac" value="'+esc(j.nacimiento||'')+'"></div><div class="field"><label for="e_peso">Peso corporal (kg)</label><input id="e_peso" type="number" step="any" value="'+esc(j.peso||'')+'"></div></div><div class="field"><label for="e_not">Notas</label><textarea id="e_not">'+esc(j.notas||'')+'</textarea></div>';
-  openModal(modalHead('Jugador',j.nombre)+'<div class="modal-b">'+b+'</div><div class="modal-f"><button class="btn danger" id="delP">Quitar del plantel</button><div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn pri" id="saveP">Guardar</button></div>',mw=>{
+  const rOpts=S.rutAll.filter(r=>!r.dif&&!r.archivada).sort((a,c)=>String(a.nombre).localeCompare(String(c.nombre),'es'));
+  const ia=S.asigDif.find(a=>a.id==='ind__'+id);const hasApp=S.atl.some(d=>{const m=atlPlayer(d);return m.j&&m.j.id===id;});
+  const ib='<div class="panel dif-box"><h3>Rutina individual</h3><p class="tiny" style="margin:0 0 8px">Para un jugador que necesita otra rutina sin estar lesionado. En la app de atletas ve esta en lugar de la del grupo y, cuando termina, vuelve sola a la de la categoría.</p>'+
+    '<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="e_ir">Rutina</label><select id="e_ir"><option value="">— Ninguna: hace la de la categoría —</option>'+rOpts.map(r=>'<option value="'+esc(r.id)+'"'+(j.indRut===r.id?' selected':'')+'>'+esc(r.nombre)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label for="e_ird">Desde</label><input id="e_ird" type="date" value="'+esc(j.indDesde||TODAY)+'"></div>'+
+    '<div class="field"><label for="e_irs">Duración</label><select id="e_irs">'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+((+j.indSem||0)===n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'</select></div></div>'+
+    (ia?'<p class="tiny" style="margin:6px 0 0">'+(asigState(ia)==='fin'?'Ya terminó (el '+esc(fmtD(ia.hasta,{day:'numeric',month:'short'}))+').':'Vigente hasta el '+esc(fmtD(ia.hasta,{day:'numeric',month:'short'}))+'.')+'</p>':'')+
+    (hasApp?'':'<p class="tiny" style="margin:6px 0 0">Todavía no entró a la app de atletas con su DNI: le va a aparecer apenas entre.</p>')+'</div>';
+  openModal(modalHead('Jugador',j.nombre)+'<div class="modal-b">'+b+ib+'</div><div class="modal-f"><button class="btn danger" id="delP">Quitar del plantel</button><div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn pri" id="saveP">Guardar</button></div>',mw=>{
     armDelete(mw.querySelector('#delP'),async()=>{await Store.remove('jugadores',id);if(jd.dniH)Store.remove('dnis',id);closeModal();toast('Jugador quitado');});
+    {const sel=mw.querySelector('#e_ir'),sem=mw.querySelector('#e_irs');const fit=()=>{const r=rutById(sel.value);if(r&&!j.indSem)sem.value=String(r.semanas||4);};if(!j.indSem)fit();sel.onchange=fit;}
     mw.querySelector('#saveP').onclick=async()=>{const v=i=>mw.querySelector('#'+i).value.trim();if(!v('e_n'))return;
       const dn=cleanDni(v('e_dni'));if(dn&&(dn.length<7||dn.length>9)){toast('Revisá el DNI: tiene que tener 7 u 8 números');return;}
       const dd=dn?{dniH:dniHash(dn),dniFin:dn.slice(-3)}:(jd.dniH?{dniH:jd.dniH,dniFin:jd.dniFin||''}:null);
-      try{await Store.put('jugadores',id,{cat:S.cat,nombre:v('e_n'),pos:v('e_p'),dorsal:v('e_d'),nacimiento:v('e_nac'),peso:v('e_peso'),notas:v('e_not')});
+      const ind=v('e_ir')?{indRut:v('e_ir'),indDesde:v('e_ird')||TODAY,indSem:+v('e_irs')||4}:{};
+      try{await Store.put('jugadores',id,Object.assign({cat:S.cat,nombre:v('e_n'),pos:v('e_p'),dorsal:v('e_d'),nacimiento:v('e_nac'),peso:v('e_peso'),notas:v('e_not')},ind));syncInd(id,ind);
         if(dd&&(dn||j.dniH||(jd.cat&&jd.cat!==S.cat)))await Store.put('dnis',id,Object.assign({cat:S.cat},dd));closeModal();toast('Guardado');}catch(e){}};
   });
 }
@@ -3244,7 +3256,22 @@ function syncDif(lid,l){
 function difUidsCheck(){if(RO||!S.jug.length)return;S.lesAll.filter(l=>l.cat===S.cat&&l.rutina&&activeInj(l)).forEach(l=>{
   const a=S.asigDif.find(x=>x.id==='dif__'+l.id);if(!a)return;
   const u=S.atl.filter(d=>{const m=atlPlayer(d);return m.j&&m.j.id===l.jugador;}).map(d=>d.id).sort().join(',');
-  if(u!==(a.uids||[]).slice().sort().join(','))syncDif(l.id,l);});}
+  if(u!==(a.uids||[]).slice().sort().join(','))syncDif(l.id,l);});
+  S.jug.filter(j=>j.indRut).forEach(j=>{const a=S.asigDif.find(x=>x.id==='ind__'+j.id);if(!a||asigState(a)==='fin')return;
+    const u=S.atl.filter(d=>{const m=atlPlayer(d);return m.j&&m.j.id===j.id;}).map(d=>d.id).sort().join(',');
+    if(u!==(a.uids||[]).slice().sort().join(','))syncInd(j.id,j);});}
+/* rutina individual (sin lesión): mismo mecanismo, con fecha de fin */
+function syncInd(jid,j){
+  const docId='ind__'+jid;const exists=S.asigDif.some(a=>a.id===docId);
+  const r=j&&j.indRut&&rutById(j.indRut);
+  if(!r){if(exists)Store.remove('asignaciones',docId);return;}
+  const uids=S.atl.filter(d=>{const m=atlPlayer(d);return m.j&&m.j.id===jid;}).map(d=>d.id);
+  const base=asigOfCat(S.cat).find(a=>asigState(a)==='vig'&&(rutById(a.rutina)||{}).tipo===r.tipo)||asigOfCat(S.cat).find(a=>asigState(a)==='vig');
+  const desde=j.indDesde||TODAY,sem=+j.indSem||r.semanas||4;
+  Store.put('asignaciones',docId,{dif:true,ind:true,cat:'dif:'+S.cat,rutina:r.id,jugador:jid,uids,desde,semanas:sem,
+    horario:base?JSON.parse(JSON.stringify(base.horario||[])):[],hasta:addDays(desde,sem*7-1)});
+}
+function indOf(jid){const a=S.asigDif.find(x=>x.id==='ind__'+jid);return a&&asigState(a)!=='fin'?a:null;}
 function syncDifFor(jid){S.lesAll.filter(l=>l.jugador===jid&&l.rutina&&activeInj(l)).forEach(l=>syncDif(l.id,l));}
 
 /* ---------- videos: se ven adentro de la app, en una ventanita ---------- */

@@ -329,7 +329,7 @@ const catById=id=>D.cats.find(c=>c.id===id)||null;
 /* trabajo diferenciado: si la preparadora le asignó una rutina propia a este celular, ve solo esa */
 const meUid=()=>(typeof myUid!=='undefined'&&myUid)||(FB()?'':ls.get('pfat-uid',''));
 function difFor(cat){const u=meUid();if(!u)return [];
-  return D.asig.filter(a=>a.dif&&a.cat==='dif:'+cat&&(a.uids||[]).includes(u)&&(!a.hasta||a.hasta>=TODAY)&&rutById(a.rutina));}
+  return D.asig.filter(a=>a.dif&&a.cat==='dif:'+cat&&(a.uids||[]).includes(u)&&(!a.hasta||a.hasta>=TODAY)&&(!a.ind||!a.desde||a.desde<=TODAY)&&rutById(a.rutina));}
 function asigFor(cat){
   const dif=difFor(cat);if(dif.length)return dif;
   return D.asig.filter(a=>a.cat===cat&&(!a.hasta||a.hasta>=TODAY)&&rutById(a.rutina)).sort((a,b)=>a.desde.localeCompare(b.desde));
@@ -431,7 +431,7 @@ function rutView(c){
   const list=asigFor(c.id);const cur=list.filter(a=>a.desde<=TODAY);const prox=list.filter(a=>a.desde>TODAY);
   if(!list.length)return '<div class="empty"><b>Todavía no hay rutina</b>Cuando tu preparadora física cargue una, la vas a ver acá.</div>';
   const pick=(st.asig&&list.find(a=>a.id===st.asig))||cur[cur.length-1]||prox[0];st.asig=pick.id;
-  let h=list[0].dif?'<div class="card" style="border-left:5px solid var(--accent);margin-bottom:10px"><b>Tu trabajo diferenciado</b><div class="tiny">Tu preparadora física te armó esta rutina mientras te recuperás. Hacé esta en lugar de la del grupo.</div></div>':'';
+  let h=list[0].dif?'<div class="card" style="border-left:5px solid var(--accent);margin-bottom:10px"><b>'+(list[0].ind?'Tu rutina individual':'Tu trabajo diferenciado')+'</b><div class="tiny">'+(list[0].ind?'Tu preparadora física te armó esta rutina para vos. Hacé esta en lugar de la del grupo.':'Tu preparadora física te armó esta rutina mientras te recuperás. Hacé esta en lugar de la del grupo.')+'</div></div>':'';
   if(list.length>1)h+='<div class="days" style="margin-top:0">'+list.map(a=>{const r=rutById(a.rutina);return '<button class="day-b'+(a.id===pick.id?' on':'')+'" data-asig="'+esc(a.id)+'"><b>'+esc(r.nombre)+'</b><small>'+(a.desde>TODAY?'Empieza '+esc(fmtD(a.desde,{day:'numeric',month:'short'})):'Vigente')+'</small></button>';}).join('')+'</div>';
   const r=rutById(pick.rutina);const ds=rutDays(r);
   const W=pick.semanas||r.semanas||4;
