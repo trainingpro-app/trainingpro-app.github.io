@@ -855,7 +855,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · biblioteca en dos columnas</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · guardar sin asignar</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2186,7 +2186,7 @@ function openRut(id,preset,after){
     '<div class="stype" id="r_tipo">'+['gym','cancha'].map(t=>'<button type="button" class="'+t+(t===tipo?' on':'')+'" data-rt="'+t+'"><span class="dot"></span>'+(t==='gym'?'Gym':'Cancha')+'</button>').join('')+'</div>'+
     '<div><h3>Días de entrenamiento</h3><div class="day-tabs" id="dayTabs"></div></div>'+
     '<div class="day-panel" id="dayPanel"></div>';
-  const foot='<div class="modal-f">'+(isNew?'':'<button class="btn danger" id="r_del">Borrar rutina</button>')+'<button class="btn" id="r_print">Imprimir planilla</button><div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn pri" id="r_save">'+(isNew?'Guardar y asignar':'Guardar rutina')+'</button></div>';
+  const foot='<div class="modal-f">'+(isNew?'':'<button class="btn danger" id="r_del">Borrar rutina</button>')+'<button class="btn" id="r_print">Imprimir planilla</button><div class="grow"></div><button class="btn" data-close>Cancelar</button>'+(isNew?'<button class="btn" id="r_save_as" title="Guarda y te lleva a elegir categoría, días y fechas">Guardar y asignar</button>':'')+'<button class="btn pri" id="r_save">'+(isNew?'Guardar':'Guardar rutina')+'</button></div>';
   openModal(modalHead('Biblioteca de rutinas'+(r0&&r0.editada?' · '+modTxt(r0):''),isNew?'Nueva rutina':r.nombre)+'<div class="modal-b">'+b+'</div>'+foot,mw=>{
     mw.classList.add('full');
     const q=id=>mw.querySelector('#'+id);
@@ -2288,18 +2288,22 @@ function openRut(id,preset,after){
     if(q('r_del'))armDelete(q('r_del'),async()=>{
       for(const a of S.asigAll.filter(a=>a.rutina===r0.id))await Store.remove('asignaciones',a.id);
       clearTimeout(dt);Draft.del(dkey);await Store.remove('rutinas',r0.id);closeModal();toast('Rutina borrada de la biblioteca y de sus categorías');});
-    q('r_save').onclick=async()=>{
+    const doSave=async assign=>{
       saveCur();
       const nombre=q('r_n').value.trim();if(!nombre){toast('Ponele un nombre a la rutina');return;}
       const newId=r0?r0.id:uid();
       const keep=r0?Object.assign({},r0):{};delete keep.id;
       const data=Object.assign(keep,{nombre,tipo,semanas:+q('r_w').value||4,sesiones:days,borrador:q('r_borr').checked,rpe:q('r_rpe').checked,indiv:q('r_ind').checked,editada:Date.now()});
       try{await Store.put('rutinas',newId,data);clearTimeout(dt);Draft.del(dkey);days.forEach(d=>saveToLibrary(d.bloques||[]));
-        if(isNew&&data.indiv){closeModal();toast('Rutina individual guardada. Asignala desde la ficha del jugador.');}
-        else if(isNew){toast('Rutina guardada. Ahora elegí a qué categorías va.');setTimeout(()=>openAsig(null,{rutina:newId,cat:after&&after.cat,_rut:Object.assign({id:newId},data)}),60);}
+        if(isNew&&assign&&!data.indiv){toast('Rutina guardada. Ahora elegí a qué categorías va.');setTimeout(()=>openAsig(null,{rutina:newId,cat:after&&after.cat,_rut:Object.assign({id:newId},data)}),60);}
+        else if(isNew){closeModal();toast(data.indiv?'Rutina individual guardada en la biblioteca. Asignala desde la ficha del jugador cuando quieras.':'Rutina guardada en la biblioteca (sin asignar). Cuando quieras, tocá “Asignar”.');}
         else{closeModal();toast('Rutina guardada');}
       }catch(e){}
     };
+    q('r_save').onclick=()=>doSave(false);
+    if(q('r_save_as'))q('r_save_as').onclick=()=>doSave(true);
+    /* las individuales se asignan desde la ficha del jugador: el botón "Guardar y asignar" no aplica */
+    {const ib=q('r_ind'),sa=q('r_save_as');if(ib&&sa){const f=()=>{sa.hidden=ib.checked;};f();ib.addEventListener('change',f);}}
   });
 }
 function dupRut(id){
