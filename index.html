@@ -682,6 +682,10 @@ button.app-b.on{background:var(--accent-soft);border-color:var(--accent);color:v
 .rut-cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
 .rut-col{min-width:0}
 .rut-col-t{font-size:18px;margin:4px 0 8px}
+.rut-col-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between}
+.ind-row{grid-template-columns:minmax(0,1fr) auto!important}
+.ind-row .lib-cats{grid-column:1/-1;grid-row:2}
+.ind-row .lib-acts{grid-row:1;grid-column:2}
 .rut-col+.rut-col{border-left:1.5px solid var(--line);padding-left:20px}
 .rut-cards.one{grid-template-columns:1fr}
 .ind-card{border-left:4px solid var(--accent)}
@@ -851,7 +855,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · rutinas de equipo e individuales</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · biblioteca en dos columnas</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2112,8 +2116,12 @@ function rutEstado(r){
 const EST_LIB={pend:['Pendientes','Las que todavía estás armando'],vig:['Vigentes','Asignadas y en uso (o por empezar)'],libre:['Sin asignar','Listas, pero no las usa ninguna categoría'],venc:['Vencidas','Ya se usaron y terminaron'],arch:['Archivadas','Guardadas aparte; no se borran']};
 function vLib(){
   let h='<div class="bar" style="margin-top:14px"><input class="inp" id="libSearch" placeholder="Buscar rutina…" value="'+esc(S.libQ||'')+'" style="max-width:300px;flex:1 1 200px"><div class="grow"></div><button class="btn pri" data-act="newRut">+ Nueva rutina</button></div>';
-  const all=S.rutAll.filter(r=>!r.dif);
-  if(!all.length)return h+'<div class="empty"><b>Todavía no hay rutinas</b>Creá la primera y después asignala a una o varias categorías.</div>';
+  const allR=S.rutAll;
+  if(S.jugAll===undefined){S.jugAll=null;Store.getAll('jugadores').then(o=>{S.jugAll=o||{};if(S.view==='lib')render();}).catch(()=>{S.jugAll={};});}
+  const all=allR.filter(r=>!isIndRut(r));const indAll=allR.filter(isIndRut);
+  const indCol=vLibInd(indAll);
+  h+='<div class="rut-cols"><div class="rut-col"><h2 class="rut-col-t">Rutinas de equipo</h2>';
+  if(!all.length)return h+'<div class="empty"><b>Todavía no hay rutinas</b>Creá la primera y después asignala a una o varias categorías.</div>'+'</div>'+indCol+'</div>';
   const q=normTxt(S.libQ||'');
   const list=all.filter(r=>!q||normTxt(r.nombre).includes(q));
   const groups={pend:[],vig:[],libre:[],venc:[],arch:[]};list.forEach(r=>groups[rutEstado(r)].push(r));
@@ -2127,8 +2135,29 @@ function vLib(){
   ['pend','vig','libre','venc'].forEach(k=>{const arr=groups[k].sort((a,b)=>(b.editada||0)-(a.editada||0)||(a.nombre||'').localeCompare(b.nombre||'','es'));if(!arr.length)return;
     h+='<div class="lib-grp"><h3>'+EST_LIB[k][0]+' <span class="lib-n2">'+arr.length+'</span><small>'+EST_LIB[k][1]+'</small></h3><div class="lib-list">'+arr.map(row).join('')+'</div></div>';});
   if(groups.arch.length)h+='<div class="lib-grp"><button class="linkish" data-libarch>'+(showArch?'▾':'▸')+' Archivadas ('+groups.arch.length+')</button>'+(showArch?'<div class="lib-list" style="margin-top:8px">'+groups.arch.map(row).join('')+'</div>':'')+'</div>';
-  if(!list.length)h+='<p class="muted">No hay rutinas con ese nombre.</p>';
-  return h;
+  if(!list.length)h+='<p class="muted">No hay rutinas de equipo con ese nombre.</p>';
+  return h+'</div>'+indCol+'</div>';
+}
+/* ¿es una rutina individual? la marcaste así, la armó una lesión, o solo la usan jugadores sueltos */
+function isIndRut(r){if(r.dif)return true;if(r.indiv===true)return true;if(r.indiv===false)return false;
+  return S.asigDif.some(a=>a.rutina===r.id)&&!S.asigAll.some(a=>a.rutina===r.id);}
+function jugNameAny(a){const j=S.jug.find(x=>x.id===a.jugador);if(j)return j.nombre;if(a.jnombre)return a.jnombre;const o=S.jugAll&&S.jugAll[a.jugador];return o?o.nombre:'Jugador';}
+function vLibInd(list){
+  const q=normTxt(S.libQ||'');list=list.filter(r=>!q||normTxt(r.nombre).includes(q));
+  const uses=r=>S.asigDif.filter(a=>a.rutina===r.id);
+  const act=list.filter(r=>!r.archivada&&uses(r).some(a=>asigState(a)!=='fin'));
+  const rest=list.filter(r=>!r.archivada&&!act.includes(r));const arch=list.filter(r=>r.archivada);
+  const card=r=>{const us=uses(r).filter(a=>asigState(a)!=='fin');
+    return '<div class="lib-row ind-row"><button class="lib-main" data-rut="'+esc(r.id)+'"><span class="chip '+r.tipo+'">'+(r.tipo==='gym'?'Gym':'Cancha')+'</span><b>'+esc(r.dif?'Diferenciado · '+(us[0]?jugNameAny(us[0]):String(r.nombre).replace(/^Diferenciado · /,'')):r.nombre)+'</b>'+(r.editada?'<span class="mod-t">'+modTxt(r)+'</span>':'')+'</button>'+
+      '<span class="lib-cats">'+(us.length?us.map(a=>'<span class="asig-chip" title="'+esc(a.hasta?'Hasta el '+fmtD(a.hasta,{day:'numeric',month:'short'}):'Hasta el alta')+'">'+esc(jugNameAny(a))+' · '+esc(catName(String(a.cat).replace(/^dif:/,'')))+(a.ind?'':' · lesión')+'</span>').join(''):'<span class="tiny">Sin asignar</span>')+'</span>'+
+      '<span class="lib-acts"><button class="btn sm ghost" data-rutdup="'+esc(r.id)+'">Duplicar</button>'+(r.archivada?'<button class="btn sm ghost" data-rutarch="'+esc(r.id)+'" data-v="0">Sacar del archivo</button>':(us.length?'':'<button class="btn sm ghost" data-rutarch="'+esc(r.id)+'" data-v="1">Archivar</button>'))+'</span></div>';};
+  let h='<div class="rut-col"><div class="rut-col-h"><h2 class="rut-col-t">Individuales y diferenciadas</h2><button class="btn sm pri" data-act="newRutInd">+ Nueva individual</button></div>'+
+    '<p class="tiny" style="margin:0 0 8px">Se asignan desde la ficha del jugador (Plantel) o con “+ Rutina individual” en la pestaña Rutinas de la categoría.</p>';
+  if(!list.length)return h+'<div class="empty" style="padding:18px"><b>No hay rutinas individuales</b>Creá una con “+ Nueva individual”.</div></div>';
+  if(act.length)h+='<div class="lib-grp" style="margin-top:6px"><h3>En uso <span class="lib-n2">'+act.length+'</span></h3><div class="lib-list">'+act.map(card).join('')+'</div></div>';
+  if(rest.length)h+='<div class="lib-grp"><h3>Sin asignar o terminadas <span class="lib-n2">'+rest.length+'</span></h3><div class="lib-list">'+rest.map(card).join('')+'</div></div>';
+  if(arch.length)h+='<div class="lib-grp"><button class="linkish" data-libarch>'+((S.libArch||q)?'▾':'▸')+' Archivadas ('+arch.length+')</button>'+((S.libArch||q)?'<div class="lib-list" style="margin-top:8px">'+arch.map(card).join('')+'</div>':'')+'</div>';
+  return h+'</div>';
 }
 function archRut(id,v){const r=rutById(id);if(!r)return;const d=Object.assign({},r);delete d.id;d.archivada=!!v;Store.put('rutinas',id,d);toast(v?'Rutina archivada':'Rutina recuperada');}
 
@@ -2150,6 +2179,7 @@ function openRut(id,preset,after){
   const RFORM=after&&after.cat?catIsForm(after.cat):(ucats.length>0&&ucats.every(catIsForm));
   const b='<div id="rsumW"></div>'+(dr?draftNote(dr.t):'')+(users.length>1?'<div class="rut-note">La usan <b>'+users.map(esc).join(', ')+'</b>. Lo que cambies acá se aplica a todas. Si una categoría necesita algo distinto, usá <b>Duplicar</b> en la biblioteca.</div>':'')+
     '<label class="sw sw-sm"><input type="checkbox" id="r_borr"'+(r.borrador?' checked':'')+'><i></i><span><b>Todavía la estoy armando</b><span class="tiny">Queda en “Pendientes” en la biblioteca hasta que la destildes.</span></span></label>'+
+    '<label class="sw sw-sm"><input type="checkbox" id="r_ind"'+((r0?isIndRut(r0):r.indiv)?' checked':'')+'><i></i><span><b>Rutina individual</b><span class="tiny">Para un jugador. En la biblioteca aparece en la columna de individuales.</span></span></label>'+
     '<label class="sw sw-sm"><input type="checkbox" id="r_rpe"'+(r.rpe?' checked':'')+'><i></i><span><b>Preguntar el RPE al final de cada día</b><span class="tiny">Los atletas responden del 1 al 10 qué tan duro fue. No es obligatorio: si no lo responden, les aparece un aviso naranja.</span></span></label>'+
     '<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="r_n">Nombre de la rutina</label><input id="r_n" value="'+esc(r.nombre||'')+'" placeholder="Ej: Fuerza · Mesociclo 1"></div>'+
     '<div class="field"><label for="r_w">Duración del mesociclo</label><select id="r_w">'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+((r.semanas||4)==n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'</select></div></div>'+
@@ -2263,9 +2293,10 @@ function openRut(id,preset,after){
       const nombre=q('r_n').value.trim();if(!nombre){toast('Ponele un nombre a la rutina');return;}
       const newId=r0?r0.id:uid();
       const keep=r0?Object.assign({},r0):{};delete keep.id;
-      const data=Object.assign(keep,{nombre,tipo,semanas:+q('r_w').value||4,sesiones:days,borrador:q('r_borr').checked,rpe:q('r_rpe').checked,editada:Date.now()});
+      const data=Object.assign(keep,{nombre,tipo,semanas:+q('r_w').value||4,sesiones:days,borrador:q('r_borr').checked,rpe:q('r_rpe').checked,indiv:q('r_ind').checked,editada:Date.now()});
       try{await Store.put('rutinas',newId,data);clearTimeout(dt);Draft.del(dkey);days.forEach(d=>saveToLibrary(d.bloques||[]));
-        if(isNew){toast('Rutina guardada. Ahora elegí a qué categorías va.');setTimeout(()=>openAsig(null,{rutina:newId,cat:after&&after.cat,_rut:Object.assign({id:newId},data)}),60);}
+        if(isNew&&data.indiv){closeModal();toast('Rutina individual guardada. Asignala desde la ficha del jugador.');}
+        else if(isNew){toast('Rutina guardada. Ahora elegí a qué categorías va.');setTimeout(()=>openAsig(null,{rutina:newId,cat:after&&after.cat,_rut:Object.assign({id:newId},data)}),60);}
         else{closeModal();toast('Rutina guardada');}
       }catch(e){}
     };
@@ -3175,7 +3206,7 @@ function openPlayer(id){
   const rOpts=S.rutAll.filter(r=>!r.dif&&!r.archivada).sort((a,c)=>String(a.nombre).localeCompare(String(c.nombre),'es'));
   const ia=S.asigDif.find(a=>a.id==='ind__'+id);const hasApp=S.atl.some(d=>{const m=atlPlayer(d);return m.j&&m.j.id===id;});
   const ib='<div class="panel dif-box"><h3>Rutina individual</h3><p class="tiny" style="margin:0 0 8px">Para un jugador que necesita otra rutina sin estar lesionado. En la app de atletas ve esta en lugar de la del grupo y, cuando termina, vuelve sola a la de la categoría.</p>'+
-    '<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="e_ir">Rutina</label><select id="e_ir"><option value="">— Ninguna: hace la de la categoría —</option>'+rOpts.map(r=>'<option value="'+esc(r.id)+'"'+(j.indRut===r.id?' selected':'')+'>'+esc(r.nombre)+'</option>').join('')+'</select></div>'+
+    '<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="e_ir">Rutina</label><select id="e_ir"><option value="">— Ninguna: hace la de la categoría —</option>'+[['Individuales',rOpts.filter(isIndRut)],['De equipo',rOpts.filter(r=>!isIndRut(r))]].filter(g=>g[1].length).map(g=>'<optgroup label="'+g[0]+'">'+g[1].map(r=>'<option value="'+esc(r.id)+'"'+(j.indRut===r.id?' selected':'')+'>'+esc(r.nombre)+'</option>').join('')+'</optgroup>').join('')+'</select></div>'+
     '<div class="field"><label for="e_ird">Desde</label><input id="e_ird" type="date" value="'+esc(j.indDesde||TODAY)+'"></div>'+
     '<div class="field"><label for="e_irs">Duración</label><select id="e_irs">'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+((+j.indSem||0)===n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'</select></div></div>'+
     (ia?'<p class="tiny" style="margin:6px 0 0">'+(asigState(ia)==='fin'?'Ya terminó (el '+esc(fmtD(ia.hasta,{day:'numeric',month:'short'}))+').':'Vigente hasta el '+esc(fmtD(ia.hasta,{day:'numeric',month:'short'}))+'.')+'</p>':'')+
@@ -3198,7 +3229,7 @@ view.addEventListener('click',e=>{
   const t=e.target.closest('[data-rutarch],[data-libarch],[data-tesmode],[data-atl],[data-atlrut],[data-rutind],[data-act],[data-calview],[data-godia],[data-day],[data-att],[data-adate],[data-match],[data-ex],[data-test],[data-inj],[data-editj],[data-stats],[data-stmode],[data-stsort],[data-rutprint],[data-rut],[data-rutdup],[data-asig],[data-asignew],[data-asigend]');if(!t)return;
   const d=t.dataset;
   if(RO){
-    if(d.att||d.asig||d.asignew||d.asigend||d.rutdup||d.tesmode||d.atl||['allP','newMatch','newTest','newInj','editIdeal','testList','newRut','newRutHere','newAsig','newInd','atlLink'].includes(d.act))return roMsg();
+    if(d.att||d.asig||d.asignew||d.asigend||d.rutdup||d.tesmode||d.atl||['allP','newMatch','newTest','newInj','editIdeal','testList','newRut','newRutInd','newRutHere','newAsig','newInd','atlLink'].includes(d.act))return roMsg();
     if(d.day)return openDay(d.day,d.tipo||undefined,false);
   }
   if(d.rutarch)return archRut(d.rutarch,d.v==='1');
@@ -3238,6 +3269,7 @@ view.addEventListener('click',e=>{
     case 'editIdeal':return openIdeal();
     case 'testList':return openTestList();
     case 'newRut':return openRut(null);
+    case 'newRutInd':return openRut(null,{nombre:'',tipo:'gym',semanas:4,indiv:true});
     case 'newRutHere':return openRut(null,null,{cat:S.cat});
     case 'newAsig':return openAsig(null,{cat:S.cat});
     case 'newInd':return openNewInd();
@@ -3417,7 +3449,7 @@ function syncDif(lid,l){
   if(!r){if(exists)Store.remove('asignaciones',docId);return;}
   const uids=S.atl.filter(d=>{const m=atlPlayer(d);return m.j&&m.j.id===l.jugador;}).map(d=>d.id);
   const base=asigOfCat(l.cat).find(a=>asigState(a)==='vig'&&(rutById(a.rutina)||{}).tipo===r.tipo)||asigOfCat(l.cat).find(a=>asigState(a)==='vig');
-  Store.put('asignaciones',docId,{dif:true,cat:'dif:'+l.cat,rutina:r.id,jugador:l.jugador,uids,desde:l.difDesde||TODAY,semanas:r.semanas||4,
+  Store.put('asignaciones',docId,{dif:true,cat:'dif:'+l.cat,rutina:r.id,jugador:l.jugador,jnombre:jugName(l.jugador),uids,desde:l.difDesde||TODAY,semanas:r.semanas||4,
     horario:base?JSON.parse(JSON.stringify(base.horario||[])):[],hasta:l.estado==='alta'?(l.fechaAlta||TODAY):''});
 }
 /* si un lesionado con diferenciado se registra después en la app de atletas, se le suma solo */
@@ -3436,7 +3468,7 @@ function syncInd(jid,j){
   const uids=S.atl.filter(d=>{const m=atlPlayer(d);return m.j&&m.j.id===jid;}).map(d=>d.id);
   const base=asigOfCat(S.cat).find(a=>asigState(a)==='vig'&&(rutById(a.rutina)||{}).tipo===r.tipo)||asigOfCat(S.cat).find(a=>asigState(a)==='vig');
   const desde=j.indDesde||TODAY,sem=+j.indSem||r.semanas||4;
-  Store.put('asignaciones',docId,{dif:true,ind:true,cat:'dif:'+S.cat,rutina:r.id,jugador:jid,uids,desde,semanas:sem,
+  Store.put('asignaciones',docId,{dif:true,ind:true,cat:'dif:'+S.cat,rutina:r.id,jugador:jid,jnombre:jugName(jid),uids,desde,semanas:sem,
     horario:base?JSON.parse(JSON.stringify(base.horario||[])):[],hasta:addDays(desde,sem*7-1)});
 }
 function indOf(jid){const a=S.asigDif.find(x=>x.id==='ind__'+jid);return a&&asigState(a)!=='fin'?a:null;}
