@@ -679,6 +679,14 @@ button.app-b.on{background:var(--accent-soft);border-color:var(--accent);color:v
 .rs-zoom{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:20px;overflow:hidden}
 .rs-zoom button{border:0;background:none;padding:3px 9px;font:inherit;font-size:13px;font-weight:800;color:var(--ink-2);cursor:pointer;min-width:28px}
 .rs-zoom .rs-zv{font-size:11.5px;font-weight:700;min-width:44px;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.rut-cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
+.rut-col{min-width:0}
+.rut-col-t{font-size:18px;margin:4px 0 8px}
+.rut-col+.rut-col{border-left:1.5px solid var(--line);padding-left:20px}
+.rut-cards.one{grid-template-columns:1fr}
+.ind-card{border-left:4px solid var(--accent)}
+.ind-fin{margin-top:10px}.ind-fin summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--ink-2)}
+@media (max-width:900px){.rut-cols{grid-template-columns:1fr}.rut-col+.rut-col{border-left:0;padding-left:0;border-top:1.5px solid var(--line);padding-top:14px}}
 /* biblioteca de ejercicios */
 .ej-filt{display:grid;gap:8px;margin-bottom:12px}
 .ej-q{max-width:420px;width:100%}
@@ -843,7 +851,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 2 nov 2026 · TrainingPro · resumen con zoom</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · rutinas de equipo e individuales</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2049,9 +2057,11 @@ async function migrateRutinas(){
 /* ----- pestaña Rutinas dentro de una categoría ----- */
 function vRut(){
   const mine=asigOfCat(S.cat);
-  let h='<div class="bar"><h2>Rutinas asignadas</h2><div class="grow"></div><button class="btn" data-act="atlLink">Link para los atletas</button><button class="btn" data-act="goLib">Ver biblioteca</button><button class="btn pri" data-act="newAsig">+ Asignar rutina</button></div>'+
+  let h='<div class="bar"><h2>Rutinas</h2><div class="grow"></div><button class="btn" data-act="atlLink">Link para los atletas</button><button class="btn" data-act="goLib">Ver biblioteca</button><button class="btn pri" data-act="newAsig">+ Asignar rutina</button></div>'+
     '<p class="tiny" style="margin:-6px 0 12px">Las rutinas se cargan en la <b>biblioteca</b> (menú lateral) y se asignan a una o varias categorías, cada una con sus días y horarios.</p>';
-  if(!mine.length)return h+'<div class="empty"><b>Sin rutinas asignadas</b>Asigná una de la biblioteca o creá una nueva.<div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri" data-act="newAsig">Asignar rutina</button><button class="btn" data-act="newRutHere">Crear rutina nueva</button></div></div>';
+  const side=vRutInd();
+  h+='<div class="rut-cols"><div class="rut-col"><h2 class="rut-col-t">Rutina de equipo</h2>';
+  if(!mine.length)return h+'<div class="empty"><b>Sin rutinas asignadas</b>Asigná una de la biblioteca o creá una nueva.<div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri" data-act="newAsig">Asignar rutina</button><button class="btn" data-act="newRutHere">Crear rutina nueva</button></div></div>'+'</div>'+side+'</div>';
   const groups={vig:[],prox:[],fin:[]};mine.forEach(a=>groups[asigState(a)].push(a));
   const titles={vig:'Vigentes',prox:'Próximas',fin:'Finalizadas'};
   ['vig','prox','fin'].forEach(k=>{
@@ -2066,7 +2076,27 @@ function vRut(){
         '<div class="rut-acts"><button class="btn sm" data-rut="'+esc(r.id)+'">Ver rutina</button><button class="btn sm ghost" data-asig="'+esc(a.id)+'">Días y fechas</button><button class="btn sm ghost" data-rutprint="'+esc(r.id)+'" data-asigid="'+esc(a.id)+'">Imprimir planilla</button>'+(k==='vig'?'<button class="btn sm ghost" data-asigend="'+esc(a.id)+'">Finalizar hoy</button>':'')+'</div></div>';
     }).join('')+'</div>';
   });
-  return h;
+  return h+'</div>'+side+'</div>';
+}
+/* columna derecha: rutinas individuales y trabajo diferenciado de esta categoría */
+function vRutInd(){
+  const list=S.asigDif.filter(a=>a.cat==='dif:'+S.cat&&rutById(a.rutina));
+  const act=list.filter(a=>asigState(a)!=='fin').sort((a,b)=>String(jugName(a.jugador)).localeCompare(String(jugName(b.jugador)),'es'));
+  const fin=list.filter(a=>asigState(a)==='fin').sort((a,b)=>(b.hasta||'').localeCompare(a.hasta||''));
+  const card=a=>{const r=rutById(a.rutina);const ind=!!a.ind;const lid=String(a.id).replace(/^dif__/,'');
+    return '<div class="rut-card ind-card'+(asigState(a)==='fin'?' fin':'')+'"><div style="display:flex;gap:8px;align-items:start;justify-content:space-between"><div><div class="rut-name">'+esc(jugName(a.jugador)||'Jugador')+'</div><div class="tiny"><b>'+esc(r.dif?'Trabajo armado para la lesión':r.nombre)+'</b></div></div>'+
+      '<span class="pill '+(ind?'neutral':'bad')+'">'+(ind?'Individual':'Lesión')+'</span></div>'+
+      '<div class="tiny">'+(a.desde?'Desde el '+esc(fmtD(a.desde,{day:'numeric',month:'short'})):'')+(a.hasta?' · hasta el '+esc(fmtD(a.hasta,{day:'numeric',month:'short'})):ind?'':' · hasta el alta')+'</div>'+
+      '<div class="rut-acts"><button class="btn sm" data-rutind="'+esc(r.id)+'">Ver rutina</button>'+(RO?'':(ind?'<button class="btn sm ghost" data-editj="'+esc(a.jugador)+'">Cambiar</button>':'<button class="btn sm ghost" data-inj="'+esc(lid)+'">Ver lesión</button>'))+'</div></div>';};
+  let h='<div class="rut-col"><div class="bar" style="margin:0"><h2 class="rut-col-t">Individuales y diferenciadas</h2><div class="grow"></div>'+(RO?'':'<button class="btn sm pri" data-act="newInd">+ Rutina individual</button>')+'</div>';
+  h+=act.length?'<div class="rut-cards one">'+act.map(card).join('')+'</div>':'<div class="empty" style="padding:18px"><b>Nadie con rutina propia</b>Tocá “+ Rutina individual”, o si está lesionado, asignale el trabajo desde Lesionados.</div>';
+  if(fin.length)h+='<details class="ind-fin"><summary>Terminadas ('+fin.length+')</summary><div class="rut-cards one">'+fin.map(card).join('')+'</div></details>';
+  return h+'</div>';
+}
+function openNewInd(){
+  if(!S.jug.length){toast('Primero cargá el plantel');return;}
+  openModal(modalHead('Rutina individual','¿Para quién?')+'<div class="modal-b"><div class="field"><label for="ni_j">Jugador</label><select id="ni_j">'+sortedJug().map(j=>'<option value="'+esc(j.id)+'">'+esc(j.nombre)+'</option>').join('')+'</select></div><p class="tiny" style="margin:0">Se abre su ficha: abajo de todo elegís la rutina, desde cuándo y cuántas semanas.</p></div><div class="modal-f"><div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn pri" id="ni_go">Seguir</button></div>',mw=>{
+    mw.querySelector('#ni_go').onclick=()=>{const jid=mw.querySelector('#ni_j').value;openPlayer(jid);setTimeout(()=>{const x=document.querySelector('#e_ir');if(x){x.scrollIntoView({block:'center'});x.focus();}},80);};});
 }
 
 /* ----- biblioteca (vista general, desde el menú lateral) ----- */
@@ -3165,10 +3195,10 @@ function openPlayer(id){
 /* ================= eventos de la vista ================= */
 const view=$('#view');
 view.addEventListener('click',e=>{
-  const t=e.target.closest('[data-rutarch],[data-libarch],[data-tesmode],[data-atl],[data-atlrut],[data-act],[data-calview],[data-godia],[data-day],[data-att],[data-adate],[data-match],[data-ex],[data-test],[data-inj],[data-editj],[data-stats],[data-stmode],[data-stsort],[data-rutprint],[data-rut],[data-rutdup],[data-asig],[data-asignew],[data-asigend]');if(!t)return;
+  const t=e.target.closest('[data-rutarch],[data-libarch],[data-tesmode],[data-atl],[data-atlrut],[data-rutind],[data-act],[data-calview],[data-godia],[data-day],[data-att],[data-adate],[data-match],[data-ex],[data-test],[data-inj],[data-editj],[data-stats],[data-stmode],[data-stsort],[data-rutprint],[data-rut],[data-rutdup],[data-asig],[data-asignew],[data-asigend]');if(!t)return;
   const d=t.dataset;
   if(RO){
-    if(d.att||d.asig||d.asignew||d.asigend||d.rutdup||d.tesmode||d.atl||['allP','newMatch','newTest','newInj','editIdeal','testList','newRut','newRutHere','newAsig','atlLink'].includes(d.act))return roMsg();
+    if(d.att||d.asig||d.asignew||d.asigend||d.rutdup||d.tesmode||d.atl||['allP','newMatch','newTest','newInj','editIdeal','testList','newRut','newRutHere','newAsig','newInd','atlLink'].includes(d.act))return roMsg();
     if(d.day)return openDay(d.day,d.tipo||undefined,false);
   }
   if(d.rutarch)return archRut(d.rutarch,d.v==='1');
@@ -3187,6 +3217,7 @@ view.addEventListener('click',e=>{
   if(d.inj)return openInj(d.inj);
   if(d.editj)return openPlayer(d.editj);
   if(d.rut)return S.view==='lib'?openRut(d.rut):openRutView(d.rut);
+  if(d.rutind)return openRutView(d.rutind);
   if(d.rutdup)return dupRut(d.rutdup);
   if(d.stats)return openStats(d.stats);
   if(d.stmode){S.stMode=d.stmode;return render();}
@@ -3209,6 +3240,7 @@ view.addEventListener('click',e=>{
     case 'newRut':return openRut(null);
     case 'newRutHere':return openRut(null,null,{cat:S.cat});
     case 'newAsig':return openAsig(null,{cat:S.cat});
+    case 'newInd':return openNewInd();
     case 'atlLink':{const u=atlUrl(S.cat);copyTxt(u,'Link copiado: pegalo en el grupo de '+((S.cats.find(c=>c.id===S.cat)||{}).nombre||'la categoría'));return;}
     case 'goLib':S.view='lib';ls.set('pf-view','lib');renderNav();return render();
     case 'goRoster':S.tab='plantel';ls.set('pf-tab','plantel');return render();
