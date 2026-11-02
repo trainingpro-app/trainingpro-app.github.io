@@ -176,6 +176,15 @@ h3{font-family:var(--f-disp);font-weight:700;font-size:18px;text-transform:upper
 .vbox iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000}
 .vbox .btn{justify-self:end}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-weight:600;z-index:80;box-shadow:var(--shadow)}
+.rpe-warn{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:#FFF0E5;border:1.5px solid #E8590C;color:#7A2E05;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.rpe-warn b{font-size:14px}.rpe-warn span{display:flex;flex-wrap:wrap;gap:6px}
+.rpe-warn button{border:1px solid #E8590C;background:#fff;color:#B33F00;border-radius:20px;padding:4px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.rpe-card{margin-top:12px;border-left:5px solid #E8590C}
+.rpe-g{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px}
+.rpe-b{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:10px 0;font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+.rpe-b.on{background:hsl(var(--h),75%,45%);border-color:hsl(var(--h),75%,40%);color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .rpe-warn{background:#3A1A08;color:#FFD3B8}:root:not([data-theme=light]) .rpe-warn button{background:transparent;color:#FFB585}}
+:root[data-theme=dark] .rpe-warn{background:#3A1A08;color:#FFD3B8}:root[data-theme=dark] .rpe-warn button{background:transparent;color:#FFB585}
 </style>
 </head>
 <body>
@@ -426,6 +435,23 @@ function home(){
   $('#app').innerHTML=h||'<div class="empty"><b>Todavía no hay categorías</b></div>';
 }
 
+/* ---------- RPE (esfuerzo percibido): opcional, si la rutina lo pide ---------- */
+/* fecha a la que corresponde un día de la rutina: la última vez que tocó (hoy o hasta 6 días atrás) */
+function rpeDate(a,i){const h=(a.horario||[])[i];if(!h||h.d==null)return TODAY;for(let k=0;k<7;k++){const f=addDays(TODAY,-k);if(f<a.desde)break;if(wdOf(f)===h.d)return f;}return TODAY;}
+function rpeGet(R,a,i,f){return (R.rpe||[]).find(x=>x.a===a.id&&x.d===i&&x.f===f);}
+/* días de entrenamiento de la última semana (sin contar hoy) que quedaron sin responder */
+function rpeMissing(a,ds){const R=getReg();if(!R.nombre)return [];const out=[];
+  for(let k=1;k<=6;k++){const f=addDays(TODAY,-k);if(f<a.desde||(a.hasta&&f>a.hasta))continue;
+    (a.horario||[]).forEach((h,i)=>{if(h&&h.d===wdOf(f)&&i<ds.length&&!rpeGet(R,a,i,f))out.push({f,i});});}
+  return out;}
+function rpeCard(a,i,dayName){
+  const R=getReg();const f=rpeDate(a,i);const cur=rpeGet(R,a,i,f);
+  let h='<div class="card rpe-card" id="rpeCard"><b>¿Qué tan duro fue el entrenamiento?</b><div class="tiny">RPE · '+esc(dayName)+' del '+esc(fmtD(f,{weekday:'long',day:'numeric',month:'short'}))+'. Del 1 (muy fácil) al 10 (no podía más). No es obligatorio, pero le sirve mucho a tu preparadora.</div>';
+  if(!R.nombre)return h+'<p class="tiny" style="margin:8px 0 0">Para responder, primero completá tus datos en <b>Mis registros</b>.</p><button class="btn sm" data-tab="reg" style="margin-top:6px">Completar mis datos</button></div>';
+  h+='<div class="rpe-g">'+Array.from({length:10},(_,k)=>k+1).map(v=>'<button class="rpe-b'+(cur&&cur.v===v?' on':'')+'" data-rpe="'+v+'" data-rpei="'+i+'" data-rpef="'+f+'" style="--h:'+(120-v*12)+'">'+v+'</button>').join('')+'</div>';
+  if(cur)h+='<div class="tiny" style="margin-top:6px">Respondiste <b>'+cur.v+'</b>. Si te equivocaste, tocá otro número.</div>';
+  return h+'</div>';
+}
 /* ---------- rutina actual ---------- */
 function rutView(c){
   const list=asigFor(c.id);const cur=list.filter(a=>a.desde<=TODAY);const prox=list.filter(a=>a.desde>TODAY);
@@ -441,6 +467,7 @@ function rutView(c){
   const wd=wdOf(TODAY);
   if(st.day==null){let best=0,bd=99;(pick.horario||[]).forEach((x,i)=>{if(x&&x.d!=null){const dd=(x.d-wd+7)%7;if(dd<bd){bd=dd;best=i;}}});st.day=Math.min(best,ds.length-1);}
   const d=ds[st.day]||ds[0];
+  if(r.rpe&&pick.desde<=TODAY){const miss=rpeMissing(pick,ds);if(miss.length)h+='<div class="rpe-warn"><b>No respondiste tu RPE</b><span>'+miss.slice(0,3).map(m=>'<button data-day="'+m.i+'" data-rpego="1">'+esc(ds[m.i].nombre||('Día '+(m.i+1)))+' · '+esc(fmtD(m.f,{weekday:'short',day:'numeric'}))+'</button>').join('')+'</span></div>';}
   h+='<div class="rut-h"><h2>'+esc(r.nombre)+'</h2><div class="rut-meta"><span class="chip '+r.tipo+'">'+(r.tipo==='gym'?'Gimnasio':'Cancha')+'</span>'+
     '<span>'+(pick.desde>TODAY?'Empieza el <b>'+esc(fmtD(pick.desde,{weekday:'long',day:'numeric',month:'long'}))+'</b>':'Semana <b>'+(nowW+1)+'</b> de '+W)+'</span>'+
     (pick.hasta?'<span>Hasta el '+esc(fmtD(pick.hasta,{day:'numeric',month:'short'}))+'</span>':'')+'</div>';
@@ -462,6 +489,7 @@ function rutView(c){
   if(rd.calma)h+='<div class="sec card"><span class="lbl">Vuelta a la calma</span><div class="txt">'+esc(rd.calma)+'</div></div>';
   if(rd.notas)h+='<div class="sec card"><span class="lbl">Notas</span><div class="txt">'+esc(rd.notas)+'</div></div>';
   if(!bl.length&&!rd.calor&&!rd.principal)h+='<div class="empty"><b>Día sin ejercicios cargados</b></div>';
+  if(r.rpe&&pick.desde<=TODAY&&(bl.length||rd.principal))h+=rpeCard(pick,st.day,d.nombre||('Día '+(st.day+1)));
   if(prox.length&&pick.desde<=TODAY)h+='<p class="tiny next">Próxima rutina: '+prox.map(a=>esc(rutById(a.rutina).nombre)+' (desde el '+esc(fmtD(a.desde,{day:'numeric',month:'short'}))+')').join(', ')+'</p>';
   return h;
 }
@@ -481,7 +509,7 @@ let myUid=null,syncT=null;
 function setReg(R){R.upd=Date.now();ls.set('pfat-reg',R);clearTimeout(syncT);syncT=setTimeout(()=>pushCloud(R),400);}
 function pushCloud(R){
   R=R||getReg();if(!R.nombre)return;
-  const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',log:R.log,ex:R.ex,upd:R.upd||Date.now()};
+  const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now()};
   if(FB()){if(!myUid)return;firebase.firestore().collection('registrosAtletas').doc(myUid).set(doc).catch(e=>console.warn('sync',e));}
   else{/* prueba local: lo deja donde lo lee Pizarra PF */const L=ls.get('pfclub-local',{});L.registrosAtletas=L.registrosAtletas||{};L.registrosAtletas[ls.get('pfat-uid','')||(()=>{const u='loc'+uid();ls.set('pfat-uid',u);return u;})()]=doc;ls.set('pfclub-local',L);}
 }
@@ -538,6 +566,8 @@ function addReg(){
 
 /* ---------- eventos ---------- */
 $('#app').addEventListener('click',e=>{
+  const rb=e.target.closest('[data-rpe]');if(rb){const R=getReg();if(!R.nombre)return;R.rpe=(R.rpe||[]).filter(x=>!(x.a===st.asig&&x.d===+rb.dataset.rpei&&x.f===rb.dataset.rpef));
+    R.rpe.push({a:st.asig,d:+rb.dataset.rpei,f:rb.dataset.rpef,v:+rb.dataset.rpe,t:Date.now()});setReg(R);render();toast('Gracias. Guardamos tu RPE: '+rb.dataset.rpe);return;}
   const t=e.target.closest('[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],#radd,#psave,#pedit');if(!t)return;
   if(t.id==='psave')return saveProfile();
   if(t.id==='pedit'){st.editProf=true;return render();}
@@ -545,7 +575,7 @@ $('#app').addEventListener('click',e=>{
   if(d.cat)return go(d.cat);
   if(d.tab){st.tab=d.tab;return render();}
   if(d.asig){st.asig=d.asig;st.day=null;st.week=null;return render();}
-  if(d.day){st.day=+d.day;return render();}
+  if(d.day){st.day=+d.day;render();if(d.rpego)setTimeout(()=>{const c=$('#rpeCard');if(c)c.scrollIntoView({behavior:'smooth',block:'center'});},60);return;}
   if(d.week){st.week=+d.week;return render();}
   if(d.vid){const em=ytEmbed(d.vid);if(em){$('#vroot').innerHTML='<div class="vmodal" id="vm"><div class="vbox"><iframe src="'+esc(em)+'" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Video del ejercicio"></iframe><button class="btn" id="vclose">Cerrar video</button></div></div>';
       $('#vm').onclick=ev=>{if(ev.target.id==='vm'||ev.target.id==='vclose')$('#vroot').innerHTML='';};}

@@ -643,6 +643,19 @@ body.drag-on{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .dtab.dragging{outline:2px solid var(--accent);box-shadow:var(--shadow);opacity:.9;transform:scale(1.04)}
 .app-b{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-3);border-radius:20px;padding:2px 9px;font-size:11.5px;font-weight:700;white-space:nowrap;font-family:inherit}
 button.app-b.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);cursor:pointer}
+.regs{display:grid;gap:8px}
+.reg-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.reg-who{flex:1 1 220px;min-width:0}.reg-who b{font-size:15px}
+.reg-rut{display:grid;text-align:left;gap:1px;border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--ink);border-radius:10px;padding:6px 12px;cursor:pointer;font:inherit;min-width:200px;flex:0 1 280px}
+.reg-rut small{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.reg-rut b{font-size:14px}.reg-rut span{font-size:12px;color:var(--accent);font-weight:700}
+.rpe-chip{display:inline-block;background:hsl(var(--h),70%,42%);color:#fff;font-weight:800;font-size:11px;border-radius:4px;padding:0 5px}
+.rpe-list{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px}
+.ar-day{display:grid;gap:4px}.ar-day h3{margin:6px 0 2px}
+.ar-ex{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:6px 0}
+.ar-n{display:grid}.ar-n small{color:var(--ink-3);font-size:12px}
+.ar-l{display:grid;justify-items:end;gap:1px;font-size:12.5px}.ar-l small{color:var(--ink-3)}
+@media (max-width:560px){.ar-ex{grid-template-columns:26px 1fr}.ar-l{grid-column:2;justify-items:start;grid-auto-flow:column;justify-content:start;gap:10px}.reg-rut{flex:1 1 100%}}
 /* biblioteca de ejercicios */
 .ej-filt{display:grid;gap:8px;margin-bottom:12px}
 .ej-q{max-width:420px;width:100%}
@@ -807,7 +820,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 2 nov 2026 · TrainingPro · quién está en la app</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 2 nov 2026 · TrainingPro · registrados y RPE</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -987,7 +1000,7 @@ const EXERCISES=[
 const DEFAULT_LIB=['Sentadilla trasera','Sentadilla frontal','Sentadilla búlgara','Peso muerto','Peso muerto rumano','Hip thrust','Puente de glúteos','Banco plano','Press militar','Remo con barra','Remo con mancuerna','Dominadas','Estocadas','Step up','Nórdicos','Copenhagen','Curl femoral','Extensión de cuádriceps','Elevación de gemelos','Press Pallof','Plancha','Plancha lateral','Curl de bíceps','Tríceps en polea','CMJ','Saltos al cajón','Drop jump','Saltos con vallas','Skipping','Sprint 10 m','Sprint 30 m','Cambios de dirección'];
 const COLLS=['config','dnis','categorias','rutinas','asignaciones','ideales','testeosLista','jugadores','sesiones','partidos','asistencia','testeos','lesiones','ejercicios'];
 const ZONAS=['Isquiotibiales','Cuádriceps','Aductores','Gemelos / sóleo','Tobillo','Rodilla','Cadera / pubis','Lumbar','Hombro','Muñeca / mano','Cabeza','Otra'];
-const TABS=[['calendario','Calendario'],['rutinas','Rutinas'],['asistencia','Asistencia'],['partidos','Partidos'],['estadisticas','Estadísticas'],['testeos','Testeos'],['lesionados','Lesionados'],['plantel','Plantel']];
+const TABS=[['calendario','Calendario'],['rutinas','Rutinas'],['asistencia','Asistencia'],['partidos','Partidos'],['estadisticas','Estadísticas'],['testeos','Testeos'],['lesionados','Lesionados'],['plantel','Plantel'],['registrados','Registrados']];
 const ATT=[['P','Presente'],['A','Ausente'],['J','Justificado'],['L','Lesionado']];
 
 /* ================= estado ================= */
@@ -1122,13 +1135,13 @@ function render(){
   $('#catGroup').textContent=c?(c.grupo||'Categoría'):'Categoría';
   $('#editCat').hidden=!c;
   renderKpis();
-  const tabs=TABS.filter(t=>t[0]!=='estadisticas'||statsOn(c));
+  const tabs=TABS.filter(t=>(t[0]!=='estadisticas'||statsOn(c))&&(t[0]!=='registrados'||!RO));
   if(!tabs.some(t=>t[0]===S.tab))S.tab='calendario';
   $('#tabs').innerHTML=tabs.map(t=>'<button class="tab'+(t[0]===S.tab?' on':'')+'" role="tab" aria-selected="'+(t[0]===S.tab)+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('');
   const v=$('#view');
   if(!c){v.innerHTML='';return;}
   if(RO&&!$('#banner').innerHTML)$('#banner').innerHTML='<div class="ro-band"><b>Solo lectura</b><span>Podés mirar todo, pero no cambiar nada.</span></div>';
-  const f={calendario:vCal,asistencia:vAtt,partidos:vMatches,testeos:vTests,lesionados:vInj,plantel:vRoster,rutinas:vRut,estadisticas:vStats}[S.tab]||vCal;
+  const f={calendario:vCal,asistencia:vAtt,partidos:vMatches,testeos:vTests,lesionados:vInj,plantel:vRoster,registrados:vRegs,rutinas:vRut,estadisticas:vStats}[S.tab]||vCal;
   v.innerHTML=f();
 }
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;ls.set('pf-tab',S.tab);render();});
@@ -2084,6 +2097,7 @@ function openRut(id,preset,after){
   const RFORM=after&&after.cat?catIsForm(after.cat):(ucats.length>0&&ucats.every(catIsForm));
   const b=(dr?draftNote(dr.t):'')+(users.length>1?'<div class="rut-note">La usan <b>'+users.map(esc).join(', ')+'</b>. Lo que cambies acá se aplica a todas. Si una categoría necesita algo distinto, usá <b>Duplicar</b> en la biblioteca.</div>':'')+
     '<label class="sw sw-sm"><input type="checkbox" id="r_borr"'+(r.borrador?' checked':'')+'><i></i><span><b>Todavía la estoy armando</b><span class="tiny">Queda en “Pendientes” en la biblioteca hasta que la destildes.</span></span></label>'+
+    '<label class="sw sw-sm"><input type="checkbox" id="r_rpe"'+(r.rpe?' checked':'')+'><i></i><span><b>Preguntar el RPE al final de cada día</b><span class="tiny">Los atletas responden del 1 al 10 qué tan duro fue. No es obligatorio: si no lo responden, les aparece un aviso naranja.</span></span></label>'+
     '<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="r_n">Nombre de la rutina</label><input id="r_n" value="'+esc(r.nombre||'')+'" placeholder="Ej: Fuerza · Mesociclo 1"></div>'+
     '<div class="field"><label for="r_w">Duración del mesociclo</label><select id="r_w">'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+((r.semanas||4)==n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'</select></div></div>'+
     '<div class="stype" id="r_tipo">'+['gym','cancha'].map(t=>'<button type="button" class="'+t+(t===tipo?' on':'')+'" data-rt="'+t+'"><span class="dot"></span>'+(t==='gym'?'Gym':'Cancha')+'</button>').join('')+'</div>'+
@@ -2163,7 +2177,7 @@ function openRut(id,preset,after){
       const nombre=q('r_n').value.trim();if(!nombre){toast('Ponele un nombre a la rutina');return;}
       const newId=r0?r0.id:uid();
       const keep=r0?Object.assign({},r0):{};delete keep.id;
-      const data=Object.assign(keep,{nombre,tipo,semanas:+q('r_w').value||4,sesiones:days,borrador:q('r_borr').checked,editada:Date.now()});
+      const data=Object.assign(keep,{nombre,tipo,semanas:+q('r_w').value||4,sesiones:days,borrador:q('r_borr').checked,rpe:q('r_rpe').checked,editada:Date.now()});
       try{await Store.put('rutinas',newId,data);clearTimeout(dt);Draft.del(dkey);days.forEach(d=>saveToLibrary(d.bloques||[]));
         if(isNew){toast('Rutina guardada. Ahora elegí a qué categorías va.');setTimeout(()=>openAsig(null,{rutina:newId,cat:after&&after.cat,_rut:Object.assign({id:newId},data)}),60);}
         else{closeModal();toast('Rutina guardada');}
@@ -2422,6 +2436,61 @@ function vAtl(){
   if(sin.length)h+='<p class="tiny">Sin registros todavía: '+sin.map(j=>esc(j.nombre)).join(', ')+'.</p>';
   return h;
 }
+/* ================= registrados: quiénes usan la app de atletas, qué rutina hacen y qué anotaron ================= */
+const actAsig=a=>a&&asigState(a)!=='fin'&&a.desde<=TODAY&&rutById(a.rutina);
+/* rutina que está haciendo ese atleta: individual > diferenciado (lesión) > la de la categoría (gym primero) */
+function atlAsig(d,m){
+  let a=m.j&&S.asigDif.find(x=>x.ind&&x.jugador===m.j.id&&actAsig(x));
+  if(!a)a=S.asigDif.find(x=>!x.ind&&x.cat==='dif:'+S.cat&&((m.j&&x.jugador===m.j.id)||(x.uids||[]).includes(d.id))&&actAsig(x));
+  if(a)return {a,kind:a.ind?'individual':'diferenciado'};
+  const cs=asigOfCat(S.cat).filter(actAsig);const g=cs.find(x=>rutById(x.rutina).tipo==='gym')||cs[0];
+  return g?{a:g,kind:'categoría'}:null;
+}
+const atlCount=d=>Object.values(d.log||{}).reduce((t,l)=>t+(l||[]).length,0);
+const ddShort=f=>f?fmtD(f,{day:'numeric',month:'short'}):'';
+const updF=t=>t?new Date(t).toISOString().slice(0,10):'';
+function rpeLast(d){const l=(d.rpe||[]).slice().sort((a,b)=>(b.f||'').localeCompare(a.f||'')||(b.t||0)-(a.t||0));return l[0]||null;}
+function vRegs(){
+  /* si un mismo jugador entró desde varios celulares, se juntan en una fila */
+  const groups={};const orphans=[];
+  S.atl.forEach(d=>{const m=atlPlayer(d);if(m.j){(groups[m.j.id]=groups[m.j.id]||{m,docs:[]}).docs.push(d);}else orphans.push({m,docs:[d]});});
+  const rows=Object.values(groups).concat(orphans).map(g=>{g.docs.sort((a,b)=>(b.upd||0)-(a.upd||0));g.d=g.docs[0];g.upd=g.d.upd||0;g.n=g.docs.reduce((t,d)=>t+atlCount(d),0);
+    g.rpe=g.docs.map(rpeLast).filter(Boolean).sort((a,b)=>(b.f||'').localeCompare(a.f||''))[0]||null;g.asg=atlAsig(g.d,g.m);return g;}).sort((a,b)=>b.upd-a.upd);
+  const reg=new Set(Object.keys(groups));const sin=S.jug.filter(j=>!reg.has(j.id));
+  let h='<div class="bar" style="margin-top:14px"><h2>Registrados</h2><span class="pill '+(reg.size?'good':'neutral')+'">'+reg.size+' de '+S.jug.length+' del plantel</span><div class="grow"></div><button class="btn" data-act="atlLink">Copiar link para los atletas</button></div>';
+  if(!rows.length)return h+'<div class="empty"><b>Todavía no se registró nadie</b>Pasales el link de la app de atletas. Se registran con nombre, apellido y DNI.</div>';
+  h+='<div class="regs">'+rows.map(g=>{const d=g.d,m=g.m,A=g.asg;const r=A&&rutById(A.a.rutina);
+    const st=m.how==='dni'?'<span class="pill good">DNI ✓</span>':m.how==='manual'?'<span class="pill neutral">vinculado</span>':m.how==='nombre'?'<span class="pill warn">por nombre</span>':'<span class="pill bad">sin reconocer</span>';
+    return '<div class="reg-row"><div class="reg-who"><b>'+esc(m.j?m.j.nombre:(d.nombre||'Sin nombre'))+'</b> '+st+
+      '<div class="tiny">'+(g.upd?'Últ. vez '+esc(ddShort(updF(g.upd))):'')+' · '+g.n+(g.n===1?' peso anotado':' pesos anotados')+(g.docs.length>1?' · '+g.docs.length+' celulares':'')+
+      (g.rpe?' · <span class="rpe-chip" style="--h:'+(120-g.rpe.v*12)+'">RPE '+g.rpe.v+'</span> '+esc(ddShort(g.rpe.f)):'')+'</div></div>'+
+      (r?'<button type="button" class="reg-rut" data-atlrut="'+esc(d.id)+'"><small>'+(A.kind==='categoría'?'Rutina de la categoría':A.kind==='individual'?'Rutina individual':'Trabajo diferenciado')+'</small><b>'+esc(r.nombre)+'</b><span>Ver rutina y lo que anotó ›</span></button>':'<button type="button" class="reg-rut" data-atl="'+esc(d.id)+'"><small>Sin rutina vigente</small><b>Ver lo que anotó</b><span>›</span></button>')+
+      (m.j?'':'<button type="button" class="btn sm" data-atl="'+esc(d.id)+'">Vincular</button>')+'</div>';}).join('')+'</div>';
+  if(sin.length)h+='<p class="tiny" style="margin-top:12px"><b>Todavía no se registraron:</b> '+sin.map(j=>esc(j.nombre)).join(', ')+'.</p>';
+  return h;
+}
+/* rutina del atleta con lo que fue anotando en cada ejercicio */
+function openAtlRut(id){
+  const d0=S.atl.find(x=>x.id===id);if(!d0)return;const m=atlPlayer(d0);
+  const docs=m.j?S.atl.filter(d=>{const k=atlPlayer(d);return k.j&&k.j.id===m.j.id;}):[d0];
+  const A=atlAsig(d0,m);if(!A)return openAtl(id);
+  const r=rutById(A.a.rutina);const ds=rutDays(r);const W=A.a.semanas||r.semanas||4;const w=Math.min(weekIdx(A.a,TODAY),W-1);
+  const ents=name=>{const o=[];docs.forEach(d=>o.push(...atlEntries(d,name)));return o.sort((a,b)=>(b.f||'').localeCompare(a.f||''));};
+  const rpes=[];docs.forEach(d=>(d.rpe||[]).forEach(x=>rpes.push(x)));rpes.sort((a,b)=>(b.f||'').localeCompare(a.f||''));
+  let b='<div class="rut-note"><span><b>'+esc(r.nombre)+'</b> · '+(A.kind==='categoría'?'rutina de la categoría':A.kind==='individual'?'rutina individual':'trabajo diferenciado')+' · semana '+(w+1)+' de '+W+'</span></div>';
+  if(r.rpe||rpes.length){
+    b+='<div><h3>RPE (esfuerzo percibido)</h3>'+(rpes.length?'<div class="rpe-list">'+rpes.slice(0,12).map(x=>'<span><span class="rpe-chip" style="--h:'+(120-x.v*12)+'">'+x.v+'</span> '+esc(ddShort(x.f))+(ds[x.d]?' · '+esc(ds[x.d].nombre||('Día '+(x.d+1))):'')+'</span>').join('')+'</div>':'<p class="tiny">Todavía no respondió ninguno.</p>')+'</div>';
+  }
+  b+=ds.map((dd,di)=>{const rd=resolveDay(dd,w);const bl=toBloques(rd,r.tipo).filter(x=>(x.ejercicios||[]).some(e=>e.n));
+    const hh=(A.a.horario||[])[di]||{};
+    return '<div class="ar-day"><h3>'+esc(dd.nombre||('Día '+(di+1)))+(hh.d!=null?' <small class="tiny">'+esc(WD[hh.d])+'</small>':'')+'</h3>'+
+      (bl.length?bl.map((x,bi)=>(x.ejercicios||[]).filter(e=>e.n).map((e,ei)=>{const L=ents(e.n);
+        return '<div class="ar-ex"><span class="mono tiny">'+String.fromCharCode(65+bi)+(ei+1)+'</span><span class="ar-n"><b>'+esc(e.n)+'</b><small>'+prescripcion(e,x)+(e.c?' · '+esc(e.c):'')+'</small></span>'+
+          '<span class="ar-l">'+(L.length?L.slice(0,3).map(z=>'<span><b class="mono">'+fmtN(z.kg)+' kg×'+z.r+'</b> <small>'+esc(ddShort(z.f))+'</small></span>').join(''):'<small class="tiny">sin anotar</small>')+'</span></div>';}).join('')).join(''):'<p class="tiny">Día sin ejercicios.</p>')+'</div>';}).join('');
+  openModal(modalHead('Registrado · '+catName(S.cat),m.j?m.j.nombre:(d0.nombre||'Atleta'))+'<div class="modal-b">'+b+'</div><div class="modal-f"><button class="btn" id="arAll">Historial completo'+(m.j?'':' / vincular')+'</button><div class="grow"></div><button class="btn pri" data-close>Cerrar</button></div>',mw=>{
+    mw.querySelector('#arAll').onclick=()=>openAtl(id);});
+}
+
 function openAtl(id){
   const d=S.atl.find(x=>x.id===id);if(!d)return;const m=atlPlayer(d);const map=atlMap();
   const exs=Object.keys(d.log||{}).filter(k=>(d.log[k]||[]).length);
@@ -3040,7 +3109,7 @@ function openPlayer(id){
 /* ================= eventos de la vista ================= */
 const view=$('#view');
 view.addEventListener('click',e=>{
-  const t=e.target.closest('[data-rutarch],[data-libarch],[data-tesmode],[data-atl],[data-act],[data-calview],[data-godia],[data-day],[data-att],[data-adate],[data-match],[data-ex],[data-test],[data-inj],[data-editj],[data-stats],[data-stmode],[data-stsort],[data-rutprint],[data-rut],[data-rutdup],[data-asig],[data-asignew],[data-asigend]');if(!t)return;
+  const t=e.target.closest('[data-rutarch],[data-libarch],[data-tesmode],[data-atl],[data-atlrut],[data-act],[data-calview],[data-godia],[data-day],[data-att],[data-adate],[data-match],[data-ex],[data-test],[data-inj],[data-editj],[data-stats],[data-stmode],[data-stsort],[data-rutprint],[data-rut],[data-rutdup],[data-asig],[data-asignew],[data-asigend]');if(!t)return;
   const d=t.dataset;
   if(RO){
     if(d.att||d.asig||d.asignew||d.asigend||d.rutdup||d.tesmode||d.atl||['allP','newMatch','newTest','newInj','editIdeal','testList','newRut','newRutHere','newAsig','atlLink'].includes(d.act))return roMsg();
@@ -3050,6 +3119,7 @@ view.addEventListener('click',e=>{
   if(t.matches('[data-libarch]')){S.libArch=!S.libArch;return render();}
   if(d.tesmode){S.tesMode=d.tesmode;return render();}
   if(d.atl)return openAtl(d.atl);
+  if(d.atlrut)return openAtlRut(d.atlrut);
   if(d.calview){S.calView=d.calview;ls.set('pf-calview',S.calView);return render();}
   if(d.godia){S.calDate=d.godia;S.calView='dia';ls.set('pf-calview','dia');return render();}
   if(d.day)return openDay(d.day,d.tipo||undefined,!!d.edit);
