@@ -674,6 +674,11 @@ button.app-b.on{background:var(--accent-soft);border-color:var(--accent);color:v
 .rs-o{font-size:12px;font-weight:700}
 .rsum-off{margin-bottom:6px}
 @media (max-width:560px){.rs-day{flex-basis:170px}.rsum.float .rs-days{max-height:28vh}}
+.rs-days{zoom:var(--rz,1)}
+.rs-blk+.rs-blk{border-top:1.5px solid var(--line);margin-top:5px;padding-top:5px}
+.rs-zoom{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.rs-zoom button{border:0;background:none;padding:3px 9px;font:inherit;font-size:13px;font-weight:800;color:var(--ink-2);cursor:pointer;min-width:28px}
+.rs-zoom .rs-zv{font-size:11.5px;font-weight:700;min-width:44px;border-left:1px solid var(--line);border-right:1px solid var(--line)}
 /* biblioteca de ejercicios */
 .ej-filt{display:grid;gap:8px;margin-bottom:12px}
 .ej-q{max-width:420px;width:100%}
@@ -838,7 +843,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 2 nov 2026 · TrainingPro · resumen al armar rutinas</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 2 nov 2026 · TrainingPro · resumen con zoom</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2178,23 +2183,33 @@ function openRut(id,preset,after){
       drawTabs();drawPanel();tabs.scrollIntoView({block:'start',behavior:'smooth'});
     });
     /* resumen de la rutina arriba: fijo, flotante (te acompaña al scrollear) o cerrado */
-    const sumW=q('rsumW');let SM=ls.get('pf-rsum','float');
+    const sumW=q('rsumW');let SM=ls.get('pf-rsum','float');let RZ=+ls.get('pf-rsz',1)||1;
+    const setZ=z=>{RZ=Math.round(Math.min(1.8,Math.max(0.5,z))*100)/100;ls.set('pf-rsz',RZ);sumW.style.setProperty('--rz',RZ);const v=sumW.querySelector('.rs-zv');if(v)v.textContent=Math.round(RZ*100)+'%';};
+    /* zoom: Ctrl + rueda (o pellizco en el trackpad) con el cursor encima del resumen */
+    sumW.addEventListener('wheel',e=>{if(!(e.ctrlKey||e.metaKey)||!e.target.closest('.rs-days'))return;e.preventDefault();setZ(RZ*(e.deltaY<0?1.08:1/1.08));},{passive:false});
+    /* en el celu: pellizcar con dos dedos */
+    let pz=null;sumW.addEventListener('touchstart',e=>{if(e.touches.length===2&&e.target.closest('.rs-days')){const[a,b]=e.touches;pz={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),z:RZ};}},{passive:true});
+    sumW.addEventListener('touchmove',e=>{if(!pz||e.touches.length!==2)return;e.preventDefault();const[a,b]=e.touches;setZ(pz.z*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/pz.d);},{passive:false});
+    sumW.addEventListener('touchend',()=>{pz=null;});
     const sumHtml=()=>{
       const live=days.map((d,i)=>{if(i!==cur||!panel.querySelector('#d_n'))return d;try{return Object.assign({},d,readContent(panel,tipo),{nombre:panel.querySelector('#d_n').value.trim()||d.nombre});}catch(e){return d;}});
       return live.map((d,i)=>{const bl=toBloques(d,tipo).filter(x=>(x.ejercicios||[]).some(e=>e.n));
         return '<button type="button" class="rs-day'+(i===cur?' on':'')+'" data-rsday="'+i+'"><span class="rs-h">'+esc(d.nombre||('Día '+(i+1)))+(i===cur?' <i>editando</i>':'')+'</span>'+
           (d.objetivo?'<span class="rs-o">'+esc(d.objetivo)+'</span>':'')+
-          (bl.length?'<ol class="wk-ex">'+bl.map((x,bi)=>(x.ejercicios||[]).filter(e=>e.n).map((e,ei)=>'<li><span class="mono">'+String.fromCharCode(65+bi)+(ei+1)+'</span> '+esc(String(e.n).toLocaleUpperCase('es'))+' <b>'+esc(presText(e,x))+'</b></li>').join('')).join('')+'</ol>':'<span class="tiny">Sin ejercicios todavía</span>')+'</button>';}).join('');
+          (bl.length?bl.map((x,bi)=>'<ol class="wk-ex rs-blk">'+(x.ejercicios||[]).filter(e=>e.n).map((e,ei)=>'<li><span class="mono">'+String.fromCharCode(65+bi)+(ei+1)+'</span> '+esc(String(e.n).toLocaleUpperCase('es'))+' <b>'+esc(presText(e,x))+'</b></li>').join('')+'</ol>').join(''):'<span class="tiny">Sin ejercicios todavía</span>')+'</button>';}).join('');
     };
     const drawSum=()=>{
       if(SM==='off'){sumW.className='rsum-off';sumW.innerHTML='<button type="button" class="btn sm" data-rsmode="float">Ver resumen de la rutina</button>';return;}
       const mh=mw.querySelector('.modal-h');sumW.style.setProperty('--mh',(mh?mh.offsetHeight:0)+'px');
       sumW.className='rsum'+(SM==='float'?' float':'');
+      sumW.style.setProperty('--rz',RZ);
       sumW.innerHTML='<div class="rs-top"><b>Resumen de la rutina</b><span class="tiny">tocá un día para editarlo</span><span class="grow"></span>'+
+        '<span class="rs-zoom" title="Zoom: también con Ctrl + rueda del mouse o pellizcando"><button type="button" data-rsz="-1" aria-label="Achicar">−</button><button type="button" data-rsz="0" class="rs-zv">'+Math.round(RZ*100)+'%</button><button type="button" data-rsz="1" aria-label="Agrandar">+</button></span>'+
         '<span class="rs-seg"><button type="button" class="'+(SM==='fix'?'on':'')+'" data-rsmode="fix" title="Queda arriba de todo">Fijo</button><button type="button" class="'+(SM==='float'?'on':'')+'" data-rsmode="float" title="Te acompaña mientras bajás">Flotante</button></span>'+
         '<button type="button" class="rs-x" data-rsmode="off" aria-label="Cerrar resumen" title="Cerrar">×</button></div><div class="rs-days">'+sumHtml()+'</div>';
     };
-    sumW.addEventListener('click',e=>{const m=e.target.closest('[data-rsmode]');if(m){SM=m.dataset.rsmode;ls.set('pf-rsum',SM);drawSum();return;}
+    sumW.addEventListener('click',e=>{const zb=e.target.closest('[data-rsz]');if(zb){const k=+zb.dataset.rsz;setZ(k?RZ*(k>0?1.15:1/1.15):1);return;}
+      const m=e.target.closest('[data-rsmode]');if(m){SM=m.dataset.rsmode;ls.set('pf-rsum',SM);drawSum();return;}
       const dB=e.target.closest('[data-rsday]');if(dB){const i=+dB.dataset.rsday;if(i===cur)return;saveCur();cur=i;drawTabs();drawPanel();tabs.scrollIntoView({block:'start',behavior:'smooth'});}});
     let sumT;const sumLater=()=>{clearTimeout(sumT);sumT=setTimeout(()=>{if(SM!=='off'&&document.contains(sumW)){const x=sumW.querySelector('.rs-days');if(x){const sl=x.scrollLeft;x.innerHTML=sumHtml();x.scrollLeft=sl;}}},250);};
     panel.addEventListener('input',sumLater);panel.addEventListener('change',sumLater);
