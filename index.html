@@ -641,6 +641,8 @@ body.drag-on{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .dtab{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #dayTabs{scroll-margin-top:120px}
 .dtab.dragging{outline:2px solid var(--accent);box-shadow:var(--shadow);opacity:.9;transform:scale(1.04)}
+.app-b{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-3);border-radius:20px;padding:2px 9px;font-size:11.5px;font-weight:700;white-space:nowrap;font-family:inherit}
+button.app-b.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);cursor:pointer}
 /* biblioteca de ejercicios */
 .ej-filt{display:grid;gap:8px;margin-bottom:12px}
 .ej-q{max-width:420px;width:100%}
@@ -805,7 +807,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 27 oct 2026 · TrainingPro · rutina individual</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 2 nov 2026 · TrainingPro · quién está en la app</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2995,10 +2997,18 @@ function openInj(id){
 function noPlayers(){return '<div class="empty"><b>Primero cargá el plantel</b>Asistencia, testeos y lesiones se arman sobre la lista de jugadores.<div style="margin-top:12px"><button class="btn pri" data-act="goRoster">Ir a Plantel</button></div></div>';}
 function vRoster(){
   const st=attStats();
-  let h='<div class="grid2"><div><div class="bar"><h2>Plantel</h2><span class="muted">'+S.jug.length+' jugadores</span></div>';
+  /* quién ya entró a la app de atletas (se empareja por DNI o nombre) */
+  const regOf={},sinVinc=[];S.atl.forEach(d=>{const m=atlPlayer(d);if(m.j){const o=regOf[m.j.id];if(!o||(d.upd||0)>(o.d.upd||0))regOf[m.j.id]={d,how:m.how};}else if(d.nombre||d.dniFin)sinVinc.push(d);});
+  const nApp=S.jug.filter(j=>regOf[j.id]).length;
+  const dd=t=>t?fmtD(new Date(t).toISOString().slice(0,10),{day:'numeric',month:'short'}):'';
+  let h='<div class="grid2"><div><div class="bar"><h2>Plantel</h2><span class="muted">'+S.jug.length+' jugadores</span>'+(S.jug.length&&!RO?'<span class="pill '+(nApp?'good':'neutral')+'" title="Jugadores que ya cargaron sus datos en la app de atletas">📱 '+nApp+' de '+S.jug.length+' en la app</span>':'')+'</div>';
   h+=S.jug.length?'<div class="roster" style="grid-template-columns:1fr">'+sortedJug().map(j=>{const inj=lesOf().find(l=>l.jugador===j.id&&activeInj(l));const p=(st[j.id]||{}).pct;
-    return '<div class="pl"><span class="dor">'+esc(j.dorsal||'·')+'</span><div class="info"><div class="nm">'+esc(j.nombre)+'</div><div class="tiny">'+esc(j.pos||'Sin posición')+(p!=null?' · '+p+'% asist.':'')+'</div></div>'+(inj?'<span class="pill bad">lesión</span>':'')+(indOf(j.id)?'<span class="pill neutral" title="Hace una rutina individual">rutina individual</span>':'')+'<button class="btn sm ghost" data-editj="'+esc(j.id)+'">'+(RO?'Ver':'Editar')+'</button></div>';}).join('')+'</div>'
+    return '<div class="pl"><span class="dor">'+esc(j.dorsal||'·')+'</span><div class="info"><div class="nm">'+esc(j.nombre)+'</div><div class="tiny">'+esc(j.pos||'Sin posición')+(p!=null?' · '+p+'% asist.':'')+'</div></div>'+(inj?'<span class="pill bad">lesión</span>':'')+(indOf(j.id)?'<span class="pill neutral" title="Hace una rutina individual">rutina individual</span>':'')+
+      (RO?'':(regOf[j.id]?'<button type="button" class="app-b on" data-atl="'+esc(regOf[j.id].d.id)+'" title="Ya está en la app de atletas'+(regOf[j.id].how==='nombre'?' (reconocido por nombre)':'')+'. Tocá para ver lo que anotó.">📱 en la app'+(regOf[j.id].d.upd?' · '+esc(dd(regOf[j.id].d.upd)):'')+'</button>':'<span class="app-b" title="Todavía no cargó sus datos en la app de atletas">sin app</span>'))+
+      '<button class="btn sm ghost" data-editj=""'+esc(j.id)+'">'+(RO?'Ver':'Editar')+'</button></div>';}).join('')+'</div>'
     :'<div class="empty"><b>Plantel vacío</b>Sumá jugadores con el formulario, o pegá una lista entera.</div>';
+  if(sinVinc.length&&!RO)h+='<div class="panel" style="margin-top:12px"><h3>En la app pero sin reconocer ('+sinVinc.length+')</h3><p class="tiny" style="margin:0 0 8px">Cargaron sus datos pero no coinciden con nadie del plantel (DNI o nombre distinto). Tocá uno para vincularlo al jugador correcto.</p>'+
+    sinVinc.map(d=>'<button type="button" class="app-b on" style="margin:0 6px 6px 0" data-atl="'+esc(d.id)+'">'+esc(d.nombre||'Sin nombre')+(d.dniFin?' · DNI …'+esc(d.dniFin):'')+(d.upd?' · '+esc(dd(d.upd)):'')+'</button>').join('')+'</div>';
   h+='</div><div style="display:grid;gap:16px"><form class="panel" id="plForm"><h3>Sumar jugador</h3><div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="p_n">Nombre y apellido</label><input id="p_n" required></div><div class="field"><label for="p_p">Posición</label><select id="p_p"><option></option><option>Arquero/a</option><option>Defensor/a</option><option>Mediocampista</option><option>Delantero/a</option></select></div><div class="field"><label for="p_d">Dorsal</label><input id="p_d" inputmode="numeric"></div></div><button class="btn pri" style="margin-top:12px" type="submit">Sumar</button></form>'+
     '<form class="panel" id="bulkForm"><h3>Pegar lista</h3><div class="field"><label for="p_bulk">Un jugador por línea (el DNI al final es opcional)</label><textarea id="p_bulk" placeholder="Juana Pérez 45123456&#10;Sofía Gómez 44.987.321&#10;…" style="min-height:120px"></textarea></div><button class="btn" style="margin-top:10px" type="submit">Sumar todos</button></form></div></div>';
   return h;
