@@ -906,7 +906,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · resumen movible</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · plantillas editables</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2099,7 +2099,7 @@ function printRutObj(r,a){
 }
 
 /* ---------- rutinas: biblioteca + asignaciones ---------- */
-const rutById=id=>S.rutAll.find(r=>r.id===id)||null;
+const rutById=id=>S.rutAll.find(r=>r.id===id)||(S.tplAll||[]).find(r=>r.id===id)||null;
 const asigOfCat=c=>S.asigAll.filter(a=>a.cat===c);
 const catName=id=>(S.cats.find(c=>c.id===id)||{}).nombre||id;
 function asigState(a){if(a.hasta&&a.hasta<TODAY)return 'fin';if(a.desde>TODAY)return 'prox';return 'vig';}
@@ -2230,7 +2230,7 @@ function archRut(id,v){const r=rutById(id);if(!r)return;const d=Object.assign({}
 function openRut(id,preset,after){
   const r0=id?rutById(id):null;
   let r=r0||preset||{nombre:'',tipo:'gym',semanas:4};
-  const isNew=!r0;
+  const isNew=!r0;const isTpl=!!(r0?r0.plantilla:(preset&&preset.plantilla));
   const dkey='rut-'+(id||(preset?'dup-'+slug(preset.nombre||''):'nueva'));
   const dr=Draft.get(dkey);
   if(dr)r=Object.assign({},r,{nombre:dr.nombre,tipo:dr.tipo,semanas:dr.semanas,sesiones:dr.days});
@@ -2242,7 +2242,7 @@ function openRut(id,preset,after){
   /* dosis de formativas si la rutina es para una formativa (o solo la usan formativas) */
   const ucats=r0?[...new Set(S.asigAll.filter(a=>a.rutina===r0.id&&asigState(a)!=='fin').map(a=>a.cat))]:[];
   const RFORM=after&&after.cat?catIsForm(after.cat):(ucats.length>0&&ucats.every(catIsForm));
-  const b='<div id="rsumW"></div>'+(dr?draftNote(dr.t):'')+(users.length>1?'<div class="rut-note">La usan <b>'+users.map(esc).join(', ')+'</b>. Lo que cambies acá se aplica a todas. Si una categoría necesita algo distinto, usá <b>Duplicar</b> en la biblioteca.</div>':'')+
+  const b=(isTpl?'<div class="rut-note"><span><b>Estás editando una plantilla</b> (queda en Programas → Mis plantillas, no en la biblioteca). En el nombre del ejercicio podés poner un ejercicio o una guía entre corchetes, ej. <b>[EMPUJE HORIZONTAL]</b>: cuando la uses, ese renglón queda vacío con la guía en naranja. Una observación que empiece con <b>ej.:</b> queda como ejemplo en gris.</span></div>':'')+'<div id="rsumW"></div>'+(dr?draftNote(dr.t):'')+(users.length>1?'<div class="rut-note">La usan <b>'+users.map(esc).join(', ')+'</b>. Lo que cambies acá se aplica a todas. Si una categoría necesita algo distinto, usá <b>Duplicar</b> en la biblioteca.</div>':'')+
     '<div class="opt-row">'+
       '<label class="opt" title="Queda en “Pendientes” en la biblioteca hasta que la destildes"><input type="checkbox" id="r_borr"'+(r.borrador?' checked':'')+'><span>La estoy armando</span></label>'+
       '<label class="opt" title="Para un jugador: en la biblioteca va a la columna de individuales"><input type="checkbox" id="r_ind"'+((r0?isIndRut(r0):r.indiv)?' checked':'')+'><span>Individual</span></label>'+
@@ -2254,7 +2254,7 @@ function openRut(id,preset,after){
     '<div><h3>Días de entrenamiento</h3><div class="day-tabs" id="dayTabs"></div></div>'+
     '<div class="day-panel" id="dayPanel"></div>';
   const foot='<div class="modal-f">'+(isNew?'':'<button class="btn danger" id="r_del">Borrar rutina</button>')+'<button class="btn" id="r_print">Imprimir planilla</button><div class="grow"></div><button class="btn" data-close>Cancelar</button>'+(isNew?'<button class="btn" id="r_save_as" title="Guarda y te lleva a elegir categoría, días y fechas">Guardar y asignar</button>':'')+'<button class="btn pri" id="r_save">'+(isNew?'Guardar':'Guardar rutina')+'</button></div>';
-  openModal(modalHead('Biblioteca de rutinas'+(r0&&r0.editada?' · '+modTxt(r0):''),isNew?'Nueva rutina':r.nombre)+'<div class="modal-b">'+b+'</div>'+foot,mw=>{
+  openModal(modalHead((isTpl?'Programas · mis plantillas':'Biblioteca de rutinas')+(r0&&r0.editada?' · '+modTxt(r0):''),isNew?(isTpl?'Nueva plantilla':'Nueva rutina'):r.nombre)+'<div class="modal-b">'+b+'</div>'+foot,mw=>{
     mw.classList.add('full');
     /* (el menú lateral se esconde con las tres rayitas de arriba del menú) */
     const q=id=>mw.querySelector('#'+id);
@@ -2390,12 +2390,15 @@ function openRut(id,preset,after){
       clearTimeout(dt);Draft.del(dkey);await Store.remove('rutinas',r0.id);closeModal();toast('Rutina borrada de la biblioteca y de sus categorías');});
     const doSave=async assign=>{
       saveCur();
+      /* renglones que quedaron sin ejercicio (p. ej. de una plantilla) no se guardan */
+      days.forEach(d=>{if(d.bloques)d.bloques=d.bloques.map(b=>Object.assign({},b,{ejercicios:(b.ejercicios||[]).filter(e=>e&&String(e.n||'').trim())})).filter(b=>b.ejercicios.length||b.nota);});
       const nombre=q('r_n').value.trim();if(!nombre){toast('Ponele un nombre a la rutina');return;}
       const newId=r0?r0.id:uid();
-      const keep=r0?Object.assign({},r0):{};delete keep.id;
+      const keep=r0?Object.assign({},r0):(isTpl?{plantilla:true}:{});delete keep.id;
       const data=Object.assign(keep,{nombre,tipo,semanas:+q('r_w').value||4,sesiones:days,borrador:q('r_borr').checked,rpe:q('r_rpe').checked,indiv:q('r_ind').checked,editada:Date.now()});
-      try{await Store.put('rutinas',newId,data);clearTimeout(dt);Draft.del(dkey);days.forEach(d=>saveToLibrary(d.bloques||[]));
-        if(isNew&&assign&&!data.indiv){toast('Rutina guardada. Ahora elegí a qué categorías va.');setTimeout(()=>openAsig(null,{rutina:newId,cat:after&&after.cat,_rut:Object.assign({id:newId},data)}),60);}
+      try{await Store.put('rutinas',newId,data);clearTimeout(dt);Draft.del(dkey);if(!isTpl)days.forEach(d=>saveToLibrary(d.bloques||[]));
+        if(isTpl){closeModal();toast('Plantilla guardada en Programas → Mis plantillas');}
+        else if(isNew&&assign&&!data.indiv){toast('Rutina guardada. Ahora elegí a qué categorías va.');setTimeout(()=>openAsig(null,{rutina:newId,cat:after&&after.cat,_rut:Object.assign({id:newId},data)}),60);}
         else if(isNew){closeModal();toast(data.indiv?'Rutina individual guardada en la biblioteca. Asignala desde la ficha del jugador cuando quieras.':'Rutina guardada en la biblioteca (sin asignar). Cuando quieras, tocá “Asignar”.');}
         else{closeModal();toast('Rutina guardada');}
       }catch(e){}
@@ -2403,7 +2406,8 @@ function openRut(id,preset,after){
     q('r_save').onclick=()=>doSave(false);
     if(q('r_save_as'))q('r_save_as').onclick=()=>doSave(true);
     /* las individuales se asignan desde la ficha del jugador: el botón "Guardar y asignar" no aplica */
-    {const ib=q('r_ind'),sa=q('r_save_as');if(ib&&sa){const f=()=>{sa.hidden=ib.checked;};f();ib.addEventListener('change',f);}}
+    {const ib=q('r_ind'),sa=q('r_save_as');if(ib&&sa){const f=()=>{sa.hidden=ib.checked||isTpl;};f();ib.addEventListener('change',f);}}
+    if(isTpl)mw.querySelectorAll('.opt-row').forEach(x=>x.hidden=true);
   });
 }
 function dupRut(id){
@@ -4074,7 +4078,7 @@ function startData(){
     if(!S.cat||!a.find(c=>c.id===S.cat)||!catUnsubs.length)selectCat(S.cat);else{renderNav();render();}});
   Store.watch('lesiones',null,null,a=>{S.lesAll=a;renderNav();render();});
   Store.watch('ejercicios',null,null,a=>{S.lib=a;EJC.t=0;migMayus('ejercicios',a);if(S.view==='ejs'&&!$('#mw'))render();});
-  Store.watch('rutinas',null,null,a=>{S.rutAll=a;EJC.t=0;renderNav();render();migMayus('rutinas',a);});
+  Store.watch('rutinas',null,null,a=>{S.tplAll=a.filter(r=>r.plantilla);S.rutAll=a.filter(r=>!r.plantilla);EJC.t=0;renderNav();render();migMayus('rutinas',a);});
   Store.watch('asignaciones',null,null,a=>{S.asigAll=a.filter(x=>!x.dif);S.asigDif=a.filter(x=>x.dif);render();});
   Store.watch('ideales',null,null,a=>{S.ideales=a;render();});
   Store.watch('testeosLista',null,null,a=>{S.testList=a;render();});
@@ -4368,12 +4372,94 @@ const PR=[
   ['A·','b','Cómo se hace cada básico (ERPA)','4 series',['50% · 75% · AMRAP 100% · ajuste','ídem','ídem']],
   ['B','s','Secundarios','búlgara · split · remo · dominadas · fondos',['3x8 → 3x10<br>doble progresión','3x8 → 3x10','3x6 → 3x8']],
   ['C','k','Core / auxiliares','roll out · pallof · plancha RKC',['2–3 series','2–3 series','2–3 series']]],
-  notes:['ERPA: la 3ª serie es "todas las que puedas" (AMRAP) con el peso del bloque; si hizo de más, la 4ª lleva más peso, si hizo de menos, menos. Esper aclara: usarlo como guía y no ir al fallo.']}]}
+  notes:['ERPA: la 3ª serie es "todas las que puedas" (AMRAP) con el peso del bloque; si hizo de más, la 4ª lleva más peso, si hizo de menos, menos. Esper aclara: usarlo como guía y no ir al fallo.']}]},
+/* ===================== 7 · lesionados ===================== */
+{id:'p7',tab:'Lesión de pierna',sm:'Esper + Cesarino',
+ title:'Lesión de pierna · tren superior completo + lo que habilite el kine',
+ tags:[['src','Esper (fases y patrones) · Cesarino (planificación horizontal, HIIT)'],['','3 bloques de 4 semanas'],['','3 días + 1 opcional']],
+ mo:true,
+ vnames:['Variante 1 · básicos en el mismo bloque','Variante 2 · un básico por bloque'],
+ uso:['Sin partidos ni caos hay certeza: se planifica a largo plazo, como una pretemporada (Cesarino). Es momento de construir, no solo de mantener.',
+      'Tres meses, cada uno con su foco (fases de Esper): <b>Mes 1 estructura</b> (~10 RM, casi sin potencia) · <b>Mes 2 fuerza estructural</b> (~6 RM, algo de lanzamientos) · <b>Mes 3 fuerza máxima + potencia</b> (% del 5RM que testeás al final del mes 2, contrastes de tren superior). Después se repite un escalón más arriba.',
+      'Cada día tiene un básico de empuje y uno de tracción (guía de Esper). <b>Variante 1:</b> los dos básicos en el mismo bloque, con el explosivo en el medio. <b>Variante 2:</b> un básico por bloque, acompañado de core, accesorios o pierna.',
+      'Renglón fijo de pierna: la <b>pierna sana</b> se entrena (ayuda a que la operada pierda menos: educación cruzada) y la <b>operada</b> hace lo que habilite el kine.',
+      'Hasta que el kine lo habilite: tren superior sentado, en banco o con apoyo; nada que cargue el pie operado de golpe.'],
+ map:[
+  ['Sacó la bota, camina','',[],'entrada en calor en bici fija · pierna sana completa · operada: lo que diga el kine (máquinas de cadera y rodilla sin cargar el tobillo)'],
+  ['Tendón cicatrizado · trote en minitramp','← hoy',[],'minitramp en la entrada en calor (los minutos que diga el kine) · bici: de continua a intermitente (mes 2 y 3) · ejercicios de pie con apoyo de las dos piernas, si el kine lo aprueba'],
+  ['Trote en el piso','',[],'carrera progresiva la define el kine · en el gym se puede empezar a sumar pierna operada con carga'],
+  ['Saltos habilitados','',[],'empezar aterrizajes y saltos bajos (tarjeta de formativas) y pasar de a poco al programa de su categoría']],
+ cards:(()=>{
+  const CAL=['8–10 min','8–10 min','8–10 min'];
+  const BAS=[['4x10 RIR 3','4x10 RIR 2','4x8 RIR 2','4x8 RIR 1'],['4x6 RIR 3','4x6 RIR 2','5x5 RIR 2','5x5 RIR 1'],['3x5 75%','3x3 80%','3x1 85%','3x5/3/1 75/80/85%']];
+  const BAT=[BAS[0],BAS[1],['3x5','3x4','3x3','3x5/3/1']];
+  const EXP=['—',['3x5','3x5','3x4','3x4'],['4x5','4x5','4x4','4x3']];
+  const SEC=[['3x8 RIR 4','3x8/8/10','3x8/10/10','3x10 RIR 2'],['3x8 RIR 3','3x8 RIR 2','3x6 RIR 2','3x6 RIR 1'],['3x6','3x6','3x5','3x5']];
+  const PS=[['3x10','3x10','3x12','3x12'],['3x8','3x8','3x6','3x6'],['3x6','3x6','3x5','3x5']];
+  const PO=['según kine','según kine','según kine'];
+  const BRZ=[['3x10','3x10','3x12','3x12'],['3x10','3x10','3x12','3x12'],['3x10','3x10','3x12','3x12']];
+  const BC=[['3x10 RIR 3','3x10 RIR 2','3x8 RIR 2','3x8 RIR 1'],['4x6 RIR 3','4x6 RIR 2','4x5 RIR 2','4x5 RIR 1'],['4x5','4x4','4x3','4x3']];
+  const POT=['2x5 técnica',['3x5','3x5','3x6','3x6'],['4x5','4x5','4x4','4x4']];
+  const BICI=['continuo 20 min',["3x5 2'/1'","3x6 2'/1'","4x6 2'/1'","4x7 2'/1'"],['3x8 10"/10"','3x10 10"/10"','4x10 10"/10"','4x12 10"/10"']];
+  const COLS=['Mes 1 · estructura','Mes 2 · fuerza','Mes 3 · fuerza + potencia'];
+  const ENT=[['#','Entrada en calor'],['0','m','Bici fija + minitramp + movilidad de hombro','minitramp solo lo que indique el kine',CAL]];
+  /* renglones reutilizables */
+  const R={
+   aEmp:['b','Empuje horizontal','press banca · press con mancuernas',BAS],
+   aExpE:['e','Explosivo de empuje','lanzamiento MB de pecho sentado o arrodillado · flexión pliométrica',EXP],
+   aTrV:['b','Tracción vertical','dominadas (asistidas o con peso) · jalón',BAT],
+   empV1:['s','Empuje vertical a 1 brazo (sentado)','press mancuerna 1 brazo sentado · landmine sentado',SEC],
+   trH1:['s','Tracción horizontal a 1 brazo','remo 1 brazo apoyado en banco · remo en polea',SEC],
+   psA:['s','Pierna sana','prensa a 1 pierna · extensión y curl unilateral · búlgara si se siente seguro',PS],
+   po:['p','Pierna operada (lo que habilite el kine)','lo que esté haciendo en el kine, pasado al gym',PO],
+   coreE:['k','Core anti-extensión','plancha · rueda · dead bug',['3x8','3x10','3x10']],
+   brz:['a','Brazos','bíceps · tríceps',BRZ],
+   bTrH:['b','Tracción horizontal','remo con apoyo de pecho · remo pendlay (si ya puede estar parado)',BAS],
+   bEmpV:['b','Empuje vertical (sentado)','press militar sentado · landmine sentado o arrodillado',BAT],
+   bExpA:['e','Explosivo por arriba de la cabeza','lanzamiento MB sobre cabeza sentado · slam arrodillado',EXP],
+   empH1:['s','Empuje horizontal a 1 brazo','press mancuerna 1 brazo · flexiones',SEC],
+   trV1:['s','Tracción vertical a 1 brazo','jalón 1 brazo · remo alto en polea',SEC],
+   psB:['s','Pierna sana','prensa a 1 pierna · curl nórdico asistido · puente a 1 pierna',PS],
+   coreR:['k','Core anti-rotación','pallof press sentado o arrodillado',['3x8','3x10','3x10']],
+   mang:['p','Manguito rotador / escápula','face pull · rotadores externos · YTW',['3x12','3x12','3x12']],
+   lRot:['e','Lanzamiento rotacional','MB rotacional sentado o arrodillado contra la pared',POT],
+   plio:['e','Pliometría de empuje','flexión pliométrica · flexión con palmada',POT],
+   cInc:['b','Empuje inclinado','press inclinado con barra o mancuernas',BC],
+   cTr:['b','Tracción (otra variante)','dominada supina · remo invertido con peso',BC],
+   psC:['s','Pierna sana','extensión · curl · gemelo de la pierna sana',PS],
+   coreL:['k','Core anti-flexión lateral','plancha lateral · farmer a 1 mano cuando pueda caminar cargado',['3x8','3x10','3x10']],
+   bici:['a','Bici (con OK del kine)','mes 1 continua · mes 2 HIIT 2 min / 1 min · mes 3 intermitente 10 s / 10 s',BICI]};
+  const x=(lbl,k)=>[lbl].concat(R[k]);
+  const bici=['Bici del mes 2: el HIIT de postemporada de Cesarino (bloques × pasadas de 2 min de trabajo y 1 min de pausa, 7 min entre bloques). Mes 3: su intermitente de 10 s / 10 s con 3 min entre bloques. La progresión de pasadas del mes 3 es mía.','Si el kine todavía no habilita intensidad en la bici, queda continua todo el bloque.'];
+  return [
+  {k:'dA',name:'Día A',when:'empuje horizontal + tracción vertical',dur:'~60 min',cols:COLS,
+   rows:ENT.concat([['#','A · Básicos'],x('A1','aEmp'),x('A2','aExpE'),x('A3','aTrV'),['#','B · Unilaterales y pierna'],x('B1','empV1'),x('B2','trH1'),x('B3','psA'),x('B4','po'),['#','C · Core y accesorios'],x('C1','coreE'),x('C2','brz')]),
+   rows2:ENT.concat([['#','A · Empuje'],x('A1','aEmp'),x('A2','aExpE'),x('A3','coreE'),['#','B · Tracción'],x('B1','aTrV'),x('B2','psA'),x('B3','po'),['#','C · Unilaterales y brazos'],x('C1','empV1'),x('C2','trH1'),x('C3','brz')])},
+  {k:'dB',name:'Día B',when:'tracción horizontal + empuje vertical',dur:'~60 min',cols:COLS,
+   rows:ENT.concat([['#','A · Básicos'],x('A1','bTrH'),x('A2','bEmpV'),x('A3','bExpA'),['#','B · Unilaterales y pierna'],x('B1','empH1'),x('B2','trV1'),x('B3','psB'),x('B4','po'),['#','C · Core y hombro'],x('C1','coreR'),x('C2','mang')]),
+   rows2:ENT.concat([['#','A · Empuje'],x('A1','bEmpV'),x('A2','bExpA'),x('A3','coreR'),['#','B · Tracción'],x('B1','bTrH'),x('B2','psB'),x('B3','po'),['#','C · Unilaterales y hombro'],x('C1','empH1'),x('C2','trV1'),x('C3','mang')])},
+  {k:'dC',name:'Día C',when:'potencia + fuerza (mixto)',dur:'~55 min',cols:COLS,notes:bici,
+   rows:ENT.concat([['#','A · Potencia de tren superior'],x('A1','lRot'),x('A2','plio'),['#','B · Fuerza'],x('B1','cInc'),x('B2','cTr'),x('B3','psC'),x('B4','po'),['#','C · Core y acondicionamiento'],x('C1','coreL'),x('C2','bici')]),
+   rows2:ENT.concat([['#','A · Empuje'],x('A1','cInc'),x('A2','plio'),x('A3','coreL'),['#','B · Tracción'],x('B1','cTr'),x('B2','lRot'),x('B3','psC'),['#','C · Pierna y acondicionamiento'],x('C1','po'),x('C2','bici')])},
+  {k:'dD',name:'Día D (opcional)',when:'si va 4 días: accesorios + acondicionamiento',dur:'~45 min',cols:COLS,notes:[],
+   rows:[['#','Entrada en calor'],['0','m','Bici fija + minitramp','',CAL],
+    ['#','A · Hombro, escápula y brazos'],
+    ['A1','a','Hombro','vuelos laterales · press Arnold sentado',['3x12','3x10','3x10']],
+    ['A2','a','Escápula','vuelos posteriores · face pull · pull down en X',['3x12','3x12','3x12']],
+    ['A3','a','Bíceps','curl martillo · curl en banco inclinado',['3x12','3x10','3x10']],
+    ['A4','a','Tríceps','francés · fondos en banco',['3x12','3x10','3x10']],
+    ['#','B · Pierna y core'],
+    ['B1','s','Pierna sana','lo que no hizo en la semana',['3x10','3x8','3x6']],
+    x('B2','po'),
+    ['B3','k','Core','dead bug · pallof · plancha',['3x10','3x10','3x10']],
+    ['#','C · Acondicionamiento'],x('C1','bici')]}];
+ })()}
+
 ];
 const RL={b:'Básico',s:'Secundario',e:'Explosivo',a:'Accesorio',p:'Prevención',k:'Core',m:'Movilidad',o:'Olímpico'};
-const GRP=[['Primera',['p1','p2']],['Formativas',['p3','p4']],['Generales e individuales',['p5','p6']]];
-const SHORT={p1:'Primera temporada',p2:'Primera pretemporada',p3:'U21',p4:'Formativas',p5:'Full body',p6:'Principiantes'};
-const DESC={p1:'Elegís la tarjeta según cuántos días faltan para el partido o pasaron desde el último.',
+const GRP=[['Primera',['p1','p2']],['Formativas',['p3','p4']],['Generales e individuales',['p5','p6']],['Lesionados',['p7']]];
+const SHORT={p1:'Primera temporada',p2:'Primera pretemporada',p3:'U21',p4:'Formativas',p5:'Full body',p6:'Principiantes',p7:'Lesión de pierna'};
+const DESC={p7:'Tren superior completo en 3 meses (estructura → fuerza → potencia) + lo que habilite el kine para las piernas.',p1:'Elegís la tarjeta según cuántos días faltan para el partido o pasaron desde el último.',
   p2:'5 semanas de carga + 2 de descarga. Días de fuerza y de potencia intercalados.',
   p3:'3 días con la misma tarjeta. Sube 5% por semana, el olímpico baja reps.',
   p4:'Técnico, sin %. Suben las reps y después el peso.',
@@ -4412,6 +4498,13 @@ const css=`
 .pg-ds{display:contents}
 .pg-role{font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:1px 5px;border-radius:4px;color:#fff}
 .r-b{background:#2f6fd6}.r-s{background:#3f9a62}.r-e{background:#e8590c}.r-a{background:#7950f2}.r-p{background:#c2255c}.r-k{background:#5c6b62}.r-m{background:#868e96}.r-o{background:#b8860b}
+.pg-mo{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pg-vr{display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--surface)}
+.pg-vr button{border:0;background:none;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.pg-vr button.on{background:var(--ink);color:var(--bg)}
+.pg-tpl{display:grid;gap:6px;margin-bottom:6px}
+.pg-tr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.pg-tr b{font-size:14px}
 .pg-note{font-size:12.5px;background:var(--surface);border-left:3px solid var(--accent);border-radius:6px;padding:6px 10px;color:var(--ink-2)}
 .pg-note.mine{border-left-color:var(--warn);background:var(--warn-soft)}
 .pg-split{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pg-split h5{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
@@ -4428,6 +4521,10 @@ const pById=id=>PR.find(p=>p.id===id);
 const nCards=p=>p.cards.length;
 function vProg(){
   let h='<p class="pg-intro">Plantillas armadas con los libros de Cesarino y Esper. Abrís un programa, elegís la tarjeta y se crea una <b>rutina nueva</b> con los bloques y la dosis de cada semana ya puestos: vos solo escribís los ejercicios.</p>';
+  const T=(S.tplAll||[]).slice().sort((a,b)=>(b.editada||0)-(a.editada||0));
+  h+='<h2 class="pg-sec">Mis plantillas</h2>'+(T.length?'<div class="pg-tpl">'+T.map(r=>'<div class="pg-tr"><b>'+esc(r.nombre)+'</b><span class="tiny">'+(r.semanas||4)+' sem · '+rutDays(r).length+(rutDays(r).length===1?' día':' días')+'</span><span class="grow"></span>'+
+    (RO?'':'<button class="btn sm ghost" data-tpledit="'+esc(r.id)+'">Editar</button><button class="btn sm pri" data-tpluse="'+esc(r.id)+'">Usar →</button>')+'</div>').join('')+'</div>':
+    '<p class="tiny" style="margin:0 0 6px">Todavía no tenés. En cualquier tarjeta tocá <b>✎ Editar como plantilla</b>: se copia acá y la cambiás a tu gusto (ejercicios, dosis, bloques, nombres).</p>');
   GRP.forEach(g=>{h+='<h2 class="pg-sec">'+g[0]+'</h2><div class="pg-grid">'+g[1].map(id=>{const p=pById(id);
     return '<div class="pg-card"><div class="pg-meta"><span class="pg-src">'+esc(p.sm)+'</span><span class="tiny">'+nCards(p)+(nCards(p)===1?' tarjeta':' tarjetas')+'</span></div><h3>'+esc(SHORT[id])+'</h3><p>'+DESC[id]+'</p>'+
       '<div class="pg-acts"><button class="btn sm pri" data-pgopen="'+id+'">Ver programa</button></div></div>';}).join('')+'</div>';});
@@ -4438,29 +4535,39 @@ function rowsH(rows,cols){
   let h='<div class="pg-t"><div class="pg-r hd" style="grid-template-columns:'+gt+'"><span></span><span>Qué va</span>'+cols.map(c=>'<span style="text-align:center">'+c+'</span>').join('')+'</div>';
   rows.forEach(r=>{if(r[0]==='#'){h+='<div class="pg-r bk">'+r[1]+'</div>';return;}
     const d=Array.isArray(r[4])?r[4]:[r[4]];
-    h+='<div class="pg-r" style="grid-template-columns:'+gt+'"><span class="pg-l">'+r[0]+'</span><span class="pg-q"><b>'+(r[1]?'<span class="pg-role r-'+r[1]+'">'+RL[r[1]]+'</span>':'')+r[2]+'</b>'+(r[3]?'<small>ej.: '+r[3]+'</small>':'')+'</span><span class="pg-ds">'+d.map((x,i)=>'<span class="pg-d" data-l="'+cols[i]+'">'+x+'</span>').join('')+'</span></div>';});
+    h+='<div class="pg-r" style="grid-template-columns:'+gt+'"><span class="pg-l">'+r[0]+'</span><span class="pg-q"><b>'+(r[1]?'<span class="pg-role r-'+r[1]+'">'+RL[r[1]]+'</span>':'')+r[2]+'</b>'+(r[3]?'<small>ej.: '+r[3]+'</small>':'')+'</span><span class="pg-ds">'+d.map((x,i)=>'<span class="pg-d" data-l="'+cols[i]+'">'+(Array.isArray(x)?x.filter((y,j)=>j===0||y!==x[j-1]).join(' → '):x)+'</span>').join('')+'</span></div>';});
   return h+'</div>';
 }
 const usable=c=>c.split||(c.cols||[]).every(x=>/^(Sem|Dosis|Desc)/.test(x));
 function cardH(c,pi,ci){
-  let h='<div class="pg-tc" id="pgc-'+(c.k||ci)+'"><div class="pg-tch"><h4>'+c.name+'</h4><span>'+(c.when||'')+(c.dur?' · '+c.dur:'')+'</span><div class="grow"></div>'+(usable(c)&&!RO?'<button class="btn sm pri" data-pguse="'+pi+':'+ci+'">Usar esta tarjeta →</button>':'')+'</div>';
-  h+=c.split?'<div class="pg-split">'+c.split.map(s=>'<div><h5>'+s[0]+'</h5>'+rowsH(s[1],['Dosis'])+'</div>').join('')+'</div>':rowsH(c.rows,c.cols);
+  let h='<div class="pg-tc" id="pgc-'+(c.k||ci)+'"><div class="pg-tch"><h4>'+c.name+'</h4><span>'+(c.when||'')+(c.dur?' · '+c.dur:'')+'</span><div class="grow"></div>'+(usable(c)&&!RO?'<button class="btn sm ghost" data-pgtpl="'+pi+':'+ci+'" title="Hace una copia en Mis plantillas para que la cambies a tu gusto">✎ Editar como plantilla</button><button class="btn sm pri" data-pguse="'+pi+':'+ci+'">Usar esta tarjeta →</button>':'')+'</div>';
+  h+=c.split?'<div class="pg-split">'+c.split.map(s=>'<div><h5>'+s[0]+'</h5>'+rowsH(s[1],['Dosis'])+'</div>').join('')+'</div>':rowsH(rowsOf(c),c.cols);
   (c.vars||[]).forEach(v=>h+='<div class="pg-note"><b>Variante · '+v[0]+':</b> '+v[1]+'</div>');
   (c.notes||[]).forEach((t,i)=>h+='<div class="pg-note'+(c.mine&&c.mine.includes(i)?' mine':'')+'">'+t+'</div>');
   return h+'</div>';
 }
+let PV=+ls.get('pf-pgvar',0)||0; /* variante de los programas que tienen dos */
+const rowsOf=c=>(PV===1&&c.rows2)?c.rows2:c.rows;
 const pill=(k,t)=>'<button type="button" class="pg-pill c-'+k+'" data-pggo="'+k+'">'+(t||CN[k])+'</button>';
 function openProg(id){
   const pi=PR.findIndex(p=>p.id===id),p=PR[pi];
   let b='<div class="rut-note"><ul class="pg-uso">'+p.uso.map(u=>'<li>'+u+'</li>').join('')+'</ul></div>';
-  if(p.map){b+='<div class="pg-h">¿Qué tarjeta toca hoy?</div><div class="pg-map">'+p.map.map(m=>'<div class="pg-mr"><div><b>'+m[0]+'</b>'+(m[1]?'<small>'+m[1]+'</small>':'')+'</div><div>'+m[2].map(x=>pill(x[0],x[1])).join(' o ')+(m[3]?' <span class="tiny">· '+m[3]+'</span>':'')+'</div></div>').join('')+'</div>';
+  if(p.vnames)b+='<div class="pg-mo"><span class="pg-vr">'+p.vnames.map((v,i)=>'<button type="button" data-pgvar="'+i+'" class="'+(PV===i?'on':'')+'">'+v+'</button>').join('')+'</span></div>';
+  if(p.mo&&!RO)b+='<div class="pg-mo">'+[0,1,2].map(i=>'<button class="btn'+(i===0?' pri':'')+'" data-pgmes="'+pi+':'+i+'">Armar mes '+(i+1)+' · '+MES[i]+'</button>').join('')+'<span class="tiny">Crea una rutina de 4 semanas con los días A, B, C y D (si va 3 días, borrás el D). Después le cambiás todos los nombres.</span></div>'+
+    '<div class="pg-mo">'+[0,1,2].map(i=>'<button class="btn sm ghost" data-pgmtpl="'+pi+':'+i+'">✎ Mes '+(i+1)+' como plantilla</button>').join('')+'<span class="tiny">Hace una copia en Mis plantillas para cambiarla a tu gusto.</span></div>';
+  if(p.mo&&p.map)b+='<div class="pg-h">¿Qué sumar según lo que habilite el kine?</div><div class="pg-map">'+p.map.map(m=>'<div class="pg-mr"><div><b>'+m[0]+'</b>'+(m[1]?'<small>'+m[1]+'</small>':'')+'</div><div class="tiny" style="font-size:13px;color:var(--ink-2)">'+m[3]+'</div></div>').join('')+'</div>';
+  if(p.map&&!p.mo){b+='<div class="pg-h">¿Qué tarjeta toca hoy?</div><div class="pg-map">'+p.map.map(m=>'<div class="pg-mr"><div><b>'+m[0]+'</b>'+(m[1]?'<small>'+m[1]+'</small>':'')+'</div><div>'+m[2].map(x=>pill(x[0],x[1])).join(' o ')+(m[3]?' <span class="tiny">· '+m[3]+'</span>':'')+'</div></div>').join('')+'</div>';
     b+='<div class="pg-h">Semanas de ejemplo</div><div class="pg-map">'+p.weeks.map(w=>'<div class="pg-mr"><div><b>'+w[0]+'</b></div><div class="pg-wk">'+w[1].map(d=>'<span>'+d[0]+pill(d[1])+'</span>').join('')+'</div></div>').join('')+'</div>';}
   b+='<div class="pg-h">Tarjetas</div>'+p.cards.map((c,ci)=>cardH(c,pi,ci)).join('');
   (p.vars||[]).forEach(v=>b+='<div class="pg-note"><b>Variante · '+v[0]+':</b> '+v[1]+'</div>');
   openModal(modalHead('Programas · '+p.sm,SHORT[id])+'<div class="modal-b">'+b+'</div><div class="modal-f"><div class="grow"></div><button class="btn" data-close>Cerrar</button></div>',mw=>{
     mw.classList.add('full');
     mw.addEventListener('click',e=>{const g=e.target.closest('[data-pggo]');if(g){const el=mw.querySelector('#pgc-'+g.dataset.pggo);if(el)el.scrollIntoView({behavior:'smooth'});}
-      const u=e.target.closest('[data-pguse]');if(u){const [a,c]=u.dataset.pguse.split(':').map(Number);usar(a,c);}});
+      const u=e.target.closest('[data-pguse]');if(u){const [a,c]=u.dataset.pguse.split(':').map(Number);usar(a,c);}
+      const ut=e.target.closest('[data-pgtpl]');if(ut){const [a,c]=ut.dataset.pgtpl.split(':').map(Number);usar(a,c,true);}
+      const um=e.target.closest('[data-pgmes]');if(um){const [a,m]=um.dataset.pgmes.split(':').map(Number);usarMes(a,m);}
+      const umt=e.target.closest('[data-pgmtpl]');if(umt){const [a,m]=umt.dataset.pgmtpl.split(':').map(Number);usarMes(a,m,true);}
+      const vr=e.target.closest('[data-pgvar]');if(vr){PV=+vr.dataset.pgvar;ls.set('pf-pgvar',PV);const st=mw.querySelector('.modal').scrollTop;closeModal();openProg(id);const m2=document.querySelector('#mw .modal');if(m2)m2.scrollTop=st;}});
   });
 }
 /* tarjeta → rutina nueva: ejercicio vacío con "qué va" como guía y la dosis de cada semana ya cargada */
@@ -4483,7 +4590,8 @@ function canon(t){
 function w1(e,c){let m=c.match(/^(\d+)x([\d-]+)(?:\s+(.*))?$/);
   if(m){e.series=m[1];const rr=m[2].split('-');if(rr.length>1){e.reps=rr;e.dist=true;}else e.reps=[m[2]];e.c=m[3]||'';return;}
   m=c.match(/^(\d+)(?: reps (.*))?$/);if(m){e.reps=[m[1]];e.c=m[2]||'';return;}e.c=c;}
-function toEx(r,nw,L){
+const MES=['estructura','fuerza','fuerza + potencia'];
+function toEx(r,nw,L,tpl){
   const raw=Array.isArray(r[4])?r[4]:[r[4]];const d=raw.map(canon);const e={n:''};
   w1(e,d[0].c);
   const cues=[];const sm=String(raw[0]).match(/<small>(.*?)<\/small>/);if(sm)cues.push(sm[1].replace(/[()]/g,''));
@@ -4491,25 +4599,47 @@ function toEx(r,nw,L){
   if(nw>1){e.prog=[''];for(let w=1;w<nw;w++)e.prog.push(d[w]&&d[w].c!==d[w-1].c?d[w].c:'');}
   if(cues.length)e.obs=cues.join(' · ');
   L.push({q:strip(r[2]),ej:r[3]?'ej.: '+strip(r[3]):''});
+  if(tpl){e.n='['+strip(r[2]).toLocaleUpperCase('es')+']';const ej=r[3]?'ej.: '+strip(r[3]):'';e.obs=[ej,e.obs||''].filter(Boolean).join(' — ');if(!e.obs)delete e.obs;}
   return e;
 }
-function toBlocks(rows,nw,first,L){
+function toBlocks(rows,nw,first,L,tpl){
   const bl=[];let cur=null;
   rows.forEach(r=>{if(r[0]==='#'){cur={nombre:strip(r[1]).replace(/^[A-E] · /,''),obj:OBJG(r[1]),ejercicios:[]};bl.push(cur);return;}
-    if(!cur){cur={nombre:first||'Bloque A',obj:OBJG(first||''),ejercicios:[]};bl.push(cur);}cur.ejercicios.push(toEx(r,nw,L));});
+    if(!cur){cur={nombre:first||'Bloque A',obj:OBJG(first||''),ejercicios:[]};bl.push(cur);}cur.ejercicios.push(toEx(r,nw,L,tpl));});
   return bl;
 }
-function usar(pi,ci){
+/* programa por meses: una rutina de 4 semanas con todos los días del mes elegido */
+function usarMes(pi,mi,tpl){
+  const p=PR[pi],ses=[],G=[];
+  p.cards.forEach(c=>{const rows=[];rowsOf(c).forEach(r=>{if(r[0]==='#'){rows.push(r);return;}const v=r[4][mi];if(v==='—')return;rows.push([r[0],r[1],r[2],r[3],Array.isArray(v)?v:[v,v,v,v]]);});
+    const L=[];ses.push({nombre:c.name.replace(/ \(opcional\)/,''),bloques:toBlocks(rows,4,c.name,L,tpl).filter(b=>b.ejercicios.length)});G.push(L);});
+  abrir((tpl?'Plantilla · ':'')+'Mes '+(mi+1)+' · '+MES[mi].replace(/^./,x=>x.toUpperCase()),4,ses,G,tpl);
+}
+function abrir(nombre,nw,ses,G,tpl){
+  closeModal();
+  openRut(null,Object.assign({nombre,tipo:'gym',semanas:nw,sesiones:ses},tpl?{plantilla:true}:{}));
+  PGPH=tpl?null:{names:ses.map(s=>s.nombre),g:G};
+  if(window.innerWidth>860)setTimeout(()=>{const n=document.getElementById('r_n');if(n){n.focus();n.select();}},80);
+}
+/* una plantilla tuya → rutina nueva: lo que está entre corchetes queda vacío con la guía en naranja */
+function usarTpl(id){
+  const r=rutById(id);if(!r)return;
+  const ses=JSON.parse(JSON.stringify(rutDays(r))).map(d=>{delete d.d;delete d.hora;return d;}),G=[];
+  ses.forEach(d=>{const L=[];(d.bloques||[]).forEach(b=>(b.ejercicios||[]).forEach(e=>{
+    const t={q:'',ej:''};const m=String(e.n||'').match(/^\[(.*)\]$/);if(m){t.q=m[1].charAt(0)+m[1].slice(1).toLocaleLowerCase('es');e.n='';}
+    const o=String(e.obs||'');if(/^ej\.:/i.test(o)){const k=o.indexOf(' — ');t.ej=k>=0?o.slice(0,k):o;e.obs=k>=0?o.slice(k+3):'';}
+    L.push(t);}));G.push(L);});
+  abrir(String(r.nombre||'').replace(/^plantilla\s*·\s*/i,''),r.semanas||4,ses,G,false);
+}
+function usar(pi,ci,tpl){
   const p=PR[pi],c=p.cards[ci];
   const nw=c.split?1:Math.min((c.cols||[]).filter(x=>/^Sem/.test(x)).length||1,12);
   const ses=[],G=[];
-  const mk=(nombre,rows,first)=>{const L=[];ses.push({nombre,bloques:toBlocks(rows,nw,first,L)});G.push(L);};
+  const mk=(nombre,rows,first)=>{const L=[];ses.push({nombre,bloques:toBlocks(rows,nw,first,L,tpl)});G.push(L);};
   if(c.split)c.split.forEach(s=>mk(s[0].replace(/^Jugó /,'').replace(/ \(.*/,''),s[1],c.name));
   else{const nd=/^Día (U21|formativas)/.test(c.name)?3:1;for(let i=0;i<nd;i++)mk(nd>1?'Día '+(i+1):c.name,c.rows,c.k==='pri'?'Priming':c.name);}
   if(c.k==='pri'||c.k==='md0')ses.forEach(s=>{if(s.bloques[0])s.bloques[0].obj='act';});
-  closeModal();
-  openRut(null,{nombre:SHORT[p.id]+' · '+c.name,tipo:'gym',semanas:nw,sesiones:ses});
-  PGPH={names:ses.map(s=>s.nombre),g:G};
+  abrir((tpl?'Plantilla · ':'')+c.name,nw,ses,G,tpl);
 }
 /* guía naranja en el nombre del ejercicio vacío (y ejemplos en la observación) */
 new MutationObserver(()=>{
@@ -4517,13 +4647,15 @@ new MutationObserver(()=>{
   const dn=mw.querySelector('#d_n');const di=dn?PGPH.names.indexOf(dn.value.trim()):-1;const L=di>=0?PGPH.g[di]:null;if(!L)return;
   mw.querySelectorAll('#blocks .exr').forEach((x,i)=>{const t=L[i];if(!t||x.dataset.pg)return;x.dataset.pg=1;
     const n=x.querySelector('.ex-n'),o=x.querySelector('.ex-o');
-    if(n){n.placeholder='✎ '+t.q;n.classList.add('pg-ph');}if(o&&t.ej)o.placeholder=t.ej;});
+    if(n&&t.q){n.placeholder='✎ '+t.q;n.classList.add('pg-ph');}if(o&&t.ej)o.placeholder=t.ej;});
 }).observe(document.getElementById('modalRoot'),{childList:true,subtree:true});
 /* menú y vista */
 const _rn=renderNav;renderNav=function(){_rn();const g=document.querySelector('#catNav .grp');if(!g)return;const b=document.createElement('button');b.className='cat-btn lib-btn'+(S.view==='prog'?' on':'');b.setAttribute('data-progs','');b.innerHTML='<span class="nm">Programas</span><span class="lib-n">'+PR.length+'</span>';g.insertBefore(b,g.querySelector('[data-ejs]'));};
 document.getElementById('catNav').addEventListener('click',e=>{if(e.target.closest('[data-progs]')){S.view='prog';ls.set('pf-view','prog');renderNav();render();if(window.innerWidth<=860)setSide(false);}});
 const _r=render;render=function(){if(S.view!=='prog')return _r();renderAgenda();$('#tabs').hidden=true;$('#kpis').hidden=true;$('#catName').textContent='Programas';$('#catGroup').textContent='Plantillas';$('#editCat').hidden=true;$('#view').innerHTML=vProg();};
-document.getElementById('view').addEventListener('click',e=>{const o=e.target.closest('[data-pgopen]');if(o)openProg(o.dataset.pgopen);});
+document.getElementById('view').addEventListener('click',e=>{const o=e.target.closest('[data-pgopen]');if(o)openProg(o.dataset.pgopen);
+  const u=e.target.closest('[data-tpluse]');if(u)usarTpl(u.dataset.tpluse);
+  const ed=e.target.closest('[data-tpledit]');if(ed)openRut(ed.dataset.tpledit);});
 renderNav();if(S.view==='prog')render();
 })();
 
