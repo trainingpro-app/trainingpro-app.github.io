@@ -895,7 +895,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · menú lateral angosto</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · programas</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -4128,6 +4128,367 @@ Store.init().then(()=>{
     });
   };
 });
+/* ================= programas / plantillas (Cesarino, Esper): tarjetas que se convierten en rutina nueva ================= */
+(function(){
+const W4=['Sem 1','Sem 2','Sem 3','Sem 4'];
+const PR=[
+/* ===================== 1 ===================== */
+{id:'p1',tab:'Primera · temporada',sm:'Cesarino',
+ title:'Primera · En temporada (según el partido)',
+ tags:[['src','Cesarino · cap. 3, 6 y 7'],['','Planificación vertical (día a día)'],['','Sin semanas fijas: manda el calendario']],
+ uso:['Cada día elegís <b>una tarjeta</b> según cuántos días faltan para el partido o pasaron desde el último (abajo está el mapa).',
+      'La carga sube o baja por el calendario, no por la semana: semana sin partido = días más fuertes; semana con 2–3 partidos = microdosis.',
+      'Día a día alternás patrones: si hoy fue rodilla + empuje (sentadilla, banca), el próximo día fuerte es cadera + tracción (hip thrust/despegue, remo).'],
+ map:[
+  ['MD+1','día después',[['post','Post-partido por minutos']]],
+  ['MD+2 / MD-3 o más','lejos del partido',[['con','Contrastes']],'el día fuerte de la semana'],
+  ['MD-2','',[['con','Contrastes'],['est','Estructura']],'contrastes si es el único día fuerte; si ayer ya hubo contrastes, estructura'],
+  ['MD-1','24–36 h antes',[['pri','Priming']]],
+  ['MD','día de partido',[['md0','Priming corto']],'opcional: a la mañana o 30–60 min antes'],
+  ['Partido cada 48 h','el día del medio',[['circ','Circuito movilidad + zona media']]],
+  ['Semana sin partido','',[['con','Contrastes'],['pot','Potencia']],'alternás un día y un día: C · P · C · P · C']],
+ weeks:[
+  ['1 partido (jueves)',[['Lun','con'],['Mar','con'],['Mié','pri'],['Jue','par'],['Vie','post']]],
+  ['2 partidos (viernes y jueves)',[['Jue','pri'],['Vie','par'],['Dom','post'],['Lun','con'],['Mié','pri'],['Jue','par']]],
+  ['3 partidos en 5 días',[['Mar','md0'],['Mar','par'],['Mié','circ'],['Jue','md0'],['Jue','par'],['Vie','circ'],['Sáb','md0'],['Sáb','par']]],
+  ['Sin partido',[['Mar','pot'],['Mié','con'],['Jue','pot'],['Vie','con'],['Sáb','pot']]]],
+ cards:[
+ {k:'con',name:'Contrastes',when:'MD+2 / MD-3 · el día fuerte',dur:'~60 min',cols:['Dosis'],rows:[
+  ['#','Preparación'],
+  ['0','m','Movilidad + zona media','la hacen al llegar, por su cuenta','libre'],
+  ['#','A · Neural'],
+  ['A1','o','Derivado olímpico','cargada · arranque · segundo tiempo · tirones','3x3 85%<br><small>sin partido: 3x2 90%</small>'],
+  ['#','B · Contraste tren inferior'],
+  ['B1','b','Básico con bandas (rodilla o cadera)','sentadilla / sentadilla asimétrica · hip thrust · despegue con trap','1x5 75% · 1x3 80% · 1x2 85%'],
+  ['B2','e','Salto con carga','saltos con trap · saltos asimétricos desde cajón','5 al 30%'],
+  ['B3','e','Pliometría reactiva','drop jump step back / lateral / rotacional','3–5 (3 x lado)'],
+  ['B4','e','Salto multidireccional','vallas con paso lateral · bandeja resistida · salto horizontal','3–5 (3 x lado)'],
+  ['#','C · Contraste tren superior'],
+  ['C1','b','Básico con bandas (empuje o tracción)','press banca · remo con barra · remo con trap · remo al mentón','1x5 75% · 1x3 80% · 1x2 85%'],
+  ['C2','e','Lanzamiento MB','de pecho · primer paso · desde recepción','3–5'],
+  ['C3','e','Lanzamiento MB rotacional','rotacional con paso lateral · sobre cabeza con giro','3–5'],
+  ['#','D · Unilaterales'],
+  ['D1','s','Tracción o empuje a 1 brazo','remo 1 brazo · remo TRX · face pull TRX · press landmine','3x8'],
+  ['D2','s','Pierna unilateral','subida al banco · PM a 1 pierna · búlgara · sentadilla lateral','3x6'],
+  ['#','E · Adicional estructura'],
+  ['E1','a','Hombro / escápula','vuelos laterales o posteriores · pull down en X','3x8'],
+  ['E2','a','Brazo','bíceps + press · tríceps francés','3x8'],
+  ['E3','a','Otro accesorio','remo al mentón · rotadores · aperturas','3x8']],
+  vars:[['Perimetrales / internos','misma tarjeta. Perimetrales: saltos con step back, paso lateral, bandeja. Internos: saltos y lanzamientos con giro, rotación y recepción.'],
+        ['Más adelante en la temporada','el básico pasa de 1x5 · 1x3 · 1x2 a 1x4 · 1x3 · 2x2 (más series pesadas, mismo techo de 85%).']]},
+ {k:'pot',name:'Potencia',when:'semana sin partido, entre contrastes · todos juntos',dur:'~30 min',cols:['Dosis'],rows:[
+  ['A1','o','Olímpico principal','tirones · cargada · arranque','4x2 90–100%<br><small>(% de la cargada)</small>'],
+  ['A2','o','Olímpico secundario','cargada francesa · arranque francés · shrug jump','3x3 80%'],
+  ['A3','e','Salto con carga','asimétricos desde cajón · con trap · soltando carga','3x3 30%'],
+  ['#','Adicional estructura'],
+  ['E1','a','Hombro / escápula','face pull TRX · vuelos posteriores · pull down en X','3x8'],
+  ['E2','a','Brazo / hombro','tríceps francés · vuelos frontales','3x8'],
+  ['E3','a','Otro accesorio','remo en trap · rotadores externos · empuje-tracción con banda','3x8']]},
+ {k:'est',name:'Estructura',when:'MD-2 cuando ya hubo contrastes',dur:'~40 min',cols:['Dosis'],rows:[
+  ['A1','o','Olímpico','cargada francesa','3x3 85%'],
+  ['A2','s','Pierna unilateral','búlgara · estocada','3x5'],
+  ['A3','s','Tracción','remo TRX con peso · remo 1 brazo','3x8'],
+  ['A4','b','Empuje','press banca','3x6 75%'],
+  ['A5','s','Cadera unilateral','PM asimétrico','3 x lado'],
+  ['#','Adicional estructura'],
+  ['E','a','3 accesorios','remo 1 brazo en plancha · flexiones diamante · press militar 1 brazo','3x8 c/u']]},
+ {k:'pri',name:'Priming',when:'MD-1 · 24–36 h antes',dur:'≤ 30 min',cols:['Dosis'],rows:[
+  ['A1','o','Olímpico','cargada · 1 tirón + 1 cargada / arranque','3x3 85%<br><small>o 3x2 80%</small>'],
+  ['A2','o','Olímpico 2','tirones de arranque · segundo tiempo · arranque francés','3x3'],
+  ['A3','e','Salto con carga','asimétricos desde cajón · sentadilla con salto y bandas','3x3 30%'],
+  ['#','Adicional estructura (máx. 3, nada de básicos)'],
+  ['E1','a','Hombro / escápula','vuelos posteriores · face pull TRX','3x8'],
+  ['E2','a','Manguito rotador / dorsal','pull down en X · rotadores','3x8'],
+  ['E3','a','Hombro','press Arnold · remo al mentón · pull over con disco','3x8']],
+  notes:['Cerca del partido solo fuerza: nada de intermitentes, HIIT ni velocidad aislada (el libro es tajante con esto).']},
+ {k:'md0',name:'Priming corto',when:'día de partido · a la mañana o 30–60 min antes',dur:'~15 min',cols:['Dosis'],rows:[
+  ['A1','o','Olímpico','cargada · arranque','3x3 70–80%'],
+  ['A2','o','Olímpico 2 / tirón','tirones de arranque · segundo tiempo','3x3'],
+  ['A3','e','Salto o tren superior','estocada drop · sentadilla con salto · press banca con bandas 80%','3x3']]},
+ {k:'post',name:'Post-partido por minutos',when:'MD+1',dur:'',split:[
+  ['Jugó más de 20 min (G+20)',[
+   ['1','m','Rolo / pistola','por grupo muscular','10'],['2','m','Movilidad','90-90 de cadera · dorsiflexión · bretzels · YTW','10'],['3','m','Estiramientos','','10'],
+   ['#','Opcional (si está fresco)'],['4','s','Empuje','press landmine','3x8'],['5','s','Pierna','subida al banco','3x5'],['6','s','Tracción','remo 1 brazo','3x8']]],
+  ['Jugó menos de 20 min (G-20)',[
+   ['1','o','Olímpico','cargada · arranque · tirones con trap','3x3 75%'],['2','s','Pierna unilateral "caos"','búlgara · estocada · subida al banco','3x5'],
+   ['3','s','Empuje "caos" (carga colgada de bandas)','press militar · press banca','3x5'],['4','s','Tracción','remo a caballo · remo TRX 1 brazo','3x6'],['5','s','Cadera unilateral','PM asimétrico · puente 1 pierna','3x5']]]],
+  notes:['No jugó: hace la tarjeta de <b>Contrastes</b> normal.','Excepciones a criterio tuyo: un G-20 con golpe o molestia pasa a G+20; un G+20 entero puede hacer G-20.']},
+ {k:'circ',name:'Circuito movilidad + zona media',when:'entre dos partidos seguidos',dur:'~20 min',cols:['Dosis'],rows:[
+  ['1','m','Movilidad','cadera · tobillo · torácica','3 rondas'],['2','k','Zona media','anti-extensión · anti-rotación · anti-flexión lateral','3 rondas']]}]},
+/* ===================== 2 ===================== */
+{id:'p2',tab:'Primera · pretemporada',sm:'Cesarino',
+ title:'Primera · Pretemporada (5 de carga + 2 de descarga)',
+ tags:[['src','Cesarino · cap. 3 y 7'],['','Lineal: sube el % todas las semanas'],['','Días de fuerza y días de potencia intercalados']],
+ uso:['Días 1-3-5: tarjeta <b>Fuerza-contraste</b> (cambiás el patrón: día 1 sentadilla + banca, día 3 hip thrust + remo, día 5 sentadilla al cajón + banca). Días 2-4: tarjeta <b>Potencia</b>.',
+      'Si tenés 3 días de gym: Fuerza · Potencia · Fuerza.',
+      'Test de control al arrancar la semana 7. Las semanas 6 y 7 son descarga: menos volumen y la consigna es "velocidad máxima posible".'],
+ cards:[
+ {name:'Fuerza-contraste',when:'días 1, 3 y 5',dur:'~70 min',cols:['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Desc. 6','Desc. 7'],rows:[
+  ['A1','o','Derivado olímpico','cargadas · arranque',['2x4 80%<br>2x3 85%','2x3 85%<br>2x2 90%','2x2 90%<br>2x2 95%','2x2 95%<br>2x2 100%','2x2 100%<br>2x2 105%','3x4 80%','3x3 85%']],
+  ['B1','b','Básico tren inferior','sentadilla · hip thrust · sentadilla al cajón',['2x4 80%<br>3x3 85%','2x3 85%<br>3x2 90%','2x2 90%<br>3x1 95%','2x2 95%<br>3x1 100%','2x2 100%<br>3x1 105%','3x4 80%<br>con bandas','3x3 85%<br>con bandas']],
+  ['B2','e','Salto con carga','sentadilla con salto · salto con trap',['5 · 30%','5 · 30%','4 · 35%','4 · 35%','4 · 35%','5 · 30%','5 · 30%']],
+  ['B3','e','Drop jump','vertical · horizontal',['5 · 60–70 cm','5 · 65–75 cm','3 · 70–80 cm','3 · 75–85 cm','3 · 75–85 cm','5 hops a vallas','5 hops a vallas']],
+  ['B4','e','Salto a cajón / vallas','piernas rectas a cajones · saltos horizontales reactivos',['5','5 paso lateral','5 paso lateral','5 lateral + horizontal','5 lateral + horizontal','5','5 paso lateral']],
+  ['C1','b','Básico tren superior','press plano · remo con barra a 90°',['2x4 80%<br>2x3 85%','2x3 85%<br>2x2 90%','2x2 90%<br>2x1 95%','2x2 95%<br>2x1 100%','2x2 100%<br>2x1 105%','3x4 80%','3x3 85%']],
+  ['C2','e','Pliometría superior','flexiones resistidas con salto',['5','5','5','5','5','—','—']],
+  ['C3','e','Lanzamiento MB','de pecho arrodillado · pullover',['5','5','5 alejado','5 alejado','5 alejado','5','5']],
+  ['C4','e','Lanzamiento reactivo','al suelo · rotacional',['5','5','5','5','5','5','5']],
+  ['D1','s','Cadera unilateral','puente unilateral · buenos días unilateral',['3x8','3x8','3x10','3x10','3x10','3x8','3x8']],
+  ['D2','s','Tracción unilateral','remo unilateral · press landmine',['3x12','3x10','3x8','3x6','3x6','3x12','3x10']]],
+  notes:['Los % por encima de 100 son del libro: se calculan sobre el RM del inicio, que para la semana 4–5 ya quedó viejo.']},
+ {name:'Potencia',when:'días 2 y 4',dur:'~35 min',cols:['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Desc. 6','Desc. 7'],rows:[
+  ['A1','o','Olímpico principal','cargadas · arranque',['5x3 85%','3x3 85%<br>2x2 90%','5x2 90%','6x1 95%','6x1 100%','3x4 80%','3x3 85%']],
+  ['A2','o','Olímpico secundario','arranque francés · cargada francesa',['4x3','4x3','4x2','4x2','4x1','3x4','3x3']],
+  ['A3','e','Salto con carga','con trap · saltos con carga',['3x5 30%','3x4 35%','3x3 40%','3x3 40%','3x3 40%','3x5 30%','3x4 35%']],
+  ['A4','o','3° olímpico (opcional)','segundo tiempo · en tijera',['3x3','3x3','3x2','3x1','3x1','3x3','3x3']]]}]},
+/* ===================== 3 ===================== */
+{id:'p3',tab:'U21',sm:'Cesarino',
+ title:'U21 · Mes lineal de 3 días',
+ tags:[['src','Cesarino · cap. 5 (tablas 5.1–5.3)'],['','Lineal: compiten el finde, se puede progresar 4 semanas seguidas']],
+ uso:['Los 3 días tienen <b>la misma tarjeta</b>; cambia el patrón: Día 1 rodilla + empuje horizontal, Día 2 cadera/trap + tracción (saltos horizontales), Día 3 sentadilla frontal + empuje vertical.',
+      'Todo sube junto: el olímpico baja reps (5→2), los básicos suben 5% por semana (75→95%), los saltos suben altura y en la semana 4 se hacen con paso lateral.',
+      'Los accesorios del final quedan fijos todo el mes.'],
+ cards:[{name:'Día U21',when:'lunes · miércoles · viernes',dur:'~60 min',cols:W4,rows:[
+  ['1','o','Derivado olímpico','D1 cargadas · D2 arranque · D3 segundo tiempo',['3x5','3x4','3x3','3x2']],
+  ['2','b','Básico tren inferior','D1 sentadilla · D2 despegue con trap · D3 sentadilla frontal (−15%)',['2x5 75%<br>2x4 80%','2x4 80%<br>2x3 85%','2x3 85%<br>2x2 90%','2x2 90%<br>2x1 95%']],
+  ['3','e','Pliometría reactiva','vallas reactivas · drop jump horizontal · drop jump a la valla',['5','5 subir altura','5 subir altura','5 con paso lateral']],
+  ['4','e','Salto con carga','saltos con carga · horizontales con peso · desde cajones',['3','3','3','3']],
+  ['5','e','Salto','al cajón · horizontal + vallas · hops a las vallas',['5','5 subir altura','5 subir altura','5 con paso lateral']],
+  ['6','b','Básico tren superior','D1 press banca · D2 remo · D3 press militar',['2x5 75%<br>2x4 80%','2x4 80%<br>2x3 85%','2x3 85%<br>2x2 90%','2x2 90%<br>2x1 95%']],
+  ['7','e','Lanzamiento MB','a la pared · al suelo · hacia arriba',['5','5','5 arrodillado','5 arrodillado']],
+  ['8','e','Lanzamiento MB 2','rotacional · pull over · de caída hacia arriba',['5','5','5 paso lateral','5 paso lateral']],
+  ['9','s','Tracción / brazo','remo en plancha · bíceps + press · remo a 1 brazo',['3x8','3x8','3x8','3x8']],
+  ['10','s','Pierna o cadera unilateral','PM asimétrico · búlgara con empuje · puente deslizado 1 pierna',['3x6','3x6','3x6','3x6']]],
+  notes:['El libro muestra un solo mes. <b>Sugerencia mía</b> (no está en la tabla): para encadenar meses, meter una semana de descarga como la de Cesarino en pretemporada (básicos 3x4 80% → 3x3 85%) y volver a arrancar.'],
+  mine:[0]}]},
+/* ===================== 4 ===================== */
+{id:'p4',tab:'U15 · formativas',sm:'Cesarino',
+ title:'U15 / formativas · Mes técnico de 3 días',
+ tags:[['src','Cesarino · cap. 5 (tablas 5.4–5.5)'],['','Sin %: la carga sube con repeticiones y después con peso']],
+ uso:['El libro lo muestra para U15 (no U13). Sirve igual para U13–U15.',
+      'Cada día: salto → driles → tren inferior → tren superior → zona media. Todo con énfasis técnico.',
+      'Progresión del tren inferior: primero suben las reps (6→8), después agregás peso y volvés a 6.'],
+ cards:[{name:'Día formativas',when:'3 días por semana',dur:'~50 min',cols:W4,rows:[
+  ['1','e','Salto','D1-D2 aterrizajes + salto al cajón y derivados · D3 driles de salto a vallas',['técnica','técnica','técnica','técnica']],
+  ['2','m','Driles','D1-D3 driles de pared + técnica de carrera · D2 posición de cambio de dirección',['técnica','técnica','técnica','técnica']],
+  ['3','b','Tren inferior (rodilla)','D1 sentadilla profunda · D3 subida al cajón',['4x6','4x8','4x6 con peso','4x8 con peso']],
+  ['3b','b','Tren inferior (cadera) · D2','peso muerto · hip thrust',['4x6 · 30 kg','4x6 · 30 kg','4x8 · 30 kg','4x8 · 30 kg']],
+  ['4','s','Empuje · D1 y D3','press de pecho con discos · press de hombro con discos',['4x6','4x6','4x6','4x6']],
+  ['4b','s','Tracción · D2','remo con disco → remo con barra',['4x6 disco','4x8 barra','4x8 barra','4x10 barra']],
+  ['5','k','Zona media','D1-D3 anti-extensión + anti-flexión lateral · D2 anti-flexión + anti-extensión',['2 ejercicios','2 ejercicios','2 ejercicios','2 ejercicios']]],
+  notes:['Los 30 kg del peso muerto quedan fijos todo el mes: lo que progresa son las repeticiones. Ajustalo a tus chicos.']}]},
+/* ===================== 5 ===================== */
+{id:'p5',tab:'Full body 2 días',sm:'Esper',
+ title:'Full body deportista · 2 días (A / B)',
+ tags:[['src','Esper · Guía para programar + libro'],['','Para individuales, diferenciados o categorías con 2 días de gym'],['','Esper: 2 días es lo óptimo en temporada']],
+ uso:['Dos sesiones, A y B. En el mes las alternás: semana 1 A/B, semana 2 B/A, semana 3 A/B, semana 4 B/A.',
+      'Los básicos llevan %; el resto progresa con repeticiones y RIR (repeticiones en reserva).',
+      'Mes a mes (de Esper): Fase 1 empieza en 70%, Fase 2 en 75%, Fase 3 en 80% (+5% cada mes). En la última semana de la fase 3, serie AMRAP al 90% para recalcular el RM.'],
+ cards:[{name:'Sesión A',when:'día 1',dur:'~55 min',cols:W4,rows:[
+  ['#','A · Potencia'],
+  ['A','e','Explosivo / pliométrico / balístico','cargada de potencia · salto al cajón · lanzamiento MB',['3x5 75%','3x3 77,5%','3x1 80%','3x5/3/1<br>75/77,5/80%']],
+  ['A1','k','Core anti-flexión lateral','plancha lateral · farmer a 1 mano',['3x8','3x8','3x8','3x8']],
+  ['A2','p','Prehab / correctivo','gemelos excéntricos · rotadores · YTW',['2x10','2x10','2x10','2x10']],
+  ['#','B · Fuerza'],
+  ['B','b','Rodilla bilateral','sentadilla trasera · frontal',['3x5 70%','3x5/5/3<br>70/70/72,5%','3x3/3/1<br>72,5/72,5/75%','3x3/1/1<br>72,5/75/77,5%']],
+  ['B1','s','Tracción horizontal unilateral','remo 1 brazo · remo TRX',['3x8 RIR 4','3x8/8/10','3x8/10/10','3x10 RIR 3/2/1']],
+  ['#','C · Hipertrofia'],
+  ['C','s','Empuje vertical unilateral','press militar 1 brazo · landmine',['3x10 RIR 3','3x10/10/12','3x10/12/12','3x12 RIR 2/1/1']],
+  ['C1','s','Cadera unipodal (o core)','puente 1 pierna · PM 1 pierna',['3x10 RIR 3','3x10/10/12','3x10/12/12','3x12 RIR 2/1/1']],
+  ['D','a','Acondicionamiento (opcional)','air bike · swing',['—','—','—','—']]]},
+ {name:'Sesión B',when:'día 2',dur:'~55 min',cols:W4,rows:[
+  ['#','A · Potencia'],
+  ['A','e','Explosivo / pliométrico / balístico','salto horizontal · lanzamiento rotacional · swing',['3x5','4x3','4x3','3x3']],
+  ['A1','k','Core anti-rotación','pallof press · plancha con remo',['3x8','3x8','3x8','3x8']],
+  ['A2','p','Prehab / correctivo','copenhague · nórdicos · face pull',['2x10','2x10','2x10','2x10']],
+  ['#','B · Fuerza'],
+  ['B','b','Cadera bipodal','peso muerto · hip thrust · trap bar',['3x5 70%','3x5/5/3<br>70/70/72,5%','3x3/3/1<br>72,5/72,5/75%','3x3/1/1<br>72,5/75/77,5%']],
+  ['B1','s','Empuje horizontal unilateral','press mancuerna 1 brazo · flexiones',['3x8 RIR 4','3x8/8/10','3x8/10/10','3x10 RIR 3/2/1']],
+  ['#','C · Hipertrofia'],
+  ['C','s','Rodilla unipodal lateral','sentadilla lateral · estocada lateral',['3x10 RIR 3','3x10/10/12','3x10/12/12','3x12 RIR 2/1/1']],
+  ['C1','s','Tracción horizontal (o core)','remo invertido · plancha con arrastre',['3x10 RIR 3','3x10/10/12','3x10/12/12','3x12 RIR 2/1/1']],
+  ['D','a','Acondicionamiento (opcional)','',['—','—','—','—']]]}],
+ vars:[['Si son 3 días','sumás Sesión C: cadera bipodal + empuje horizontal unilateral + rodilla unipodal + tracción vertical + core anti-flexión lateral. Mes: A/B/C todas las semanas.'],
+       ['"Los 3 grandes" (versión corta, 2–3 días con poco tiempo)','A básico 6x6 (70→85% del 6RM, +5% por semana) emparejado: 3 series con A1 (secundario 3x8 RIR 2/3) y 3 series con A2 (tracción 3x8→3x10). Sin nada más que un core.']]},
+/* ===================== 6 ===================== */
+{id:'p6',tab:'Principiantes',sm:'Esper',
+ title:'Principiantes · aprender → cargar (6 meses)',
+ tags:[['src','Esper · Génesis y Strong First'],['','Para chicos que recién empiezan gym o jugadores sin base']],
+ uso:['Primero se aprende el movimiento (Génesis), después se carga (Strong First en 3 bloques de 4 semanas).',
+      'Los ejercicios por patrón son siempre los mismos: rodilla, cadera, empuje, tracción, core. Lo que cambia es la fase.'],
+ cards:[{name:'Génesis · aprender el movimiento',when:'los primeros meses',dur:'',cols:['Fase 1 · movimiento','Fase 2 · técnica','Fase 3 · ejercicio'],rows:[
+  ['1','b','Rodilla','',['sentadilla de pulso · copa','copa → barra (últ. 2 sem.)','sentadilla trasera · zercher']],
+  ['2','b','Cadera','',['buenos días con KB · bisagra','RNT deadlift · rumano mancuernas · hip thrust con barra','peso muerto (sumo, convencional, trap) · hip thrust']],
+  ['3','s','Empuje','',['push up','press plano','banco plano']],
+  ['4','s','Tracción','',['remo 1 brazo · remo en anillas','ídem','ídem']],
+  ['5','s','Unilateral','',['split squat · PM 1 pierna','ídem','ídem + press mancuernas']],
+  ['6','k','Core','',['bracing · plancha · plancha lateral · pallof','dead bug · plancha RKC · pallof dinámico','roll out · pallof combo · stir the pot']],
+  ['7','m','Correctivos','',['cat-camel · bird dog · rotación torácica','+ bisagra · pulse squat','extensión torácica · goblet']]],
+  notes:['En esta etapa la carga no es lo importante: cuenta la técnica y que se haga el hábito.']},
+ {name:'Strong First · cargar',when:'3 bloques de 4 semanas',dur:'',cols:['Bloque 1','Bloque 2','Bloque 3'],rows:[
+  ['A','b','Básicos (rodilla, cadera, empuje)','sentadilla · hip thrust · banco · PM',['~10 RM<br>hipertrofia','~6 RM<br>fuerza estructural','~3 RM<br>fuerza máxima']],
+  ['A·','b','Cómo se hace cada básico (ERPA)','4 series',['50% · 75% · AMRAP 100% · ajuste','ídem','ídem']],
+  ['B','s','Secundarios','búlgara · split · remo · dominadas · fondos',['3x8 → 3x10<br>doble progresión','3x8 → 3x10','3x6 → 3x8']],
+  ['C','k','Core / auxiliares','roll out · pallof · plancha RKC',['2–3 series','2–3 series','2–3 series']]],
+  notes:['ERPA: la 3ª serie es "todas las que puedas" (AMRAP) con el peso del bloque; si hizo de más, la 4ª lleva más peso, si hizo de menos, menos. Esper aclara: usarlo como guía y no ir al fallo.']}]}
+];
+const RL={b:'Básico',s:'Secundario',e:'Explosivo',a:'Accesorio',p:'Prevención',k:'Core',m:'Movilidad',o:'Olímpico'};
+const GRP=[['Primera',['p1','p2']],['Formativas',['p3','p4']],['Generales e individuales',['p5','p6']]];
+const SHORT={p1:'Primera temporada',p2:'Primera pretemporada',p3:'U21',p4:'Formativas',p5:'Full body',p6:'Principiantes'};
+const DESC={p1:'Elegís la tarjeta según cuántos días faltan para el partido o pasaron desde el último.',
+  p2:'5 semanas de carga + 2 de descarga. Días de fuerza y de potencia intercalados.',
+  p3:'3 días con la misma tarjeta. Sube 5% por semana, el olímpico baja reps.',
+  p4:'Técnico, sin %. Suben las reps y después el peso.',
+  p5:'Sesiones A y B por patrones. Para individuales o 2 días de gym.',
+  p6:'Aprender el movimiento y después cargar, en 3 bloques.'};
+const CN={con:'Contrastes',pot:'Potencia',est:'Estructura',pri:'Priming',md0:'Priming corto',post:'Post-partido',circ:'Circuito',par:'PARTIDO'};
+const css=`
+.pg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:22px}
+.pg-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:8px;align-content:start}
+.pg-card h3{margin:0;font-family:var(--f-disp);font-size:22px;letter-spacing:.02em;text-transform:uppercase;line-height:1.05}
+.pg-card p{margin:0;font-size:13px;color:var(--ink-2)}
+.pg-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pg-src{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:4px;padding:1px 6px;background:var(--surface-2);color:var(--ink-2)}
+.pg-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.pg-sec{font-family:var(--f-disp);font-size:20px;text-transform:uppercase;letter-spacing:.03em;margin:18px 0 10px}
+.pg-intro{font-size:13px;color:var(--ink-2);margin:10px 0 0;max-width:720px}
+.pg-uso{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-2);display:grid;gap:3px}
+.pg-h{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:6px 0 -2px}
+.pg-map{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.pg-mr{display:grid;grid-template-columns:170px 1fr;gap:10px;align-items:center;padding:7px 12px;border-top:1px solid var(--line);font-size:13px}
+.pg-mr:first-child{border-top:0}
+.pg-mr b{font-size:13px}.pg-mr small{display:block;color:var(--ink-3);font-size:11.5px}
+.pg-pill{display:inline-block;font-weight:700;font-size:12px;padding:2px 9px;border-radius:6px;color:#fff;border:0;cursor:pointer;font-family:inherit;white-space:nowrap}
+.c-con{background:#c2410c}.c-pot{background:#e8590c}.c-pri{background:#2f55c9}.c-md0{background:#5b7fd6}.c-post{background:#1d8a47}.c-circ{background:#7a847d}.c-est{background:#7950f2}.c-par{background:#0d110e}
+.pg-tc{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:10px;display:grid;gap:6px;scroll-margin-top:70px}
+.pg-tch{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pg-tch h4{margin:0;font-family:var(--f-disp);font-size:19px;text-transform:uppercase;letter-spacing:.03em}
+.pg-tch span{font-size:12.5px;color:var(--ink-2)}
+.pg-t{display:grid;gap:4px}
+.pg-r{display:grid;gap:6px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px}
+.pg-r.hd{background:none;border:0;padding:0 8px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.pg-r.bk{background:none;border:0;padding:4px 2px 0;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.pg-l{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3)}
+.pg-q{display:grid;gap:1px;min-width:0}.pg-q b{font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.pg-q small{color:var(--ink-3);font-size:11.5px}
+.pg-d{font-size:12px;font-weight:600;text-align:center;background:var(--surface-2);border-radius:5px;padding:4px 3px;line-height:1.25;min-width:0;overflow-wrap:anywhere}
+.pg-ds{display:contents}
+.pg-role{font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:1px 5px;border-radius:4px;color:#fff}
+.r-b{background:#2f6fd6}.r-s{background:#3f9a62}.r-e{background:#e8590c}.r-a{background:#7950f2}.r-p{background:#c2255c}.r-k{background:#5c6b62}.r-m{background:#868e96}.r-o{background:#b8860b}
+.pg-note{font-size:12.5px;background:var(--surface);border-left:3px solid var(--accent);border-radius:6px;padding:6px 10px;color:var(--ink-2)}
+.pg-note.mine{border-left-color:var(--warn);background:var(--warn-soft)}
+.pg-split{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pg-split h5{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.pg-wk{display:flex;gap:4px;flex-wrap:wrap;align-items:flex-end}.pg-wk span{display:grid;justify-items:center;gap:2px;font-size:10.5px;color:var(--ink-3);font-weight:700}
+@media (max-width:860px){.pg-mr{grid-template-columns:1fr;gap:4px}.pg-split{grid-template-columns:1fr}
+ .pg-r:not(.bk){grid-template-columns:1fr!important}.pg-r.hd{display:none}.pg-l{display:none}
+ .pg-ds{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:3px}
+ .pg-d::before{content:attr(data-l);display:block;font-size:9px;color:var(--ink-3);font-weight:800}}
+.ex-n.pg-ph::placeholder{color:#c2410c;opacity:.85;font-weight:600;text-transform:none}
+`;
+const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+const strip=t=>String(t).replace(/<br>/g,' + ').replace(/<small>|<\/small>/g,'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+const pById=id=>PR.find(p=>p.id===id);
+const nCards=p=>p.cards.length;
+function vProg(){
+  let h='<p class="pg-intro">Plantillas armadas con los libros de Cesarino y Esper. Abrís un programa, elegís la tarjeta y se crea una <b>rutina nueva</b> con los bloques y la dosis de cada semana ya puestos: vos solo escribís los ejercicios.</p>';
+  GRP.forEach(g=>{h+='<h2 class="pg-sec">'+g[0]+'</h2><div class="pg-grid">'+g[1].map(id=>{const p=pById(id);
+    return '<div class="pg-card"><div class="pg-meta"><span class="pg-src">'+esc(p.sm)+'</span><span class="tiny">'+nCards(p)+(nCards(p)===1?' tarjeta':' tarjetas')+'</span></div><h3>'+esc(SHORT[id])+'</h3><p>'+DESC[id]+'</p>'+
+      '<div class="pg-acts"><button class="btn sm pri" data-pgopen="'+id+'">Ver programa</button></div></div>';}).join('')+'</div>';});
+  return h;
+}
+function rowsH(rows,cols){
+  const n=cols.length,gt='30px minmax(0,1.7fr) '+(n>1?'repeat('+n+',minmax(0,1fr))':'minmax(120px,.8fr)');
+  let h='<div class="pg-t"><div class="pg-r hd" style="grid-template-columns:'+gt+'"><span></span><span>Qué va</span>'+cols.map(c=>'<span style="text-align:center">'+c+'</span>').join('')+'</div>';
+  rows.forEach(r=>{if(r[0]==='#'){h+='<div class="pg-r bk">'+r[1]+'</div>';return;}
+    const d=Array.isArray(r[4])?r[4]:[r[4]];
+    h+='<div class="pg-r" style="grid-template-columns:'+gt+'"><span class="pg-l">'+r[0]+'</span><span class="pg-q"><b>'+(r[1]?'<span class="pg-role r-'+r[1]+'">'+RL[r[1]]+'</span>':'')+r[2]+'</b>'+(r[3]?'<small>ej.: '+r[3]+'</small>':'')+'</span><span class="pg-ds">'+d.map((x,i)=>'<span class="pg-d" data-l="'+cols[i]+'">'+x+'</span>').join('')+'</span></div>';});
+  return h+'</div>';
+}
+const usable=c=>c.split||(c.cols||[]).every(x=>/^(Sem|Dosis|Desc)/.test(x));
+function cardH(c,pi,ci){
+  let h='<div class="pg-tc" id="pgc-'+(c.k||ci)+'"><div class="pg-tch"><h4>'+c.name+'</h4><span>'+(c.when||'')+(c.dur?' · '+c.dur:'')+'</span><div class="grow"></div>'+(usable(c)&&!RO?'<button class="btn sm pri" data-pguse="'+pi+':'+ci+'">Usar esta tarjeta →</button>':'')+'</div>';
+  h+=c.split?'<div class="pg-split">'+c.split.map(s=>'<div><h5>'+s[0]+'</h5>'+rowsH(s[1],['Dosis'])+'</div>').join('')+'</div>':rowsH(c.rows,c.cols);
+  (c.vars||[]).forEach(v=>h+='<div class="pg-note"><b>Variante · '+v[0]+':</b> '+v[1]+'</div>');
+  (c.notes||[]).forEach((t,i)=>h+='<div class="pg-note'+(c.mine&&c.mine.includes(i)?' mine':'')+'">'+t+'</div>');
+  return h+'</div>';
+}
+const pill=(k,t)=>'<button type="button" class="pg-pill c-'+k+'" data-pggo="'+k+'">'+(t||CN[k])+'</button>';
+function openProg(id){
+  const pi=PR.findIndex(p=>p.id===id),p=PR[pi];
+  let b='<div class="rut-note"><ul class="pg-uso">'+p.uso.map(u=>'<li>'+u+'</li>').join('')+'</ul></div>';
+  if(p.map){b+='<div class="pg-h">¿Qué tarjeta toca hoy?</div><div class="pg-map">'+p.map.map(m=>'<div class="pg-mr"><div><b>'+m[0]+'</b>'+(m[1]?'<small>'+m[1]+'</small>':'')+'</div><div>'+m[2].map(x=>pill(x[0],x[1])).join(' o ')+(m[3]?' <span class="tiny">· '+m[3]+'</span>':'')+'</div></div>').join('')+'</div>';
+    b+='<div class="pg-h">Semanas de ejemplo</div><div class="pg-map">'+p.weeks.map(w=>'<div class="pg-mr"><div><b>'+w[0]+'</b></div><div class="pg-wk">'+w[1].map(d=>'<span>'+d[0]+pill(d[1])+'</span>').join('')+'</div></div>').join('')+'</div>';}
+  b+='<div class="pg-h">Tarjetas</div>'+p.cards.map((c,ci)=>cardH(c,pi,ci)).join('');
+  (p.vars||[]).forEach(v=>b+='<div class="pg-note"><b>Variante · '+v[0]+':</b> '+v[1]+'</div>');
+  openModal(modalHead('Programas · '+p.sm,SHORT[id])+'<div class="modal-b">'+b+'</div><div class="modal-f"><div class="grow"></div><button class="btn" data-close>Cerrar</button></div>',mw=>{
+    mw.classList.add('full');
+    mw.addEventListener('click',e=>{const g=e.target.closest('[data-pggo]');if(g){const el=mw.querySelector('#pgc-'+g.dataset.pggo);if(el)el.scrollIntoView({behavior:'smooth'});}
+      const u=e.target.closest('[data-pguse]');if(u){const [a,c]=u.dataset.pguse.split(':').map(Number);usar(a,c);}});
+  });
+}
+/* tarjeta → rutina nueva: ejercicio vacío con "qué va" como guía y la dosis de cada semana ya cargada */
+const OBJG=t=>{t=t.toLowerCase();if(/prepar|movilidad/.test(t))return 'movact';if(/estructura|accesorio/.test(t))return 'acc';if(/unilateral|hipertrofia/.test(t))return 'fh';if(/fuerza/.test(t))return 'fmax';if(/neural|contraste|potencia/.test(t))return 'pot';return '';};
+let PGPH=null; /* guía por día y posición mientras el editor de la plantilla está abierto */
+function canon(t){
+  t=String(t).replace(/<small>.*?<\/small>/g,'').replace(/<br>/g,' + ').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().replace(/[\s+]+$/,'');
+  const parts=t.split(/\s*(?:\+|·)\s*/);
+  if(parts.length>1&&parts.every(p=>/^\d+x\d+(?:\s*\d+(?:[.,]\d+)?%)?$/.test(p))){
+    let reps=[],pc=[];parts.forEach(p=>{const m=p.match(/^(\d+)x(\d+)(?:\s*(\d+(?:[.,]\d+)?)%)?$/);for(let i=0;i<+m[1];i++)reps.push(m[2]);if(m[3]&&!pc.includes(m[3]))pc.push(m[3]);});
+    return {c:reps.length+'x'+reps.join('-')+(pc.length?' '+pc.join('/')+'%':''),cue:''};}
+  let m=t.match(/^(\d+)x([\d\/]+)\s*(.*)$/);
+  if(m){const r=m[2].replace(/\//g,'-');let rest=m[3].replace(/^·\s*/,'').trim(),load='',cue='';
+    if(/^(\d+(?:[.,]\d+)?\s*%|\d+\s*kg|RIR.*|\(.*\))$/i.test(rest))load=rest.replace(/\s+kg/,'kg');else cue=rest;
+    return {c:m[1]+'x'+r+(load?' '+load:''),cue};}
+  m=t.match(/^(\d+)\s*(?:·|al)\s*(\d+%)$/);if(m)return {c:m[1]+' reps '+m[2],cue:''};
+  m=t.match(/^(\d+)(?:\s+(.*))?$/);if(m&&!/%|kg|cm/.test(m[2]||''))return {c:m[1],cue:m[2]||''};
+  return {c:t,cue:''};
+}
+function w1(e,c){let m=c.match(/^(\d+)x([\d-]+)(?:\s+(.*))?$/);
+  if(m){e.series=m[1];const rr=m[2].split('-');if(rr.length>1){e.reps=rr;e.dist=true;}else e.reps=[m[2]];e.c=m[3]||'';return;}
+  m=c.match(/^(\d+)(?: reps (.*))?$/);if(m){e.reps=[m[1]];e.c=m[2]||'';return;}e.c=c;}
+function toEx(r,nw,L){
+  const raw=Array.isArray(r[4])?r[4]:[r[4]];const d=raw.map(canon);const e={n:''};
+  w1(e,d[0].c);
+  const cues=[];const sm=String(raw[0]).match(/<small>(.*?)<\/small>/);if(sm)cues.push(sm[1].replace(/[()]/g,''));
+  d.forEach((x,i)=>{if(x.cue&&(i===0||x.cue!==d[i-1].cue))cues.push((nw>1?'Sem '+(i+1)+': ':'')+x.cue);});
+  if(nw>1){e.prog=[''];for(let w=1;w<nw;w++)e.prog.push(d[w]&&d[w].c!==d[w-1].c?d[w].c:'');}
+  if(cues.length)e.obs=cues.join(' · ');
+  L.push({q:strip(r[2]),ej:r[3]?'ej.: '+strip(r[3]):''});
+  return e;
+}
+function toBlocks(rows,nw,first,L){
+  const bl=[];let cur=null;
+  rows.forEach(r=>{if(r[0]==='#'){cur={nombre:strip(r[1]).replace(/^[A-E] · /,''),obj:OBJG(r[1]),ejercicios:[]};bl.push(cur);return;}
+    if(!cur){cur={nombre:first||'Bloque A',obj:OBJG(first||''),ejercicios:[]};bl.push(cur);}cur.ejercicios.push(toEx(r,nw,L));});
+  return bl;
+}
+function usar(pi,ci){
+  const p=PR[pi],c=p.cards[ci];
+  const nw=c.split?1:Math.min((c.cols||[]).filter(x=>/^Sem/.test(x)).length||1,12);
+  const ses=[],G=[];
+  const mk=(nombre,rows,first)=>{const L=[];ses.push({nombre,bloques:toBlocks(rows,nw,first,L)});G.push(L);};
+  if(c.split)c.split.forEach(s=>mk(s[0].replace(/^Jugó /,'').replace(/ \(.*/,''),s[1],c.name));
+  else{const nd=/^Día (U21|formativas)/.test(c.name)?3:1;for(let i=0;i<nd;i++)mk(nd>1?'Día '+(i+1):c.name,c.rows,c.k==='pri'?'Priming':c.name);}
+  if(c.k==='pri'||c.k==='md0')ses.forEach(s=>{if(s.bloques[0])s.bloques[0].obj='act';});
+  closeModal();
+  openRut(null,{nombre:SHORT[p.id]+' · '+c.name,tipo:'gym',semanas:nw,sesiones:ses});
+  PGPH={names:ses.map(s=>s.nombre),g:G};
+}
+/* guía naranja en el nombre del ejercicio vacío (y ejemplos en la observación) */
+new MutationObserver(()=>{
+  if(!PGPH)return;const mw=document.getElementById('mw');if(!mw||!mw.querySelector('#r_n')){PGPH=null;return;}
+  const dn=mw.querySelector('#d_n');const di=dn?PGPH.names.indexOf(dn.value.trim()):-1;const L=di>=0?PGPH.g[di]:null;if(!L)return;
+  mw.querySelectorAll('#blocks .exr').forEach((x,i)=>{const t=L[i];if(!t||x.dataset.pg)return;x.dataset.pg=1;
+    const n=x.querySelector('.ex-n'),o=x.querySelector('.ex-o');
+    if(n){n.placeholder='✎ '+t.q;n.classList.add('pg-ph');}if(o&&t.ej)o.placeholder=t.ej;});
+}).observe(document.getElementById('modalRoot'),{childList:true,subtree:true});
+/* menú y vista */
+const _rn=renderNav;renderNav=function(){_rn();const g=document.querySelector('#catNav .grp');if(!g)return;const b=document.createElement('button');b.className='cat-btn lib-btn'+(S.view==='prog'?' on':'');b.setAttribute('data-progs','');b.innerHTML='<span class="nm">Programas</span><span class="lib-n">'+PR.length+'</span>';g.insertBefore(b,g.querySelector('[data-ejs]'));};
+document.getElementById('catNav').addEventListener('click',e=>{if(e.target.closest('[data-progs]')){S.view='prog';ls.set('pf-view','prog');renderNav();render();if(window.innerWidth<=860)setSide(false);}});
+const _r=render;render=function(){if(S.view!=='prog')return _r();renderAgenda();$('#tabs').hidden=true;$('#kpis').hidden=true;$('#catName').textContent='Programas';$('#catGroup').textContent='Plantillas';$('#editCat').hidden=true;$('#view').innerHTML=vProg();};
+document.getElementById('view').addEventListener('click',e=>{const o=e.target.closest('[data-pgopen]');if(o)openProg(o.dataset.pgopen);});
+renderNav();if(S.view==='prog')render();
+})();
+
 })();
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:')window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
