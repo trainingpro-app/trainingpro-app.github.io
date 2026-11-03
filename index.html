@@ -673,7 +673,7 @@ button.app-b.on{background:var(--accent-soft);border-color:var(--accent);color:v
 .rs-h i{font-style:normal;font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:1px 5px;vertical-align:2px;letter-spacing:.06em}
 .rs-o{font-size:12px;font-weight:700}
 .rsum-off{margin-bottom:6px}
-@media (max-width:560px){.rs-day{flex-basis:170px}.rsum.float .rs-days{max-height:28vh}}
+@media (max-width:560px){.rs-day{flex-basis:160px}.rsum{padding:6px 8px 8px}.rsum.float .rs-days{max-height:22vh}.rs-top{gap:5px;margin-bottom:4px;flex-wrap:nowrap}.rs-top b{font-size:12px;white-space:nowrap}.rs-top .tiny{display:none}.rs-zoom{display:none}.rs-long{display:none}.rs-seg button{padding:2px 7px;font-size:11px}.rs-x{width:24px;height:24px;font-size:18px}.blk-h .blk-obj{max-width:150px}}
 .rs-days{zoom:var(--rz,1)}
 .rs-blk+.rs-blk{border-top:1.5px solid var(--line);margin-top:5px;padding-top:5px}
 .rs-zoom{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:20px;overflow:hidden}
@@ -691,6 +691,15 @@ button.app-b.on{background:var(--accent-soft);border-color:var(--accent);color:v
 .ind-card{border-left:4px solid var(--accent)}
 .ind-fin{margin-top:10px}.ind-fin summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--ink-2)}
 @media (max-width:900px){.rut-cols{grid-template-columns:1fr}.rut-col+.rut-col{border-left:0;padding-left:0;border-top:1.5px solid var(--line);padding-top:14px}}
+.opt-row{display:flex;flex-wrap:wrap;gap:6px}
+.opt{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:5px 11px 5px 8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink-2)}
+.opt input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.obj-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 90px;gap:10px;align-items:end}
+.obj-row.ses{grid-template-columns:minmax(0,1fr) 100px 100px 90px 120px}
+.obj-row .f-sm input{width:100%}
+@media (max-width:620px){.obj-row,.obj-row.ses{grid-template-columns:1fr 1fr}.obj-row .f-obj{grid-column:1/-1}}
+.side-tg{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--ink-2);flex:none;align-self:center;margin-right:4px}
 /* biblioteca de ejercicios */
 .ej-filt{display:grid;gap:8px;margin-bottom:12px}
 .ej-q{max-width:420px;width:100%}
@@ -855,7 +864,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · guardar sin asignar</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · editor más compacto y entrada en calor en bloque</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1536,14 +1545,23 @@ function parseRoutineText(txt){
 }
 
 /* ---------- contenido compartido: sesión y rutina ---------- */
+function calorBlock(txt){
+  const ej=[];const notas=[];
+  String(txt).split(/\n+/).map(x=>x.replace(/^[-•*·\d.)\s]+/,'').trim()).filter(Boolean).forEach(l=>{
+    if(l.split(/\s+/).length>9){notas.push(l);return;}
+    const e=parseExercise(l);ej.push(e&&e.n?Object.assign({},e,{n:String(e.n).toLocaleUpperCase('es')}):{n:l.toLocaleUpperCase('es')});});
+  return {nombre:'Entrada en calor',obj:'movact',series:'',nota:notas.join(' · '),ejercicios:ej.length?ej:[{},{}]};
+}
 function contentHtml(s,tipo,opts){
-  opts=opts||{};CUR_WEEKS=opts.weeks||0;CUR_FORM=!!opts.form;const lib=libMap();const bloques=toBloques(s,tipo);
-  let b='<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="s_obj">Objetivo'+(opts.rutina?'':' de la sesión')+'</label><input id="s_obj" value="'+esc(s.objetivo||'')+'" placeholder="'+(tipo==='gym'?'Ej: fuerza máxima tren inferior':'Ej: resistencia intermitente + velocidad')+'"></div>'+
-     (opts.rutina?'':'<div class="field"><label for="s_hora">Hora</label><input id="s_hora" type="time" value="'+esc(s.hora||'')+'"></div>')+
-     '<div class="field"><label for="s_dur">Duración (min)</label><input id="s_dur" type="number" min="0" inputmode="numeric" value="'+esc(s.duracion||'')+'"></div>'+
-     '<div class="field"><label for="s_rpe">RPE objetivo (1-10)</label><input id="s_rpe" type="number" min="1" max="10" inputmode="numeric" value="'+esc(s.rpe||'')+'"></div>'+
-     (opts.rutina?'':'<div class="field"><label for="s_mic">Día del microciclo</label><input id="s_mic" value="'+esc(s.micro||'')+'" placeholder="Ej: MD-3"></div>')+'</div>';
-  b+='<div class="field"><label for="s_ec">Entrada en calor'+(tipo==='gym'?' / activación':'')+'</label><textarea id="s_ec">'+esc(s.calor||'')+'</textarea></div>';
+  opts=opts||{};CUR_WEEKS=opts.weeks||0;CUR_FORM=!!opts.form;const lib=libMap();let bloques=toBloques(s,tipo);
+  /* la entrada en calor de texto pasa a ser un bloque más (movilidad + activación) */
+  if(tipo==='gym'&&String(s.calor||'').trim()){const cb=calorBlock(s.calor);const rest=bloques.filter(x=>(x.ejercicios||[]).some(e=>e.n)||x.nota);bloques=[cb].concat(rest.length?rest:bloques);}
+  let b='<div class="obj-row'+(opts.rutina?'':' ses')+'"><div class="field f-obj"><label for="s_obj">Objetivo'+(opts.rutina?'':' de la sesión')+'</label><input id="s_obj" value="'+esc(s.objetivo||'')+'" placeholder="'+(tipo==='gym'?'Ej: fuerza máxima tren inferior':'Ej: resistencia intermitente + velocidad')+'"></div>'+
+     (opts.rutina?'':'<div class="field f-sm"><label for="s_hora">Hora</label><input id="s_hora" type="time" value="'+esc(s.hora||'')+'"></div>')+
+     '<div class="field f-sm"><label for="s_dur">Duración (min)</label><input id="s_dur" type="number" min="0" inputmode="numeric" value="'+esc(s.duracion||'')+'"></div>'+
+     '<div class="field f-sm"><label for="s_rpe">RPE obj.</label><input id="s_rpe" type="number" min="1" max="10" inputmode="numeric" value="'+esc(s.rpe||'')+'"></div>'+
+     (opts.rutina?'':'<div class="field f-sm"><label for="s_mic">Microciclo</label><input id="s_mic" value="'+esc(s.micro||'')+'" placeholder="Ej: MD-3"></div>')+'</div>';
+  if(tipo!=='gym')b+='<div class="field"><label for="s_ec">Entrada en calor</label><textarea id="s_ec">'+esc(s.calor||'')+'</textarea></div>';
   b+='<div><div class="blk-title"><h3>'+(tipo==='gym'?'Bloques de trabajo':'Bloques / tareas')+'</h3><span class="blk-tools"><button type="button" class="btn sm" data-ejpanel>Biblioteca de ejercicios</button><button type="button" class="btn sm" data-paste>Pegar texto</button></span></div>'+
      '<div class="paste-box" hidden><label class="f-lbl" for="pasteTxt">Escribí o pegá la rutina, un ejercicio por renglón</label>'+
      '<textarea class="paste-txt" id="pasteTxt" placeholder="Bloque 1 - 3 series&#10;CMJ 3x5&#10;Saltos al cajón 3x4 60cm&#10;&#10;Bloque 2 - 4 series&#10;Sentadilla 4x6-6-4-4 80kg&#10;Hip thrust 4x8 100kg&#10;&#10;Accesorios:&#10;Nórdicos 3x6&#10;Curl bíceps 3x12"></textarea>'+
@@ -1569,7 +1587,7 @@ const CB={box:null,inp:null,i:-1,chip:'',
     const list=ejAll();const match=e=>!q||normTxt(e.nombre).includes(q);
     const used=new Set(ctx.prev.map(p=>p.id));
     let secs;
-    if(this.chip==='sug'&&ctx.obj){secs=ejSuggest(ctx.obj,ctx.idx,ctx.prev,list);}
+    if(this.chip==='sug'&&ctx.obj){secs=ejSuggest(ctx.obj,ctx.idx,ctx.prev,list,ctx);}
     else if(this.chip&&this.chip!=='all'&&this.chip!=='sug'){const arr=list.filter(e=>e.rol===this.chip&&!used.has(e.id));const last=ctx.prev[ctx.prev.length-1];
       const same=last?arr.filter(e=>e.pat===last.pat):[];secs=same.length?[[ROL[this.chip]+' · mismo patrón',same],[ROL[this.chip]+' · otros',arr.filter(e=>!same.includes(e))]]:[[ROL[this.chip],arr]];}
     else secs=[['',list]];
@@ -2178,9 +2196,11 @@ function openRut(id,preset,after){
   const ucats=r0?[...new Set(S.asigAll.filter(a=>a.rutina===r0.id&&asigState(a)!=='fin').map(a=>a.cat))]:[];
   const RFORM=after&&after.cat?catIsForm(after.cat):(ucats.length>0&&ucats.every(catIsForm));
   const b='<div id="rsumW"></div>'+(dr?draftNote(dr.t):'')+(users.length>1?'<div class="rut-note">La usan <b>'+users.map(esc).join(', ')+'</b>. Lo que cambies acá se aplica a todas. Si una categoría necesita algo distinto, usá <b>Duplicar</b> en la biblioteca.</div>':'')+
-    '<label class="sw sw-sm"><input type="checkbox" id="r_borr"'+(r.borrador?' checked':'')+'><i></i><span><b>Todavía la estoy armando</b><span class="tiny">Queda en “Pendientes” en la biblioteca hasta que la destildes.</span></span></label>'+
-    '<label class="sw sw-sm"><input type="checkbox" id="r_ind"'+((r0?isIndRut(r0):r.indiv)?' checked':'')+'><i></i><span><b>Rutina individual</b><span class="tiny">Para un jugador. En la biblioteca aparece en la columna de individuales.</span></span></label>'+
-    '<label class="sw sw-sm"><input type="checkbox" id="r_rpe"'+(r.rpe?' checked':'')+'><i></i><span><b>Preguntar el RPE al final de cada día</b><span class="tiny">Los atletas responden del 1 al 10 qué tan duro fue. No es obligatorio: si no lo responden, les aparece un aviso naranja.</span></span></label>'+
+    '<div class="opt-row">'+
+      '<label class="opt" title="Queda en “Pendientes” en la biblioteca hasta que la destildes"><input type="checkbox" id="r_borr"'+(r.borrador?' checked':'')+'><span>La estoy armando</span></label>'+
+      '<label class="opt" title="Para un jugador: en la biblioteca va a la columna de individuales"><input type="checkbox" id="r_ind"'+((r0?isIndRut(r0):r.indiv)?' checked':'')+'><span>Individual</span></label>'+
+      '<label class="opt" title="Los atletas responden del 1 al 10 qué tan duro fue; si no responden les aparece un aviso naranja"><input type="checkbox" id="r_rpe"'+(r.rpe?' checked':'')+'><span>Preguntar RPE</span></label>'+
+    '</div>'+
     '<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="r_n">Nombre de la rutina</label><input id="r_n" value="'+esc(r.nombre||'')+'" placeholder="Ej: Fuerza · Mesociclo 1"></div>'+
     '<div class="field"><label for="r_w">Duración del mesociclo</label><select id="r_w">'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+((r.semanas||4)==n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'</select></div></div>'+
     '<div class="stype" id="r_tipo">'+['gym','cancha'].map(t=>'<button type="button" class="'+t+(t===tipo?' on':'')+'" data-rt="'+t+'"><span class="dot"></span>'+(t==='gym'?'Gym':'Cancha')+'</button>').join('')+'</div>'+
@@ -2189,6 +2209,8 @@ function openRut(id,preset,after){
   const foot='<div class="modal-f">'+(isNew?'':'<button class="btn danger" id="r_del">Borrar rutina</button>')+'<button class="btn" id="r_print">Imprimir planilla</button><div class="grow"></div><button class="btn" data-close>Cancelar</button>'+(isNew?'<button class="btn" id="r_save_as" title="Guarda y te lleva a elegir categoría, días y fechas">Guardar y asignar</button>':'')+'<button class="btn pri" id="r_save">'+(isNew?'Guardar':'Guardar rutina')+'</button></div>';
   openModal(modalHead('Biblioteca de rutinas'+(r0&&r0.editada?' · '+modTxt(r0):''),isNew?'Nueva rutina':r.nombre)+'<div class="modal-b">'+b+'</div>'+foot,mw=>{
     mw.classList.add('full');
+    {const mh=mw.querySelector('.modal-h');if(mh&&window.innerWidth>860){const sb=document.createElement('button');sb.type='button';sb.className='side-tg';sb.title='Mostrar u ocultar el menú lateral';sb.setAttribute('aria-label','Menú lateral');sb.textContent=app.classList.contains('side-off')?'☰':'«';
+      sb.onclick=()=>{const off=app.classList.contains('side-off');setSide(off);sb.textContent=off?'«':'☰';};mh.insertBefore(sb,mh.firstChild);}}
     const q=id=>mw.querySelector('#'+id);
     const panel=q('dayPanel'),tabs=q('dayTabs');
     wireContent(panel);
@@ -2253,7 +2275,7 @@ function openRut(id,preset,after){
     sumW.addEventListener('touchend',()=>{pz=null;});
     const sumHtml=()=>{
       const live=days.map((d,i)=>{if(i!==cur||!panel.querySelector('#d_n'))return d;try{return Object.assign({},d,readContent(panel,tipo),{nombre:panel.querySelector('#d_n').value.trim()||d.nombre});}catch(e){return d;}});
-      return live.map((d,i)=>{const bl=toBloques(d,tipo).filter(x=>(x.ejercicios||[]).some(e=>e.n));
+      return live.map((d,i)=>{let bl0=toBloques(d,tipo);if(tipo==='gym'&&String(d.calor||'').trim())bl0=[calorBlock(d.calor)].concat(bl0);const bl=bl0.filter(x=>(x.ejercicios||[]).some(e=>e.n));
         return '<button type="button" class="rs-day'+(i===cur?' on':'')+'" data-rsday="'+i+'"><span class="rs-h">'+esc(d.nombre||('Día '+(i+1)))+(i===cur?' <i>editando</i>':'')+'</span>'+
           (d.objetivo?'<span class="rs-o">'+esc(d.objetivo)+'</span>':'')+
           (bl.length?bl.map((x,bi)=>'<ol class="wk-ex rs-blk">'+(x.ejercicios||[]).filter(e=>e.n).map((e,ei)=>'<li><span class="mono">'+String.fromCharCode(65+bi)+(ei+1)+'</span> '+esc(String(e.n).toLocaleUpperCase('es'))+' <b>'+esc(presText(e,x))+'</b></li>').join('')+'</ol>').join(''):'<span class="tiny">Sin ejercicios todavía</span>')+'</button>';}).join('');
@@ -2263,7 +2285,7 @@ function openRut(id,preset,after){
       const mh=mw.querySelector('.modal-h');sumW.style.setProperty('--mh',(mh?mh.offsetHeight:0)+'px');
       sumW.className='rsum'+(SM==='float'?' float':'');
       sumW.style.setProperty('--rz',RZ);
-      sumW.innerHTML='<div class="rs-top"><b>Resumen de la rutina</b><span class="tiny">tocá un día para editarlo</span><span class="grow"></span>'+
+      sumW.innerHTML='<div class="rs-top"><b>Resumen<span class="rs-long"> de la rutina</span></b><span class="tiny">tocá un día para editarlo</span><span class="grow"></span>'+
         '<span class="rs-zoom" title="Zoom: también con Ctrl + rueda del mouse o pellizcando"><button type="button" data-rsz="-1" aria-label="Achicar">−</button><button type="button" data-rsz="0" class="rs-zv">'+Math.round(RZ*100)+'%</button><button type="button" data-rsz="1" aria-label="Agrandar">+</button></span>'+
         '<span class="rs-seg"><button type="button" class="'+(SM==='fix'?'on':'')+'" data-rsmode="fix" title="Queda arriba de todo">Fijo</button><button type="button" class="'+(SM==='float'?'on':'')+'" data-rsmode="float" title="Te acompaña mientras bajás">Flotante</button></span>'+
         '<button type="button" class="rs-x" data-rsmode="off" aria-label="Cerrar resumen" title="Cerrar">×</button></div><div class="rs-days">'+sumHtml()+'</div>';
@@ -3575,12 +3597,15 @@ function ejByName(n){const k=slug(n);const e=ejAll(true).find(x=>x.id===k);retur
 
 /* ---- objetivo del bloque ---- */
 const OBJS={
+  mov:{t:'Movilidad',h:'Movilidad de lo que se va a cargar en los bloques del día. Las sugerencias miran qué ejercicios hay en los otros bloques.'},
+  eca:{t:'Activación',h:'Activación (glúteos, core, escápulas) para preparar lo de los otros bloques del día.'},
+  movact:{t:'Movilidad + activación',h:'Entrada en calor: movilidad y activación de lo que se usa en los otros bloques del día (se sugiere sola).'},
   pot:{t:'Potencia',h:'Básico pesado → pausa activa (opcional) → transferencia explosiva del mismo patrón.',hf:'Formativas: saltos y aterrizajes → patrón técnico → core. Sin contrastes pesados.'},
   fmax:{t:'Fuerza máxima',h:'Básico bilateral primero, pausas largas. En la pausa: un correctivo o core.',hf:'Formativas: el básico con técnica, más reps y sin %.'},
   fh:{t:'Fuerza-hipertrofia',h:'Secundarios / unilaterales en bi-serie que no se pisen (rodilla + tracción, cadera + empuje).'},
   acc:{t:'Accesorios',h:'Analíticos al final: más reps, pausa corta.'},
   prev:{t:'Prevención',h:'Rodilla, tobillo, hombro, aductor, isquios.'},
-  act:{t:'Activación',h:'Poco volumen: 2-3 explosivos + core. Ideal el día antes del partido.'}
+  act:{t:'Priming (pre-partido)',h:'Poco volumen: 2-3 explosivos + core. Ideal el día antes del partido.'}
 };
 let CUR_FORM=false; /* el editor abierto es de una formativa (U13-U17) */
 function catIsForm(id){const c=S.cats.find(x=>x.id===id);return !!c&&/^u1[0-7]/i.test(String(c.grupo||c.nombre||'').trim());}
@@ -3595,7 +3620,10 @@ function ejDose(obj,r){
     fh:{b:F?['3','10','RIR 3']:['4','6','75%'],s:F?['3','10','RIR 3']:['4','8','RIR 2'],k:['3','10',''],a:['3','12','RIR 1']},
     acc:{a:['3','12','RIR 1'],s:['3','12','RIR 1'],p:['3','10',''],k:['3','10','']},
     prev:{p:['3','8','lento 3"'],a:['3','10',''],k:['3','8',''],m:['2','8','']},
-    act:{e:F?['3','3','aterrizaje']:['3','3','70%'],b:['3','3','70%'],k:['2','6','']}
+    act:{e:F?['3','3','aterrizaje']:['3','3','70%'],b:['3','3','70%'],k:['2','6','']},
+    mov:{m:['2','8',''],p:['2','8',''],k:['2','8','']},
+    eca:{p:['2','10',''],k:['2','8',''],m:['2','8',''],s:['2','10','liviano']},
+    movact:{m:['2','8',''],p:['2','10',''],k:['2','8',''],s:['2','10','liviano']}
   };
   const o=D[obj];if(!o)return null;return o[r]||null;
 }
@@ -3603,12 +3631,30 @@ function ejExpected(obj,idx,prev){
   const last=prev[prev.length-1];
   if(obj==='pot'){if(CUR_FORM)return idx===0?'e':idx===1?'s':'k';if(idx===0)return 'b';if(last&&['b','s','k','m','p'].includes(last.rol))return 'e';return 'b';}
   if(obj==='fmax'){if(idx===0)return 'b';if(last&&last.rol==='b')return 'k';return 'b';}
+  if(obj==='mov')return 'm';if(obj==='eca')return 'p';if(obj==='movact')return idx%2?'p':'m';
   if(obj==='fh')return 's';if(obj==='acc')return 'a';if(obj==='prev')return 'p';if(obj==='act')return idx<2?'e':'k';return '';
 }
 const EJPAIR={rod:['trh','trv'],cad:['emh','emv'],emh:['cad','rod'],emv:['cad','rod'],trh:['rod','cad'],trv:['rod','cad']};
 const LEGS=['rod','cad'],UPPER=['emh','emv','trh','trv'];
 /* secciones de sugerencias según objetivo, lugar en el bloque y lo anterior */
-function ejSuggest(obj,idx,prev,all){
+/* qué patrones prepara un ejercicio de movilidad/activación (o lo que marcaste en su ficha) */
+const PREP={tob:['rod','car'],cad:['cad','rod'],adu:['rod','cad'],rod:['rod'],hom:['emh','emv','trh','trv'],rot:['rot','emh'],car:['car','rod'],emh:['emh'],emv:['emv'],trh:['trh'],trv:['trv'],core:[]};
+const PREP_OPTS=[['rod','Rodilla dominante'],['cad','Cadera dominante'],['emh','Empuje horizontal'],['emv','Empuje vertical'],['trh','Tracción horizontal'],['trv','Tracción vertical'],['car','Carrera / saltos'],['rot','Rotación']];
+const prepOf=e=>(Array.isArray(e.prep)&&e.prep.length)?e.prep:(PREP[e.pat]||[]);
+function ejSuggest(obj,idx,prev,all,ctx){
+  if(obj==='mov'||obj==='eca'||obj==='movact'){
+    const used=new Set(prev.map(p=>p.id));const roles=obj==='mov'?['m','p']:obj==='eca'?['p','k']:['m','p','k'];
+    const pool=all.filter(e=>roles.includes(e.rol)&&!used.has(e.id));
+    const main=(ctx&&ctx.main)||[];const mp=new Set(main.map(m=>m.pat).filter(Boolean));
+    const S2=[];const add=(t,a)=>{if(a.length)S2.push([t,a]);};
+    if(mp.size){const rel=pool.filter(e=>prepOf(e).some(p=>mp.has(p)));
+      add('Para preparar '+main.slice(0,3).map(m=>m.nombre).join(', ')+(main.length>3?'…':''),rel);
+      const relS=new Set(rel.map(e=>e.id));
+      if(roles.includes('k'))add('Core (sirve para todo)',pool.filter(e=>e.rol==='k'&&!relS.has(e.id)));
+      add('Otros',pool.filter(e=>e.rol!=='k'&&!relS.has(e.id)));}
+    else{roles.forEach(r=>add(ROL[r],pool.filter(e=>e.rol===r)));}
+    return S2;
+  }
   const used=new Set(prev.map(p=>p.id));const ok=e=>!used.has(e.id);
   const last=prev[prev.length-1];const lastB=[...prev].reverse().find(p=>p.rol==='b'||p.rol==='s');
   const S2=[];const add=(t,arr)=>{arr=arr.filter(ok);if(arr.length)S2.push([t,arr]);};
@@ -3644,12 +3690,16 @@ function rowCtx(row){
   const bk=row.closest('.blk');if(!bk)return {obj:'',idx:0,prev:[]};
   const rows=[...bk.querySelectorAll('.exr')];const idx=rows.indexOf(row);
   const prev=rows.slice(0,idx).map(r=>r.querySelector('.ex-n').value.trim()).filter(Boolean).map(ejByName);
-  return {obj:(bk.querySelector('.blk-obj')||{}).value||'',idx,prev,bk};
+  /* ejercicios principales de los otros bloques del día (para sugerir movilidad/activación relacionada) */
+  const main=[];const root=bk.closest('#blocks');
+  if(root)root.querySelectorAll('.blk').forEach(o=>{if(o===bk)return;const ob=(o.querySelector('.blk-obj')||{}).value||'';if(['mov','eca','movact'].includes(ob))return;
+    o.querySelectorAll('.ex-n').forEach(i=>{const n=i.value.trim();if(!n)return;const e=ejByName(n);if(['b','s','e'].includes(e.rol)&&!main.some(m=>m.id===e.id))main.push(e);});});
+  return {obj:(bk.querySelector('.blk-obj')||{}).value||'',idx,prev,bk,main};
 }
 /* dosis en gris (placeholder): no se guarda, solo guía */
 function doseBlock(bk){
   const objSel=bk.querySelector('.blk-obj');const obj=objSel?objSel.value:'';
-  const h=bk.querySelector('.blk-hint');if(h){h.textContent=objHint(obj);h.hidden=!obj;}
+  const h=bk.querySelector('.blk-hint');if(h){const ht=objHint(obj);if(h.textContent!==ht)h.textContent=ht;if(h.hidden!==!obj)h.hidden=!obj;}
   if(objSel)objSel.classList.toggle('set',!!obj);
   const bs=bk.querySelector('.blk-series').value;
   const rows=[...bk.querySelectorAll('.exr')];const prev=[];
@@ -3815,7 +3865,7 @@ function openEj(id,onSaved){
   const e0=id?ejAll(true).find(x=>x.id===id):null;
   const e=e0?Object.assign({},e0):{id:'',nombre:'',link:'',impl:[],rol:'',pat:'',uni:false};
   const auto=!!(e0&&e0.auto);
-  const st={rol:e.rol||'',pat:e.pat||'',uni:!!e.uni,impl:(e.impl||[]).slice(),img:EJIMG.m[e.id]||'',imgCh:false};
+  const st={rol:e.rol||'',pat:e.pat||'',uni:!!e.uni,impl:(e.impl||[]).slice(),img:EJIMG.m[e.id]||'',imgCh:false,prep:prepOf(e).slice(),prepCh:false};
   const chip=(attr,v,on,txt,col)=>'<button type="button" class="ej-chip'+(col?' rc':'')+(on?' on':'')+'"'+(col?' style="--rc:'+col+'"':'')+' '+attr+'="'+esc(v)+'">'+esc(txt)+'</button>';
   const draw=()=>{
     const th=st.img?'<img alt="" src="'+esc(st.img)+'">':(e.link&&vidInfo(e.link)&&vidInfo(e.link).thumb?'<img alt="" src="'+esc(vidInfo(e.link).thumb)+'"><small>portada del video</small>':'<span>Sin foto</span>');
@@ -3827,6 +3877,7 @@ function openEj(id,onSaved){
       (auto?'<p class="tiny ej-sug">Estas etiquetas las puso la app según el nombre. Revisalas y tocá Guardar.</p>':'')+
       '<div class="field"><label>Rol en la sesión</label><div class="ej-chips">'+ROLS.map(r=>chip('data-fr',r,st.rol===r,ROL[r],ROLC[r])).join('')+'</div></div>'+
       '<div class="field"><label>Patrón de movimiento</label><div class="ej-chips">'+PATS.map(p=>chip('data-fp',p[0],st.pat===p[0],p[1])).join('')+chip('data-fu','1',st.uni,'Unilateral / a una pierna')+'</div></div>'+
+      (['m','p','k'].includes(st.rol)?'<div class="field"><label>Prepara para <small class="tiny">(en un bloque de movilidad/activación se sugiere cuando el día tiene estos patrones)</small></label><div class="ej-chips">'+PREP_OPTS.map(p=>chip('data-fprep',p[0],st.prep.includes(p[0]),p[1])).join('')+'</div></div>':'')+
       '<div class="field"><label>Implemento <small class="tiny">(podés marcar varios)</small></label><div class="ej-chips">'+EJ_IMPL.map(t=>chip('data-fi',t,st.impl.includes(t),t)).join('')+'</div></div>'+
       (e.uso?'<p class="tiny">Está en '+e.uso+(e.uso===1?' rutina.':' rutinas.')+'</p>':'');
   };
@@ -3837,8 +3888,9 @@ function openEj(id,onSaved){
     const redraw=()=>{keep();body.innerHTML=draw();};
     body.addEventListener('click',ev=>{const t=ev.target;
       const r=t.closest('[data-fr]');if(r){st.rol=st.rol===r.dataset.fr?'':r.dataset.fr;return redraw();}
-      const p=t.closest('[data-fp]');if(p){st.pat=st.pat===p.dataset.fp?'':p.dataset.fp;return redraw();}
+      const p=t.closest('[data-fp]');if(p){st.pat=st.pat===p.dataset.fp?'':p.dataset.fp;if(!st.prepCh)st.prep=(PREP[st.pat]||[]).slice();return redraw();}
       if(t.closest('[data-fu]')){st.uni=!st.uni;return redraw();}
+      const pp=t.closest('[data-fprep]');if(pp){const v=pp.dataset.fprep;st.prep=st.prep.includes(v)?st.prep.filter(x=>x!==v):st.prep.concat(v);st.prepCh=true;return redraw();}
       const im=t.closest('[data-fi]');if(im){const v=im.dataset.fi;st.impl=st.impl.includes(v)?st.impl.filter(x=>x!==v):st.impl.concat(v);return redraw();}
       if(t.closest('#ej_fx')){st.img='';st.imgCh=true;return redraw();}
     });
@@ -3853,7 +3905,7 @@ function openEj(id,onSaved){
       let nid=e.id||slug(n);
       /* si le cambiaste el nombre, queda como ejercicio nuevo y el viejo se oculta */
       if(e0&&slug(n)!==e.id){nid=slug(n);ejPut(e.id,{oculto:true});if(EJIMG.m[e.id]&&!st.imgCh){st.imgCh=true;}}
-      ejPut(nid,{nombre:n,link:e.link.trim(),rol:st.rol,pat:st.pat,uni:st.uni,impl:st.impl,oculto:false,foto:!!st.img,zona:null,tipo:null});
+      ejPut(nid,{nombre:n,link:e.link.trim(),rol:st.rol,pat:st.pat,uni:st.uni,impl:st.impl,prep:(st.prepCh&&['m','p','k'].includes(st.rol))?st.prep:(e.prep||null),oculto:false,foto:!!st.img,zona:null,tipo:null});
       if(st.imgCh){if(st.img){EJIMG.m[nid]=st.img;Store.put('ejImg',nid,{d:st.img});}else{delete EJIMG.m[nid];Store.remove('ejImg',nid);}}
       closeModal();ejRedrawView();if(EJP.box)EJP.draw();toast('Ejercicio guardado');if(onSaved)onSaved(nid);
     };
