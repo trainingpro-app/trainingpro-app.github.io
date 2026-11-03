@@ -673,6 +673,17 @@ button.app-b.on{background:var(--accent-soft);border-color:var(--accent);color:v
 .rs-h i{font-style:normal;font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:1px 5px;vertical-align:2px;letter-spacing:.06em}
 .rs-o{font-size:12px;font-weight:700}
 .rsum-off{margin-bottom:6px}
+.rsum.free{position:fixed;z-index:60;margin:0;display:flex;flex-direction:column;box-shadow:0 18px 44px rgba(0,0,0,.28);max-width:none}
+.rsum.free .rs-days{max-height:min(34vh,300px);overflow:auto;align-items:flex-start}
+.rsum.free.sized .rs-days{flex:1 1 auto;max-height:none;min-height:0}
+.rs-top{touch-action:none}
+.rs-grip{cursor:grab;color:var(--ink-3);font-size:16px;line-height:1;user-select:none;padding:2px 2px 2px 0}
+.rsum.drag,.rsum.drag *{cursor:grabbing!important;user-select:none}
+.rs-rz{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;touch-action:none;border-radius:0 0 12px 0;background:linear-gradient(135deg,transparent 50%,var(--line) 50%,var(--line) 58%,transparent 58%,transparent 70%,var(--line) 70%,var(--line) 78%,transparent 78%)}
+.rsum:not(.free) .rs-rz{display:none}
+.rs-dock{border:1px solid var(--line);background:none;border-radius:20px;padding:3px 10px;font:inherit;font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.rsum:not(.free) .rs-dock{display:none}
+.rsum.free .rs-top{flex-wrap:wrap!important;row-gap:4px}
 @media (max-width:560px){.rs-day{flex-basis:160px}.rsum{padding:6px 8px 8px}.rsum.float .rs-days{max-height:22vh}.rs-top{gap:5px;margin-bottom:4px;flex-wrap:nowrap}.rs-top b{font-size:12px;white-space:nowrap}.rs-top .tiny{display:none}.rs-zoom{display:none}.rs-long{display:none}.rs-seg button{padding:2px 7px;font-size:11px}.rs-x{width:24px;height:24px;font-size:18px}.blk-h .blk-obj{max-width:150px}}
 .rs-days{zoom:var(--rz,1)}
 .rs-blk+.rs-blk{border-top:1.5px solid var(--line);margin-top:5px;padding-top:5px}
@@ -895,7 +906,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · programas</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · resumen movible</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2315,17 +2326,44 @@ function openRut(id,preset,after){
           (d.objetivo?'<span class="rs-o">'+esc(d.objetivo)+'</span>':'')+
           (bl.length?bl.map((x,bi)=>'<ol class="wk-ex rs-blk">'+(x.ejercicios||[]).filter(e=>e.n).map((e,ei)=>'<li><span class="mono">'+String.fromCharCode(65+bi)+(ei+1)+'</span> '+esc(String(e.n).toLocaleUpperCase('es'))+' <b>'+esc(presText(e,x))+'</b></li>').join('')+'</ol>').join(''):'<span class="tiny">Sin ejercicios todavía</span>')+'</button>';}).join('');
     };
+    /* ventana libre: se arrastra desde la barra de arriba y se agranda desde la esquina */
+    let POS=ls.get('pf-rspos',null);
+    const clampPos=()=>{if(!POS)return;const W=window.innerWidth,H=window.innerHeight;
+      if(POS.w)POS.w=Math.min(Math.max(POS.w,220),W);if(POS.h)POS.h=Math.min(Math.max(POS.h,90),H);
+      const w=POS.w||sumW.offsetWidth||300;POS.x=Math.min(Math.max(POS.x,0),Math.max(0,W-Math.min(w,W)));const h=POS.h||sumW.offsetHeight||100;POS.y=Math.min(Math.max(POS.y,0),Math.max(0,H-Math.min(h,H)));};
+    const applyPos=()=>{const free=SM==='float'&&!!POS;sumW.classList.toggle('free',free);sumW.classList.toggle('sized',free&&!!POS.h);
+      if(!free){['left','top','width','height'].forEach(k=>sumW.style[k]='');return;}
+      clampPos();sumW.style.left=POS.x+'px';sumW.style.top=POS.y+'px';sumW.style.width=POS.w?POS.w+'px':'';sumW.style.height=POS.h?POS.h+'px':'';};
+    const onWinRz=()=>{if(!document.contains(sumW)){window.removeEventListener('resize',onWinRz);return;}applyPos();};
+    window.addEventListener('resize',onWinRz);
+    let PD=null;
+    sumW.addEventListener('pointerdown',e=>{
+      if(SM==='off'||e.button>0)return;
+      const rz=e.target.closest('.rs-rz');const top=e.target.closest('.rs-top');
+      if(!rz&&(!top||e.target.closest('button')))return;
+      const r=sumW.getBoundingClientRect();
+      if(!POS||SM!=='float'){SM='float';ls.set('pf-rsum',SM);POS={x:r.left,y:r.top,w:r.width,h:null};drawSum();}
+      if(rz&&!POS.h)POS.h=r.height;
+      PD={rz:!!rz,sx:e.clientX,sy:e.clientY,x:POS.x,y:POS.y,w:POS.w||r.width,h:POS.h||r.height,id:e.pointerId};
+      try{sumW.setPointerCapture(e.pointerId);}catch(_){}
+      sumW.classList.add('drag');e.preventDefault();});
+    sumW.addEventListener('pointermove',e=>{if(!PD||e.pointerId!==PD.id)return;const dx=e.clientX-PD.sx,dy=e.clientY-PD.sy;
+      if(PD.rz){POS.w=Math.min(PD.w+dx,window.innerWidth-POS.x);POS.h=Math.min(PD.h+dy,window.innerHeight-POS.y);}else{POS.x=PD.x+dx;POS.y=PD.y+dy;}applyPos();});
+    const endPD=e=>{if(!PD||(e&&e.pointerId!==PD.id))return;PD=null;sumW.classList.remove('drag');ls.set('pf-rspos',POS);};
+    sumW.addEventListener('pointerup',endPD);sumW.addEventListener('pointercancel',endPD);
     const drawSum=()=>{
-      if(SM==='off'){sumW.className='rsum-off';sumW.innerHTML='<button type="button" class="btn sm" data-rsmode="float">Ver resumen de la rutina</button>';return;}
+      if(SM==='off'){sumW.className='rsum-off';applyPos();sumW.innerHTML='<button type="button" class="btn sm" data-rsmode="float">Ver resumen de la rutina</button>';return;}
       const mh=mw.querySelector('.modal-h');sumW.style.setProperty('--mh',(mh?mh.offsetHeight:0)+'px');
       sumW.className='rsum'+(SM==='float'?' float':'');
       sumW.style.setProperty('--rz',RZ);
-      sumW.innerHTML='<div class="rs-top"><b>Resumen<span class="rs-long"> de la rutina</span></b><span class="tiny">tocá un día para editarlo</span><span class="grow"></span>'+
+      sumW.innerHTML='<span class="rs-rz" title="Arrastrá para cambiar el tamaño" aria-hidden="true"></span><div class="rs-top" title="Arrastrá desde acá para mover el resumen"><span class="rs-grip" aria-hidden="true">⠿</span><b>Resumen<span class="rs-long"> de la rutina</span></b><span class="tiny">tocá un día para editarlo</span><span class="grow"></span>'+
         '<span class="rs-zoom" title="Zoom: también con Ctrl + rueda del mouse o pellizcando"><button type="button" data-rsz="-1" aria-label="Achicar">−</button><button type="button" data-rsz="0" class="rs-zv">'+Math.round(RZ*100)+'%</button><button type="button" data-rsz="1" aria-label="Agrandar">+</button></span>'+
         '<span class="rs-seg"><button type="button" class="'+(SM==='fix'?'on':'')+'" data-rsmode="fix" title="Queda arriba de todo">Fijo</button><button type="button" class="'+(SM==='float'?'on':'')+'" data-rsmode="float" title="Te acompaña mientras bajás">Flotante</button></span>'+
-        '<button type="button" class="rs-x" data-rsmode="off" aria-label="Cerrar resumen" title="Cerrar">×</button></div><div class="rs-days">'+sumHtml()+'</div>';
+        '<button type="button" class="rs-dock" data-rsdock title="Vuelve a su lugar, arriba de la rutina">↥ Arriba</button><button type="button" class="rs-x" data-rsmode="off" aria-label="Cerrar resumen" title="Cerrar">×</button></div><div class="rs-days">'+sumHtml()+'</div>';
+      applyPos();
     };
     sumW.addEventListener('click',e=>{const zb=e.target.closest('[data-rsz]');if(zb){const k=+zb.dataset.rsz;setZ(k?RZ*(k>0?1.15:1/1.15):1);return;}
+      if(e.target.closest('[data-rsdock]')){POS=null;ls.set('pf-rspos',null);drawSum();return;}
       const m=e.target.closest('[data-rsmode]');if(m){SM=m.dataset.rsmode;ls.set('pf-rsum',SM);drawSum();return;}
       const dB=e.target.closest('[data-rsday]');if(dB){const i=+dB.dataset.rsday;if(i===cur)return;saveCur();cur=i;drawTabs();drawPanel();tabs.scrollIntoView({block:'start',behavior:'smooth'});}});
     let sumT;const sumLater=()=>{clearTimeout(sumT);sumT=setTimeout(()=>{if(SM!=='off'&&document.contains(sumW)){const x=sumW.querySelector('.rs-days');if(x){const sl=x.scrollLeft;x.innerHTML=sumHtml();x.scrollLeft=sl;}}},250);};
