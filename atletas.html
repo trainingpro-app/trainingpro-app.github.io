@@ -144,6 +144,9 @@ h3{font-family:var(--f-disp);font-weight:700;font-size:18px;text-transform:upper
 .hist{list-style:none;margin:0;padding:0;display:grid;gap:2px;font-size:13px}
 .hist li{display:flex;gap:10px;align-items:center;padding:4px 0;border-top:1px solid var(--line)}
 .hist li span:first-child{width:70px;color:var(--ink-3)}
+.opt-d{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.opt-d summary{font-weight:700;font-size:13.5px;cursor:pointer}
+.opt-d[open] summary{margin-bottom:8px}
 .rh-tabs{margin:12px 0 10px}
 .rh-x{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:13px;align-items:start}
 .rh-x>span:first-child{font-weight:700}
@@ -411,6 +414,8 @@ document.addEventListener('click',e=>{
 
 /* ---------- estado ---------- */
 const st={cat:null,tab:'rutina',asig:null,day:null,week:null};
+/* link de la PF para completar datos: atletas.html?datos#categoria */
+if(/[?&]datos\b/.test(location.search)){st.tab='reg';st.editProf=true;st.datosLink=true;}
 /* Si entran con el link de una categoría (atletas.html#u15-a) quedan fijos en esa: no ven el menú de todas */
 const LOCK=(()=>{const h=decodeURIComponent((location.hash||'').slice(1))||'';try{if(h==='todas'){localStorage.removeItem('pfat-lock');return '';}if(h)localStorage.setItem('pfat-lock',h);else return localStorage.getItem('pfat-lock')||'';}catch(e){}return h;})();
 function go(cat){st.cat=cat;st.tab='rutina';st.asig=null;st.day=null;st.week=null;ls.set('pfat-cat',cat||'');try{history.replaceState(null,'',cat?'#'+cat:location.pathname);}catch(e){}render();window.scrollTo(0,0);}
@@ -514,7 +519,7 @@ let myUid=null,syncT=null;
 function setReg(R){R.upd=Date.now();ls.set('pfat-reg',R);clearTimeout(syncT);syncT=setTimeout(()=>pushCloud(R),400);}
 function pushCloud(R){
   R=R||getReg();if(!R.nombre)return;
-  const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now()};
+  const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',nac:R.nac||'',talla:R.talla||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now()};
   if(FB()){if(!myUid)return;firebase.firestore().collection('registrosAtletas').doc(myUid).set(doc,{mergeFields:Object.keys(doc)}).catch(e=>console.warn('sync',e));}
   else{/* prueba local: lo deja donde lo lee Pizarra PF */const L=ls.get('pfclub-local',{});L.registrosAtletas=L.registrosAtletas||{};const k=ls.get('pfat-uid','')||(()=>{const u='loc'+uid();ls.set('pfat-uid',u);return u;})();L.registrosAtletas[k]=Object.assign({},L.registrosAtletas[k]||{},doc);ls.set('pfclub-local',L);}
 }
@@ -551,6 +556,10 @@ function profileForm(R){
     '<div class="fld"><label for="pn">Nombre</label><input id="pn" autocomplete="given-name" value="'+esc(R.nom||(R.ape?'':R.nombre)||'')+'" placeholder="Ej: Gian Franco"></div>'+
     '<div class="fld"><label for="pa">Apellido</label><input id="pa" autocomplete="family-name" value="'+esc(R.ape||'')+'" placeholder="Ej: Gasparini"></div>'+
     '<div class="fld"><label for="pd">DNI (solo números)</label><input id="pd" inputmode="numeric" autocomplete="off" placeholder="'+(R.dniFin?'Cargado: …'+esc(R.dniFin)+' (escribí otro para cambiarlo)':'Ej: 45123456')+'"></div>'+
+    '<details class="opt-d"'+(st.datosLink||R.nac||R.talla?' open':'')+'><summary>Más datos (opcional): nacimiento, peso y altura</summary>'+
+    '<div class="fld"><label for="pnac">Fecha de nacimiento</label><input id="pnac" type="date" value="'+esc(R.nac||'')+'"></div>'+
+    '<div class="me-row"><div class="fld" style="flex:1"><label for="ppc">Peso (kg)</label><input id="ppc" type="number" inputmode="decimal" step="any" value="'+esc(R.pc||'')+'"></div>'+
+    '<div class="fld" style="flex:1"><label for="ptal">Altura (cm)</label><input id="ptal" type="number" inputmode="decimal" step="any" value="'+esc(R.talla||'')+'" placeholder="Ej: 185"></div></div></details>'+
     '<button class="btn pri" id="psave">Guardar mis datos</button><p class="tiny" style="margin:0">Podés poner el DNI con o sin puntos. No se guarda escrito: se usa solo para reconocerte.</p></div>';
 }
 function regView(){
@@ -588,7 +597,9 @@ function saveProfile(){
   const R=getReg();
   if(d){if(d.length<7||d.length>9){toast('El DNI tiene que tener 7 u 8 números');return;}R.dniH=dniHash(d);R.dniFin=d.slice(-3);}
   else if(!R.dniH){toast('Poné tu DNI (solo números)');return;}
-  R.nombre=n;R.nom=nm;R.ape=ap;R.cat=st.cat;st.editProf=false;setReg(R);render();toast('Listo, '+n.split(' ')[0]+'. Ya podés anotar tus pesos');
+  const nac=$('#pnac')?$('#pnac').value:'',pc2=$('#ppc')?$('#ppc').value:'',tal=$('#ptal')?$('#ptal').value:'';
+  if(nac)R.nac=nac;if(pc2)R.pc=pc2;if(tal)R.talla=tal;
+  R.nombre=n;R.nom=nm;R.ape=ap;R.cat=st.cat;st.editProf=false;st.datosLink=false;setReg(R);render();toast('Listo, '+n.split(' ')[0]+'. Ya podés anotar tus pesos');
 }
 function addReg(){
   let x=$('#rx').value;

@@ -611,6 +611,39 @@ body.drag-on{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .hist-x{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
 .hist-xn{font-weight:700;font-size:13px}
 @media (max-width:560px){.hist-x{grid-template-columns:1fr}}
+.pl-click{cursor:pointer}.pl-click:hover .nm{color:var(--accent);text-decoration:underline}
+.fi{gap:10px}
+.fi-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:grid;gap:8px}
+.fi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 18px;max-width:640px}
+.fi-line .grow{flex:1}
+.fd{display:grid;gap:0;min-width:0}.fd small{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}.fd span{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fi .linkish{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--accent);cursor:pointer;font-size:13px;white-space:nowrap}
+.fi-acts{display:flex;gap:4px 14px;flex-wrap:wrap;align-items:center}
+.fi-acts .linkish{font-size:12.5px;color:var(--ink-2)}
+.fi-line{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-size:14px}
+.fi-lt{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.fi-m b{font-weight:800}
+.dl{font-size:12px;font-weight:800;margin-left:5px;color:var(--ink-3)}.dl.g{color:var(--good)}.dl.b{color:var(--bad)}
+.fi-more{display:grid;gap:8px;padding:0 4px 4px}
+.fi-more[hidden]{display:none}
+.fi-top{display:grid;gap:10px}
+.fi-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.fi-k{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:1px}
+.fi-k small{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.fi-k b{font-family:var(--f-disp);font-size:21px;line-height:1.1}
+.fi-app{font-style:normal;font-size:12px}
+.fi-acts{display:flex;gap:6px;flex-wrap:wrap}
+.fi-sec{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}
+.fi-sh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.fi-sh h3{margin:0}
+.fi-cmp{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px}
+.fi-cmp ul{margin:4px 0 0;padding-left:18px;display:grid;gap:3px}
+.fi-cmp li.up-good b{color:var(--good)}.fi-cmp li.up-bad b{color:var(--bad)}
+.fi-tomas{display:flex;gap:6px;flex-wrap:wrap}
+.fi-toma{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 9px;display:grid;text-align:left;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.fi-list{display:grid;gap:6px}
+.fi-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"b p" "t p";gap:2px 8px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer;color:var(--ink)}
+.fi-row b{grid-area:b}.fi-row .tiny{grid-area:t}.fi-row .pill,.fi-row .fi-go{grid-area:p}.fi-go{font-size:20px;color:var(--ink-3)}
+.fi-row:hover{border-color:var(--accent)}
 .pend-t{font-size:11px;font-weight:700;color:#c2410c;background:#fff1e6;border-radius:4px;padding:1px 6px;white-space:nowrap}
 .ex-head2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) 56px auto 88px 28px;gap:6px;padding:0 9px 0 31px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .ex-head2 span:nth-child(4){min-width:120px}
@@ -921,7 +954,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · historial de pesos</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · ficha del jugador</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2825,6 +2858,171 @@ function openAtlHist(id){
   });
 }
 
+/* ================= ficha del jugador: datos, antropometría (Kerr), lesiones y rutinas ================= */
+const edadDe=f=>{if(!f)return null;const b=pISO(f),t=pISO(TODAY);let a=t.getFullYear()-b.getFullYear();if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate()))a--;return a;};
+const n1=v=>v==null||isNaN(v)?'–':fmtN(Math.round(v*10)/10);
+function jugDocs(jid){return S.atl.filter(d=>{const k=atlPlayer(d);return k.j&&k.j.id===jid;}).sort((a,b)=>(b.upd||0)-(a.upd||0));}
+/* lo que cargó él en la app de atletas (lo más nuevo) */
+function jugDatosApp(jid){const o={};jugDocs(jid).forEach(d=>{['nac','talla','pc'].forEach(k=>{if(o[k]==null&&d[k])o[k]=d[k];});});return o;}
+/* ---------- antropometría: fraccionamiento en 5 componentes (Kerr, 1988) ---------- */
+const AN_ISAK=[
+  ['Básicas',[['peso','Peso (kg)'],['talla','Talla (cm)'],['tallaS','Talla sentado (cm)']]],
+  ['Pliegues (mm)',[['pTri','Tríceps'],['pSub','Subescapular'],['pSupra','Supraespinal'],['pAbd','Abdominal'],['pMus','Muslo frontal'],['pPan','Pantorrilla medial']]],
+  ['Perímetros (cm)',[['cCab','Cabeza'],['cBra','Brazo relajado'],['cAnt','Antebrazo'],['cTor','Tórax mesoesternal'],['cCin','Cintura'],['cMus','Muslo medio'],['cPan','Pantorrilla']]],
+  ['Diámetros (cm)',[['dBiac','Biacromial'],['dBiil','Biiliocrestídeo'],['dTorT','Tórax transverso'],['dTorAP','Tórax antero-posterior'],['dHum','Húmero'],['dFem','Fémur']]]];
+const AN_INF=[['peso','Peso (kg)'],['talla','Talla (cm)'],['adip','Masa adiposa (kg)'],['musc','Masa muscular (kg)'],['osea','Masa ósea (kg)'],['resid','Masa residual (kg)'],['piel','Masa de la piel (kg)'],['sum6','Σ 6 pliegues (mm)']];
+function kerr(m,sexo,edad){
+  const need=AN_ISAK.flatMap(g=>g[1].map(x=>x[0]));const miss=need.filter(k=>!(+m[k]>0));if(miss.length)return {miss};
+  const H=+m.talla,W=+m.peso,SH=+m.tallaS,pi=Math.PI,k=170.18/H,k3=Math.pow(k,3);
+  const csa=edad!=null&&edad<12?70.691:sexo==='f'?73.704:68.308;
+  const piel=csa*Math.pow(W,0.425)*Math.pow(H,0.725)/10000*(sexo==='f'?1.96:2.07)*1.05;
+  const sum6=+m.pTri+(+m.pSub)+(+m.pSupra)+(+m.pAbd)+(+m.pMus)+(+m.pPan);
+  const adip=(((sum6*k-116.41)/34.79)*5.85+25.6)/k3;
+  const cor=(c,p)=>+c-pi*(+p)/10;
+  const sMus=cor(m.cBra,m.pTri)+(+m.cAnt)+cor(m.cMus,m.pMus)+cor(m.cPan,m.pPan)+cor(m.cTor,m.pSub);
+  const musc=(((sMus*k-207.21)/13.74)*5.4+24.5)/k3;
+  const oCab=((+m.cCab-56.0)/1.44)*0.18+1.20;
+  const sOs=+m.dBiac+(+m.dBiil)+2*(+m.dHum)+2*(+m.dFem);
+  const oCue=(((sOs*k-98.88)/5.33)*1.34+6.70)/k3;
+  const ks=89.92/SH;const sRes=+m.dTorAP+(+m.dTorT)+cor(m.cCin,m.pAbd);
+  const resid=(((sRes*ks-109.35)/7.08)*1.24+6.10)/Math.pow(ks,3);
+  const total=piel+adip+musc+oCab+oCue+resid;
+  return {peso:W,talla:H,piel,adip,musc,osea:oCab+oCue,resid,sum6,total,dif:(total-W)/W*100};
+}
+function anRes(t,j){if(t.modo==='inf'){const m=t.m||{};const o={};AN_INF.forEach(x=>{if(m[x[0]]!==''&&m[x[0]]!=null&&!isNaN(m[x[0]]))o[x[0]]=+m[x[0]];});return o;}
+  return kerr(t.m||{},catRama(S.cats.find(c=>c.id===j.cat)),edadDe(j.nac));}
+const pct=(v,p)=>v!=null&&p?v/p*100:null;
+function anCompare(a,b){/* a = anterior, b = actual */
+  const out=[];const L=[['musc','Masa muscular',1],['adip','Masa adiposa',-1],['osea','Masa ósea',0],['peso','Peso',0]];
+  L.forEach(([k,n,good])=>{if(a[k]==null||b[k]==null)return;const d=b[k]-a[k];const pa=pct(a[k],a.peso),pb=pct(b[k],b.peso);
+    const cls=Math.abs(d)<0.2?'':(good===0?'':(d*good>0?'up-good':'up-bad'));
+    out.push('<li class="'+cls+'"><b>'+n+'</b> '+(Math.abs(d)<0.05?'sin cambios':(d>0?'subió ':'bajó ')+n1(Math.abs(d))+' kg')+' <span class="tiny">('+n1(a[k])+' → '+n1(b[k])+' kg'+(k!=='peso'&&pa!=null&&pb!=null?' · '+n1(pa)+'% → '+n1(pb)+'% del peso':'')+')</span></li>');});
+  if(a.sum6!=null&&b.sum6!=null){const d=b.sum6-a.sum6;out.push('<li class="'+(Math.abs(d)<1?'':d<0?'up-good':'up-bad')+'"><b>Σ 6 pliegues</b> '+(Math.abs(d)<0.5?'sin cambios':(d>0?'subió ':'bajó ')+n1(Math.abs(d))+' mm')+' <span class="tiny">('+n1(a.sum6)+' → '+n1(b.sum6)+' mm)</span></li>');}
+  if(a.musc&&a.osea&&b.musc&&b.osea)out.push('<li><b>Índice músculo/óseo</b> '+(a.musc/a.osea).toFixed(2)+' → '+(b.musc/b.osea).toFixed(2)+' <span class="tiny">(cuánto músculo por kg de hueso)</span></li>');
+  return out;
+}
+function anBlock(j){
+  const T=(j.antro||[]).slice().sort((a,b)=>(a.f||'').localeCompare(b.f||''));
+  if(!T.length)return '<div class="fi-line"><span class="fi-lt">Antropometría</span><span class="tiny">sin tomas</span><span class="grow"></span>'+(RO?'':'<button class="linkish" data-annew>+ Cargar</button>')+'</div>';
+  const R=T.map(t=>({t,r:anRes(t,j)}));const last=R[R.length-1],prev=R[R.length-2],first=R[0];
+  const L=last.r,P=prev&&prev.r;
+  const dl=(k,good)=>{if(!P||P[k]==null||L[k]==null)return '';const d=L[k]-P[k];if(Math.abs(d)<0.05)return '<span class="dl">=</span>';
+    return '<span class="dl '+(d*good>0?'g':'b')+'">'+(d>0?'▲ +':'▼ −')+n1(Math.abs(d))+'</span>';};
+  let h='<div class="fi-line"><span class="fi-lt">Antropometría</span><span class="tiny">'+esc(fmtD(last.t.f,{day:'numeric',month:'short'}))+'</span>'+
+    (L.musc!=null?'<span class="fi-m">Muscular <b>'+n1(L.musc)+' kg</b>'+dl('musc',1)+'</span>':'')+
+    (L.adip!=null?'<span class="fi-m">Grasa <b>'+n1(L.adip)+' kg</b>'+dl('adip',-1)+'</span>':'')+
+    (L.miss?'<span class="tiny">faltan medidas</span>':'')+
+    '<span class="grow"></span><button class="linkish" data-fmore="an">+ información</button></div>';
+  h+='<div class="fi-more" data-more="an" hidden><div class="fi-sh"><span class="grow"></span>'+(RO?'':'<button class="btn sm pri" data-annew>+ Nueva antropometría</button>')+'</div><div class="fi-kpis">'+[['Masa muscular',L.musc,'musc'],['Masa adiposa',L.adip,'adip'],['Masa ósea',L.osea,'osea'],['Σ 6 pliegues',L.sum6,'sum6']].map(([n,v,k])=>v==null?'':'<div class="fi-k"><small>'+n+'</small><b>'+n1(v)+(k==='sum6'?' mm':' kg')+'</b>'+(k!=='sum6'&&L.peso?'<span class="tiny">'+n1(pct(v,L.peso))+'% del peso</span>':'')+'</div>').join('')+'</div>';
+  h+='<p class="tiny" style="margin:2px 0 0">Última toma: '+esc(fmtD(last.t.f,{day:'numeric',month:'short',year:'numeric'}))+' · '+(last.t.modo==='inf'?'resultado de informe':'medidas ISAK (Kerr)')+(L.dif!=null?' · diferencia con el peso real '+(L.dif>0?'+':'')+n1(L.dif)+'%':'')+'</p>';
+  if(prev){const c=anCompare(prev.r,L);if(c.length)h+='<div class="fi-cmp"><b>Desde la toma anterior ('+esc(fmtD(prev.t.f,{day:'numeric',month:'short'}))+')</b><ul>'+c.join('')+'</ul></div>';}
+  if(R.length>2){const c=anCompare(first.r,L);if(c.length)h+='<div class="fi-cmp"><b>Desde la primera ('+esc(fmtD(first.t.f,{day:'numeric',month:'short',year:'numeric'}))+')</b><ul>'+c.join('')+'</ul></div>';}
+  h+='<div class="fi-tomas">'+R.slice().reverse().map(x=>'<button type="button" class="fi-toma" data-anedit="'+esc(x.t.id)+'"><b>'+esc(fmtD(x.t.f,{day:'numeric',month:'short',year:'2-digit'}))+'</b><span class="tiny">'+(x.r.miss?'faltan medidas':'MM '+n1(x.r.musc)+' · MA '+n1(x.r.adip))+'</span></button>').join('')+'</div>';
+  return h+'</div>';
+}
+function openAnTake(jid,tid){
+  const j=S.jug.find(x=>x.id===jid);if(!j)return;const t0=(j.antro||[]).find(x=>x.id===tid);
+  let modo=t0?t0.modo:'isak';const m=Object.assign({peso:j.peso||'',talla:j.talla||''},t0?t0.m:{});
+  const f=t0?t0.f:TODAY;
+  const inp=(k,n)=>'<div class="field"><label for="an_'+k+'">'+n+'</label><input id="an_'+k+'" data-an="'+k+'" type="number" step="any" inputmode="decimal" value="'+esc(m[k]==null?'':m[k])+'"></div>';
+  const draw=()=>'<div class="field"><label for="an_f">Fecha</label><input id="an_f" type="date" value="'+esc(f)+'"></div>'+
+    '<div class="stype" id="an_modo"><button type="button" class="'+(modo==='isak'?'on':'')+'" data-anmodo="isak">Medidas ISAK (calcula la app)</button><button type="button" class="'+(modo==='inf'?'on':'')+'" data-anmodo="inf">Resultado de un informe</button></div>'+
+    (modo==='isak'?AN_ISAK.map(g=>'<h3>'+g[0]+'</h3><div class="form-grid">'+g[1].map(x=>inp(x[0],x[1])).join('')+'</div>').join('')+'<div class="rut-note"><span id="an_res"></span></div>'
+      :'<p class="tiny">Cargá lo que tenga el informe; lo que no tenga, dejalo vacío.</p><div class="form-grid">'+AN_INF.map(x=>inp(x[0],x[1])).join('')+'</div>');
+  openModal(modalHead('Antropometría · '+j.nombre,t0?'Toma del '+fmtD(f,{day:'numeric',month:'short'}):'Nueva toma')+'<div class="modal-b" id="an_b">'+draw()+'</div><div class="modal-f">'+(t0&&!RO?'<button class="btn danger" id="an_del">Borrar toma</button>':'')+'<button class="btn" id="an_back">Volver</button><div class="grow"></div>'+(RO?'':'<button class="btn pri" id="an_save">Guardar</button>')+'</div>',mw=>{
+    const body=mw.querySelector('#an_b');
+    const keep=()=>body.querySelectorAll('[data-an]').forEach(i=>{m[i.dataset.an]=i.value;});
+    const res=()=>{const o=body.querySelector('#an_res');if(!o)return;keep();const r=kerr(m,catRama(S.cats.find(c=>c.id===j.cat)),edadDe(j.nac));
+      o.innerHTML=r.miss?'Faltan '+r.miss.length+' medidas para calcular las 5 masas.':'Muscular <b>'+n1(r.musc)+' kg</b> · Adiposa <b>'+n1(r.adip)+' kg</b> · Ósea <b>'+n1(r.osea)+' kg</b> · Residual '+n1(r.resid)+' · Piel '+n1(r.piel)+' · Suma '+n1(r.total)+' kg (<b>'+(r.dif>0?'+':'')+n1(r.dif)+'%</b> vs. peso real)';};
+    body.addEventListener('input',res);res();
+    body.addEventListener('click',e=>{const b=e.target.closest('[data-anmodo]');if(b){keep();modo=b.dataset.anmodo;body.innerHTML=draw();res();}});
+    mw.querySelector('#an_back').onclick=()=>openFicha(jid);
+    const sv=mw.querySelector('#an_save');if(sv)sv.onclick=()=>{keep();const fe=body.querySelector('#an_f').value;if(!fe){toast('Poné la fecha');return;}
+      const mm={};Object.keys(m).forEach(k=>{if(m[k]!==''&&m[k]!=null)mm[k]=+m[k];});
+      const t={id:t0?t0.id:uid(),f:fe,modo,m:mm};const arr=(j.antro||[]).filter(x=>x.id!==t.id).concat(t);
+      const d=Object.assign({},j,{antro:arr});if(mm.peso)d.peso=mm.peso;if(mm.talla)d.talla=mm.talla;delete d.id;Store.put('jugadores',jid,d);
+      Object.assign(j,{antro:arr},mm.peso?{peso:mm.peso}:{},mm.talla?{talla:mm.talla}:{});toast('Antropometría guardada');openFicha(jid);};
+    const dl=mw.querySelector('#an_del');if(dl)armDelete(dl,()=>{const arr=(j.antro||[]).filter(x=>x.id!==tid);const d=Object.assign({},j,{antro:arr});delete d.id;Store.put('jugadores',jid,d);j.antro=arr;toast('Toma borrada');openFicha(jid);});
+  });
+}
+/* ---------- datos personales ---------- */
+function openFichaDatos(jid){
+  const j=S.jug.find(x=>x.id===jid);if(!j)return;const ap=jugDatosApp(jid);
+  const b='<div class="form-grid"><div class="field"><label for="fd_n">Fecha de nacimiento</label><input id="fd_n" type="date" value="'+esc(j.nac||ap.nac||'')+'"></div>'+
+    '<div class="field"><label for="fd_p">Peso (kg)</label><input id="fd_p" type="number" step="any" inputmode="decimal" value="'+esc(j.peso||ap.pc||'')+'"></div>'+
+    '<div class="field"><label for="fd_t">Altura (cm)</label><input id="fd_t" type="number" step="any" inputmode="decimal" value="'+esc(j.talla||ap.talla||'')+'"></div></div>'+
+    (ap.nac||ap.pc||ap.talla?'<p class="tiny">Lo que estaba vacío lo completé con lo que él cargó en la app. Revisalo y guardá.</p>':'');
+  openModal(modalHead('Datos · '+j.nombre,'Datos personales')+'<div class="modal-b">'+b+'</div><div class="modal-f"><button class="btn" id="fd_back">Volver</button><div class="grow"></div><button class="btn pri" id="fd_ok">Guardar</button></div>',mw=>{
+    mw.querySelector('#fd_back').onclick=()=>openFicha(jid);
+    mw.querySelector('#fd_ok').onclick=()=>{const v=i=>mw.querySelector(i).value.trim();const d=Object.assign({},j,{nac:v('#fd_n'),peso:v('#fd_p'),talla:v('#fd_t')});delete d.id;
+      Store.put('jugadores',jid,d);Object.assign(j,{nac:d.nac,peso:d.peso,talla:d.talla});toast('Datos guardados');openFicha(jid);};});
+}
+/* ---------- rutinas que hizo: de la más nueva a la más vieja ---------- */
+function fichaPers(jid){const j=S.jug.find(x=>x.id===jid);const docs=jugDocs(jid);
+  const P=atlPeriods(docs,j);const G={};atlGroup(docs,j).forEach(g=>{G[g.k]=g;});
+  const all=Object.values(P).map(p=>Object.assign({},p,{ents:(G[p.k]||{}).ents||[]}));
+  Object.values(G).forEach(g=>{if(!P[g.k])all.push(g);});
+  return all.filter(p=>p.k==='sin'?p.ents.length:p.desde<=TODAY).sort((a,b)=>(a.k==='sin')-(b.k==='sin')||(b.desde||'').localeCompare(a.desde||''));}
+function openPer(jid,k){
+  const j=S.jug.find(x=>x.id===jid);const p=fichaPers(jid).find(x=>x.k===k);if(!p)return;const r=p.rid&&rutById(p.rid);
+  const by={};p.ents.forEach(e=>{const kk=normTxt(e.x);(by[kk]=by[kk]||[]).push(e);});const used=new Set();
+  let b='<div class="rut-note"><span><b>'+esc(p.rn||'Rutina')+'</b> · '+esc(PER_T[p.kind]||'')+(p.desde?' · '+esc(ddShort(p.desde))+(p.hasta&&p.hasta<'9999'?' → '+esc(ddShort(p.hasta)):''):'')+(p.rid&&!r?' · <b>la rutina se borró</b>: quedan solo los pesos':'')+'</span><span class="tiny">Tocá un peso para corregirlo o pasarlo a Testeos.</span></div>';
+  if(r){b+=rutDays(r).map((dd,di)=>{const bl=toBloques(dd,r.tipo).filter(x=>(x.ejercicios||[]).some(e=>e.n));
+    return '<div class="ar-day"><h3>'+esc(dd.nombre||('Día '+(di+1)))+'</h3>'+(bl.length?bl.map((x,bi)=>(x.ejercicios||[]).filter(e=>e.n).map((e,ei)=>{
+      const L=p.ents.filter(z=>atlExMatch(z.x,e.n)).sort((a,c)=>(c.f||'').localeCompare(a.f||''));L.forEach(z=>used.add(z.id));
+      return '<div class="ar-ex"><span class="mono tiny">'+String.fromCharCode(65+bi)+(ei+1)+'</span><span class="ar-n"><b>'+esc(e.n)+'</b><small>'+prescripcion(e,x)+(e.c?' · '+esc(e.c):'')+'</small></span><span class="ar-l">'+(L.length?L.map(entChip).join(''):'<small class="tiny">sin anotar</small>')+'</span></div>';}).join('')).join(''):'<p class="tiny">Día sin ejercicios.</p>')+'</div>';}).join('');}
+  const rest=p.ents.filter(e=>!used.has(e.id));
+  if(rest.length){const bx={};rest.forEach(e=>(bx[e.x]=bx[e.x]||[]).push(e));
+    b+='<div class="ar-day"><h3>'+(r?'Otros pesos que anotó':'Pesos que anotó')+'</h3>'+Object.keys(bx).map(x=>'<div class="ar-ex"><span></span><span class="ar-n"><b>'+esc(x)+'</b></span><span class="ar-l">'+bx[x].sort((a,c)=>(c.f||'').localeCompare(a.f||'')).map(entChip).join('')+'</span></div>').join('')+'</div>';}
+  if(!r&&!rest.length)b+='<p class="tiny">No anotó pesos en esta rutina.</p>';
+  openModal(modalHead('Rutina · '+j.nombre,p.rn||'Rutina')+'<div class="modal-b">'+b+'</div><div class="modal-f"><button class="btn" id="pe_back">Volver a la ficha</button><div class="grow"></div><button class="btn pri" data-close>Cerrar</button></div>',mw=>{
+    mw.querySelector('#pe_back').onclick=()=>openFicha(jid);
+    mw.addEventListener('click',ev=>{const c=ev.target.closest('[data-ent]');if(c)openEnt(c.dataset.ent,()=>openPer(jid,k));});});
+}
+/* ---------- la ficha ---------- */
+function openFicha(jid){
+  const j=S.jug.find(x=>x.id===jid);if(!j)return;const jd=dniOf(jid);const ap=jugDatosApp(jid);const docs=jugDocs(jid);
+  const ed=edadDe(j.nac||ap.nac);const lastA=((j.antro||[]).slice().sort((x,y)=>(y.f||'').localeCompare(x.f||''))[0]||{}).m||{};const peso=+j.peso||+lastA.peso||+ap.pc||null,talla=+j.talla||+lastA.talla||+ap.talla||null;const imc=peso&&talla?peso/Math.pow(talla/100,2):null;
+  const fromApp=k=>!j[k==='pc'?'peso':k]&&ap[k]?' <i class="fi-app" title="Lo cargó él en la app">📱</i>':'';
+  const kp=(n,v,extra)=>'<div class="fi-k"><small>'+n+'</small><b>'+v+'</b>'+(extra||'')+'</div>';
+  const fd=(n,v)=>'<div class="fd"><small>'+n+'</small><span>'+v+'</span></div>';const nac=j.nac||ap.nac;
+  let b='<div class="fi-card"><div class="fi-grid">'+
+    fd('Nacimiento',nac?esc(fmtD(nac,{day:'2-digit',month:'2-digit',year:'numeric'}))+fromApp('nac'):'–')+
+    fd('Peso',peso?n1(peso)+' kg'+fromApp('pc'):'–')+
+    fd('Edad',ed!=null?ed+' años':'–')+
+    fd('DNI',jd.dniFin?'…'+esc(jd.dniFin):(jd.dniH?'cargado':'–'))+
+    fd('Altura',talla?n1(talla)+' cm'+fromApp('talla'):'–')+
+    fd('Posición',esc(j.pos||'–')+(j.dorsal?' · #'+esc(j.dorsal):''))+
+    '</div>'+(RO?'':'<div class="fi-acts"><button class="linkish" data-fdatos>Editar datos</button><button class="linkish" data-flink title="Le mandás este link y completa fecha de nacimiento, peso y altura desde su celular">📱 Link para que complete sus datos</button><button class="linkish" data-fedit>Nombre, DNI y rutina individual</button>'+(docs.length?'<span class="tiny">· usa la app'+(docs[0].upd?' (últ. vez '+esc(ddShort(new Date(docs[0].upd).toISOString().slice(0,10)))+')':'')+'</span>':'<span class="tiny">· todavía no usa la app</span>')+'</div>')+'</div>';
+  b+=anBlock(j);
+  const les=S.lesAll.filter(l=>l.jugador===jid).sort((a,c)=>(c.fecha||'').localeCompare(a.fecha||''));
+  const ul=les[0];
+  b+='<div class="fi-line"><span class="fi-lt">Última lesión</span>'+(ul?'<span><b>'+esc(ul.tipo||ul.zona||'Lesión')+'</b> <span class="tiny">· '+esc(fmtD(ul.fecha,{day:'numeric',month:'short',year:'numeric'}))+'</span></span><span class="pill '+(activeInj(ul)?'bad':'good')+'">'+(activeInj(ul)?'activa':'alta')+'</span>':'<span class="tiny">ninguna cargada</span>')+
+    '<span class="grow"></span><button class="linkish" data-fmore="les">+ información</button></div>';
+  b+='<div class="fi-more" data-more="les" hidden><div class="fi-sh"><span class="tiny">'+les.length+(les.length===1?' lesión':' lesiones')+'</span><span class="grow"></span>'+(RO?'':'<button class="btn sm" data-fles>+ Cargar lesión</button>')+'</div>'+
+    (les.length?'<div class="fi-list">'+les.map(l=>{const act=activeInj(l);const dias=l.fecha?Math.round((pISO(l.fechaAlta&&!act?l.fechaAlta:TODAY)-pISO(l.fecha))/864e5):null;
+      return '<button type="button" class="fi-row" data-finj="'+esc(l.id)+'"><b>'+esc(l.tipo||l.zona||'Lesión')+'</b><span class="tiny">'+esc(l.zona||'')+' · '+esc(fmtD(l.fecha,{day:'numeric',month:'short',year:'numeric'}))+(dias!=null?' · '+dias+' días'+(act?' (sigue)':' de baja'):'')+'</span><span class="pill '+(act?'bad':'good')+'">'+(act?'activa':'alta')+'</span></button>';}).join('')+'</div>'
+      :'<p class="tiny">Sin lesiones cargadas. Las anteriores también las podés cargar acá (ponés la fecha y el alta).</p>')+'</div>';
+  const pers=fichaPers(jid);
+  b+='<div class="fi-sec"><div class="fi-sh"><h3>Rutinas</h3><span class="tiny">de la más nueva a la más vieja</span></div>'+
+    (pers.length?'<div class="fi-list">'+pers.map(p=>{const live=p.live&&p.desde<=TODAY&&p.hasta>=TODAY;
+      return '<button type="button" class="fi-row" data-fper="'+esc(p.k)+'"><b>'+esc(p.k==='sin'?'Pesos sin rutina asociada':(p.rn||'Rutina'))+'</b><span class="tiny">'+esc(PER_T[p.kind]||'')+(p.desde&&p.k!=='sin'?' · '+esc(ddShort(p.desde))+(p.hasta&&p.hasta<'9999'?' → '+esc(ddShort(p.hasta)):''):'')+' · '+p.ents.length+(p.ents.length===1?' peso anotado':' pesos anotados')+(p.rid&&!rutById(p.rid)?' · rutina borrada':'')+'</span>'+(live?'<span class="pill good">vigente</span>':'<span class="fi-go">›</span>')+'</button>';}).join('')+'</div>'
+      :'<p class="tiny">Todavía no tuvo rutinas asignadas.</p>')+'</div>';
+  openModal(modalHead(catName(j.cat||S.cat)+' · ficha',j.nombre)+'<div class="modal-b fi">'+b+'</div><div class="modal-f"><div class="grow"></div><button class="btn pri" data-close>Cerrar</button></div>',mw=>{
+    mw.classList.add('full');
+    mw.addEventListener('click',e=>{const t=e.target;
+      const mo=t.closest('[data-fmore]');if(mo){const box=mw.querySelector('[data-more="'+mo.dataset.fmore+'"]');box.hidden=!box.hidden;mo.textContent=box.hidden?'+ información':'− menos';return;}
+      if(t.closest('[data-fdatos]'))return openFichaDatos(jid);
+      if(t.closest('[data-fedit]'))return openPlayer(jid);
+      if(t.closest('[data-flink]'))return copyTxt(atlUrl(j.cat||S.cat).replace('#','?datos#'),'Link copiado: mandáselo y completa sus datos');
+      if(t.closest('[data-annew]'))return openAnTake(jid,null);
+      const an=t.closest('[data-anedit]');if(an)return openAnTake(jid,an.dataset.anedit);
+      if(t.closest('[data-fles]'))return openInj(null,{jugador:jid,estado:'alta'});
+      const li=t.closest('[data-finj]');if(li)return openInj(li.dataset.finj);
+      const pe=t.closest('[data-fper]');if(pe)return openPer(jid,pe.dataset.fper);});
+  });
+}
+
 /* ================= registrados: quiénes usan la app de atletas, qué rutina hacen y qué anotaron ================= */
 const actAsig=a=>a&&asigState(a)!=='fin'&&a.desde<=TODAY&&rutById(a.rutina);
 /* rutina que está haciendo ese atleta: individual > diferenciado (lesión) > la de la categoría (gym primero) */
@@ -3418,8 +3616,8 @@ function vInj(){
     hist.map(l=>'<tr data-inj="'+esc(l.id)+'" style="cursor:pointer"><td>'+esc(jugName(l.jugador))+'</td><td>'+esc(l.zona||'')+'</td><td>'+esc(l.tipo||'')+'</td><td>'+esc(fmtD(l.fecha,{day:'numeric',month:'short',year:'2-digit'}))+'</td><td>'+esc(fmtD(l.fechaAlta,{day:'numeric',month:'short',year:'2-digit'}))+'</td><td class="r num">'+(l.fechaAlta?daysBetween(l.fecha,l.fechaAlta):'–')+'</td><td>'+esc(l.mecanismo||'')+'</td></tr>').join('')+'</tbody></table></div>';}
   return h;
 }
-function openInj(id){
-  const l=S.lesAll.find(x=>x.id===id)||{fecha:TODAY,estado:'activa'};const isNew=!id;
+function openInj(id,pre){
+  const l=S.lesAll.find(x=>x.id===id)||Object.assign({fecha:TODAY,estado:'activa'},pre||{});const isNew=!id;
   const b='<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="l_j">Jugador</label><select id="l_j">'+sortedJug().map(j=>'<option value="'+esc(j.id)+'"'+(j.id===l.jugador?' selected':'')+'>'+esc(j.nombre)+'</option>').join('')+'</select></div>'+
     '<div class="field"><label for="l_f">Fecha de lesión</label><input type="date" id="l_f" value="'+esc(l.fecha)+'"></div>'+
     '<div class="field"><label for="l_z">Zona</label><select id="l_z">'+ZONAS.map(z=>'<option'+(z===l.zona?' selected':'')+'>'+z+'</option>').join('')+'</select></div>'+
@@ -3467,9 +3665,9 @@ function vRoster(){
   const dd=t=>t?fmtD(new Date(t).toISOString().slice(0,10),{day:'numeric',month:'short'}):'';
   let h='<div class="grid2"><div><div class="bar"><h2>Plantel</h2><span class="muted">'+S.jug.length+' jugadores</span>'+(S.jug.length&&!RO?'<span class="pill '+(nApp?'good':'neutral')+'" title="Jugadores que ya cargaron sus datos en la app de atletas">📱 '+nApp+' de '+S.jug.length+' en la app</span>':'')+'</div>';
   h+=S.jug.length?'<div class="roster" style="grid-template-columns:1fr">'+sortedJug().map(j=>{const inj=lesOf().find(l=>l.jugador===j.id&&activeInj(l));const p=(st[j.id]||{}).pct;
-    return '<div class="pl"><span class="dor">'+esc(j.dorsal||'·')+'</span><div class="info"><div class="nm">'+esc(j.nombre)+'</div><div class="tiny">'+esc(j.pos||'Sin posición')+(p!=null?' · '+p+'% asist.':'')+'</div></div>'+(inj?'<span class="pill bad">lesión</span>':'')+(indOf(j.id)?'<span class="pill neutral" title="Hace una rutina individual">rutina individual</span>':'')+
+    return '<div class="pl"><span class="dor">'+esc(j.dorsal||'·')+'</span><div class="info pl-click" data-ficha="'+esc(j.id)+'" title="Ver ficha"><div class="nm">'+esc(j.nombre)+'</div><div class="tiny">'+esc(j.pos||'Sin posición')+(p!=null?' · '+p+'% asist.':'')+'</div></div>'+(inj?'<span class="pill bad">lesión</span>':'')+(indOf(j.id)?'<span class="pill neutral" title="Hace una rutina individual">rutina individual</span>':'')+
       (RO?'':(regOf[j.id]?'<button type="button" class="app-b on" data-atl="'+esc(regOf[j.id].d.id)+'" title="Ya está en la app de atletas'+(regOf[j.id].how==='nombre'?' (reconocido por nombre)':'')+'. Tocá para ver lo que anotó.">📱 en la app'+(regOf[j.id].d.upd?' · '+esc(dd(regOf[j.id].d.upd)):'')+'</button>':'<span class="app-b" title="Todavía no cargó sus datos en la app de atletas">sin app</span>'))+
-      '<button class="btn sm ghost" data-editj=""'+esc(j.id)+'">'+(RO?'Ver':'Editar')+'</button></div>';}).join('')+'</div>'
+      '<button class="btn sm ghost" data-editj="'+esc(j.id)+'">'+(RO?'Ver':'Editar')+'</button></div>';}).join('')+'</div>'
     :'<div class="empty"><b>Plantel vacío</b>Sumá jugadores con el formulario, o pegá una lista entera.</div>';
   if(sinVinc.length&&!RO)h+='<div class="panel" style="margin-top:12px"><h3>En la app pero sin reconocer ('+sinVinc.length+')</h3><p class="tiny" style="margin:0 0 8px">Cargaron sus datos pero no coinciden con nadie del plantel (DNI o nombre distinto). Tocá uno para vincularlo al jugador correcto.</p>'+
     sinVinc.map(d=>'<button type="button" class="app-b on" style="margin:0 6px 6px 0" data-atl="'+esc(d.id)+'">'+esc(d.nombre||'Sin nombre')+(d.dniFin?' · DNI …'+esc(d.dniFin):'')+(d.upd?' · '+esc(dd(d.upd)):'')+'</button>').join('')+'</div>';
@@ -3504,8 +3702,9 @@ function openPlayer(id){
 /* ================= eventos de la vista ================= */
 const view=$('#view');
 view.addEventListener('click',e=>{
-  const t=e.target.closest('[data-rutarch],[data-libarch],[data-tesmode],[data-atl],[data-atlrut],[data-rutind],[data-act],[data-calview],[data-godia],[data-day],[data-att],[data-adate],[data-match],[data-ex],[data-test],[data-inj],[data-editj],[data-stats],[data-stmode],[data-stsort],[data-rutprint],[data-rut],[data-rutdup],[data-asig],[data-asignew],[data-asigend]');if(!t)return;
+  const t=e.target.closest('[data-ficha],[data-rutarch],[data-libarch],[data-tesmode],[data-atl],[data-atlrut],[data-rutind],[data-act],[data-calview],[data-godia],[data-day],[data-att],[data-adate],[data-match],[data-ex],[data-test],[data-inj],[data-editj],[data-stats],[data-stmode],[data-stsort],[data-rutprint],[data-rut],[data-rutdup],[data-asig],[data-asignew],[data-asigend]');if(!t)return;
   const d=t.dataset;
+  if(d.ficha)return openFicha(d.ficha);
   if(RO){
     if(d.att||d.asig||d.asignew||d.asigend||d.rutdup||d.tesmode||d.atl||['allP','newMatch','newTest','newInj','editIdeal','testList','newRut','newRutInd','newRutHere','newAsig','newInd','atlLink'].includes(d.act))return roMsg();
     if(d.day)return openDay(d.day,d.tipo||undefined,false);
