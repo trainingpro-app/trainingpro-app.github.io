@@ -193,6 +193,26 @@ h3{font-family:var(--f-disp);font-weight:700;font-size:18px;text-transform:upper
 .rpe-b.on{background:hsl(var(--h),75%,45%);border-color:hsl(var(--h),75%,40%);color:#fff}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .rpe-warn{background:#3A1A08;color:#FFD3B8}:root:not([data-theme=light]) .rpe-warn button{background:transparent;color:#FFB585}}
 :root[data-theme=dark] .rpe-warn{background:#3A1A08;color:#FFD3B8}:root[data-theme=dark] .rpe-warn button{background:transparent;color:#FFB585}
+.tabs.t3 button{font-size:15px;padding:10px 4px;letter-spacing:.03em}
+.sec-t{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--ink-3);margin:16px 4px 8px}.sec-t small{text-transform:none;letter-spacing:0;font-weight:600}
+.rep{background:var(--ink);color:var(--bg);border-radius:14px;padding:14px;margin:0 0 4px}.rep h4{margin:0;font-size:17px}.rep-s{font-size:12.5px;opacity:.7;margin-top:2px}.rep-p{margin:10px 0 0;font-size:14px;line-height:1.4}
+.rep ul{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:9px}.rep li{display:flex;gap:9px;font-size:14.5px;line-height:1.35}
+.rep li i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;flex:0 0 auto}
+.rep i.ok{background:#1FB65C;color:#04140A}.rep i.bad{background:#EE6E62;color:#2a0a07}.rep i.nu{background:rgba(127,127,127,.35);color:inherit}
+.rep-v{margin-top:12px;background:rgba(31,182,92,.16);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.4}
+.an-l{display:grid;gap:8px}.an-b{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font:inherit;color:inherit;cursor:pointer}
+.an-bt{flex:1;display:grid;gap:1px}.an-bt b{font-size:15.5px}.an-ar{color:var(--ink-3);font-size:18px}
+.an-b.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent);border-radius:12px 12px 0 0}.an-b.on .an-ar{color:var(--accent)}
+.an-d{background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;margin-top:-8px;padding:10px 14px 12px;display:grid;gap:10px}
+.an-ts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.an-t{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:1px}
+.an-t small{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--ink-3)}.an-t b{font-size:22px;line-height:1.15}.an-t b span{font-size:13px;font-weight:600}
+.an-mini{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:14px}.an-mini b{text-align:right}
+.hl{padding:2px 14px}.hl-r{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:11px 0;font:inherit;color:inherit;cursor:pointer}.hl-r:last-child{border-bottom:0}
+.hl-r>span:first-child{flex:1;display:grid;gap:2px}.hl-r b{font-size:15px}.hl-r small{font-size:12.5px;color:var(--ink-3)}.hl-go{color:var(--ink-3);font-size:18px}
+.lnk-back{background:none;border:0;color:var(--accent);font:inherit;font-weight:700;font-size:15px;padding:4px 2px 10px;cursor:pointer}
+.h-t{font-size:17px}.hd-b{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.hd-b button{border:1px solid var(--line);background:var(--surface-2,#eef0ee);border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer}.hd-b button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.hx{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.hx:last-child{border-bottom:0}
+.hx-n{display:grid;gap:1px;min-width:0}.hx-n b{font-size:14.5px}.hx-n small{font-size:12px;color:var(--ink-3)}.hx-v{display:grid;justify-items:end;gap:1px;text-align:right}.hx-v .mono{font-size:13.5px}.hx-v small{font-size:12px;font-weight:700;color:var(--ink-3)}.hx-v small.up{color:var(--good)}.hx-v small.dn{color:var(--bad)}
 </style>
 </head>
 <body>
@@ -425,9 +445,12 @@ function render(){
   if(!(D.ready.c&&D.ready.r&&D.ready.a))return;
   const c=st.cat&&catById(st.cat);
   if(!c){if(LOCK)return noCat();st.cat=null;return home();}
-  $('#back').hidden=!!LOCK;$('#eye').textContent=c.grupo||'Categoría';$('#ttl').textContent=c.nombre;
-  let h='<div class="tabs"><button class="'+(st.tab==='rutina'?'on':'')+'" data-tab="rutina">Rutina actual</button><button class="'+(st.tab==='reg'?'on':'')+'" data-tab="reg">Mis registros</button></div>';
-  h+=st.tab==='reg'?regView():rutView(c);
+  const PC=isPersC(c);
+  $('#back').hidden=!!LOCK||PC;$('#eye').textContent=PC?'Personalizado':(c.grupo||'Categoría');$('#ttl').textContent=PC?(getReg().nombre||'Personalizados'):c.nombre;
+  const T=PC?[['rutina','Rutinas'],['an','Antropometría']]:[['rutina','Rutina actual'],['reg','Mis registros']].concat(anList().length?[['an','Antropometría']]:[]);
+  if(PC&&st.tab==='reg')st.tab='rutina';if(!T.some(t=>t[0]===st.tab))st.tab='rutina';
+  let h='<div class="tabs'+(T.length>2?' t3':'')+'">'+T.map(t=>'<button class="'+(st.tab===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>';
+  h+=st.tab==='an'?anView():PC?persRut(c):st.tab==='reg'?regView():rutView(c);
   $('#app').innerHTML=h;
 }
 function noCat(){
@@ -436,7 +459,7 @@ function noCat(){
 }
 function home(){
   $('#back').hidden=true;$('#eye').textContent='Club Villa Mitre';$('#ttl').innerHTML='Elegí tu <b>categoría</b>';
-  const groups={};D.cats.slice().sort((a,b)=>(a.orden||0)-(b.orden||0)).forEach(c=>{(groups[c.grupo||'Otras']=groups[c.grupo||'Otras']||[]).push(c);});
+  const groups={};D.cats.filter(c=>!isPersC(c)).sort((a,b)=>(a.orden||0)-(b.orden||0)).forEach(c=>{(groups[c.grupo||'Otras']=groups[c.grupo||'Otras']||[]).push(c);});
   let h='';
   Object.keys(groups).forEach(g=>{
     h+='<div class="grp-t">'+esc(g)+'</div><div class="cat-grid">'+groups[g].map(c=>{const n=asigFor(c.id).filter(a=>a.desde<=TODAY).length;
@@ -467,7 +490,7 @@ function rutView(c){
   const list=asigFor(c.id);const cur=list.filter(a=>a.desde<=TODAY);const prox=list.filter(a=>a.desde>TODAY);
   if(!list.length)return '<div class="empty"><b>Todavía no hay rutina</b>Cuando tu preparadora física cargue una, la vas a ver acá.</div>';
   const pick=(st.asig&&list.find(a=>a.id===st.asig))||cur[cur.length-1]||prox[0];st.asig=pick.id;
-  let h=list[0].dif?'<div class="card" style="border-left:5px solid var(--accent);margin-bottom:10px"><b>'+(list[0].ind?'Tu rutina individual':'Tu trabajo diferenciado')+'</b><div class="tiny">'+(list[0].ind?'Tu preparadora física te armó esta rutina para vos. Hacé esta en lugar de la del grupo.':'Tu preparadora física te armó esta rutina mientras te recuperás. Hacé esta en lugar de la del grupo.')+'</div></div>':'';
+  let h=list[0].dif&&!isPersC(c)?'<div class="card" style="border-left:5px solid var(--accent);margin-bottom:10px"><b>'+(list[0].ind?'Tu rutina individual':'Tu trabajo diferenciado')+'</b><div class="tiny">'+(list[0].ind?'Tu preparadora física te armó esta rutina para vos. Hacé esta en lugar de la del grupo.':'Tu preparadora física te armó esta rutina mientras te recuperás. Hacé esta en lugar de la del grupo.')+'</div></div>':'';
   if(list.length>1)h+='<div class="days" style="margin-top:0">'+list.map(a=>{const r=rutById(a.rutina);return '<button class="day-b'+(a.id===pick.id?' on':'')+'" data-asig="'+esc(a.id)+'"><b>'+esc(r.nombre)+'</b><small>'+(a.desde>TODAY?'Empieza '+esc(fmtD(a.desde,{day:'numeric',month:'short'})):'Vigente')+'</small></button>';}).join('')+'</div>';
   const r=rutById(pick.rutina);const ds=rutDays(r);
   const W=pick.semanas||r.semanas||4;
@@ -562,18 +585,97 @@ function profileForm(R){
     '<div class="fld" style="flex:1"><label for="ptal">Altura (cm)</label><input id="ptal" type="number" inputmode="decimal" step="any" value="'+esc(R.talla||'')+'" placeholder="Ej: 185"></div></div></details>'+
     '<button class="btn pri" id="psave">Guardar mis datos</button><p class="tiny" style="margin:0">Podés poner el DNI con o sin puntos. No se guarda escrito: se usa solo para reconocerte.</p></div>';
 }
-function regView(){
+
+/* ================= PERSONALIZADOS y antropometría ================= */
+const isPersC=c=>!!c&&(c.pers===true||c.id==='pers');
+const n1=v=>v==null||isNaN(v)?'–':fmtN(Math.round(v*10)/10);
+const sg=v=>(v>=0?'+':'−')+n1(Math.abs(v));
+const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+function anList(){return ((pfNow().an)||[]).filter(t=>t&&t.f).slice().sort((x,y)=>x.f.localeCompare(y.f));}
+function anInforme(T){
+  const L=T[T.length-1],P=T[T.length-2];const fl=f=>esc(fmtD(f,{day:'numeric',month:'short'}));
+  if(!P)return '<div class="rep"><h4>Tu mini informe</h4><div class="rep-s">Primera medición: '+fl(L.f)+'</div><p class="rep-p">Esta es tu primera medición. Cuando tengas la próxima, acá vas a ver qué subió y qué bajó.</p></div>';
+  const it=[];const li=(c,t)=>it.push('<li><i class="'+c+'">'+(c==='ok'?'✓':c==='bad'?'!':'=')+'</i><span>'+t+'</span></li>');
+  const D=k=>L[k]!=null&&P[k]!=null?L[k]-P[k]:null;
+  const dm=D('musc'),da=D('adip'),ds=D('sum6'),dp=D('peso');
+  if(dm!=null){if(Math.abs(dm)<0.2)li('nu','<b>Tu masa muscular se mantuvo</b> ('+sg(dm)+' kg)');else if(dm>0)li('ok','<b>Subió tu masa muscular:</b> +'+n1(dm)+' kg');else li('bad','<b>Bajó tu masa muscular:</b> −'+n1(-dm)+' kg');}
+  if(da!=null){if(Math.abs(da)<0.2)li('nu','<b>Tu masa adiposa se mantuvo</b> ('+sg(da)+' kg)');else if(da<0)li('ok','<b>Bajó tu masa adiposa:</b> −'+n1(-da)+' kg');else li('bad','<b>Subió tu masa adiposa:</b> +'+n1(da)+' kg');}
+  if(ds!=null){if(Math.abs(ds)<1)li('nu','<b>Tus pliegues casi no cambiaron</b>');else if(ds<0)li('ok','<b>Bajaron tus pliegues:</b> −'+n1(-ds)+' mm (menos grasa bajo la piel)');else li('bad','<b>Subieron tus pliegues:</b> +'+n1(ds)+' mm');}
+  if(dp!=null){const mU=dm!=null&&dm>=0.2,aD=da!=null&&da<=-0.2;
+    if(Math.abs(dp)<0.5)li('nu','<b>Tu peso casi no cambió</b> ('+sg(dp)+' kg)'+(mU&&aD?': cambiaste grasa por músculo.':'.'));
+    else li('nu','<b>Tu peso '+(dp>0?'subió':'bajó')+'</b> '+n1(Math.abs(dp))+' kg'+(dp<0&&aD&&!(dm!=null&&dm<=-0.2)?': lo que bajó es grasa, no músculo.':dp>0&&mU&&!(da!=null&&da>=0.2)?': lo que subió es músculo.':'.'));}
+  let h='<div class="rep"><h4>Tu mini informe</h4><div class="rep-s">Última medición '+fl(L.f)+', comparada con la del '+fl(P.f)+'</div><ul>'+it.join('')+'</ul>';
+  if(T.length>=3){const F=T[0];if(F.musc!=null&&L.musc!=null&&F.adip!=null&&L.adip!=null)h+='<div class="rep-v">Desde la primera ('+esc(fmtD(F.f,{month:'long',year:'numeric'}))+'): <b>'+sg(L.musc-F.musc)+' kg de músculo</b> y <b>'+sg(L.adip-F.adip)+' kg de grasa</b>.</div>';}
+  return h+'</div>';
+}
+function anView(){
+  const T=anList();
+  if(!T.length)return '<div class="empty"><b>Todavía no hay mediciones</b>Cuando tu preparadora cargue tu antropometría, la vas a ver acá con un mini informe.</div>';
+  const open=st.anOpen===undefined?T[T.length-1].f:st.anOpen;
+  const pc=(v,p)=>v!=null&&p?'<span class="tiny">'+n1(v/p*100)+'% del peso</span>':'';
+  let h=anInforme(T)+'<div class="sec-t">Mis mediciones <small>de la más nueva a la más vieja</small></div><div class="an-l">';
+  T.slice().reverse().forEach(t=>{const on=open===t.f;
+    h+='<button type="button" class="an-b'+(on?' on':'')+'" data-anf="'+esc(t.f)+'"><span class="an-bt"><b>'+esc(fmtD(t.f,{day:'numeric',month:'short',year:'numeric'}))+'</b><span class="tiny">Muscular '+n1(t.musc)+' · Adiposa '+n1(t.adip)+' kg</span></span><span class="an-ar">'+(on?'▾':'›')+'</span></button>';
+    if(on)h+='<div class="an-d">'+(t.ev?'<div class="tiny">Nutri: '+esc(t.ev)+'</div>':'')+
+      '<div class="an-ts"><div class="an-t"><small>Masa muscular</small><b>'+n1(t.musc)+' <span>kg</span></b>'+pc(t.musc,t.peso)+'</div><div class="an-t"><small>Masa adiposa</small><b>'+n1(t.adip)+' <span>kg</span></b>'+pc(t.adip,t.peso)+'</div></div>'+
+      '<div class="an-mini">'+(t.peso!=null?'<span>Peso</span><b>'+n1(t.peso)+' kg</b>':'')+(t.osea!=null?'<span>Masa ósea</span><b>'+n1(t.osea)+' kg</b>':'')+(t.sum6!=null?'<span>Σ 6 pliegues</span><b>'+n1(t.sum6)+' mm</b>':'')+(t.musc&&t.osea?'<span>Músculo por kg de hueso</span><b>'+(t.musc/t.osea).toFixed(2).replace('.',',')+'</b>':'')+'</div></div>';});
+  return h+'</div>';
+}
+/* rutinas que ya terminó (con o sin pesos anotados), de la más nueva a la más vieja */
+function pastPeriods(){const R=getReg();const G=myGroups(effLog(R));const P=myPeriods();const have=new Set(G.map(g=>g.k));
+  Object.values(P).forEach(p=>{if(!have.has(p.k))G.push(Object.assign({},p,{ents:[]}));});
+  return G.filter(g=>g.k==='sin'?g.ents.length:!(g.live&&g.desde<=TODAY&&g.hasta>=TODAY)&&g.desde<=TODAY)
+    .sort((a,b)=>(a.k==='sin')-(b.k==='sin')||(b.desde||'').localeCompare(a.desde||''));}
+const rng=p=>p.desde?esc(fmtD(p.desde,{day:'numeric',month:'short'}))+(p.hasta&&p.hasta<'9999'?' → '+esc(fmtD(p.hasta,{day:'numeric',month:'short'})):''):'';
+function persRut(c){
   const R=getReg();
   if(!R.nombre||!R.ape||!R.dniH||st.editProf)return profileForm(R);
-  const exs=[...new Set(BASE_EX.concat(R.ex||[]).concat(Object.keys(R.log||{})))];
-  const sel=st.regEx||exs[0];
-  let h='<div class="card me"><div class="me-row" style="justify-content:space-between;align-items:center"><span><b>'+esc(R.nombre)+'</b>'+(R.dniFin?' <span class="tiny">· DNI …'+esc(R.dniFin)+'</span>':'')+'</span><button class="btn sm" id="pedit">Editar mis datos</button></div>'+
+  if(st.hist)return histView(st.hist);
+  const exs=[...new Set(BASE_EX.concat(R.ex||[]).concat(Object.keys(R.log||{})))];const sel=st.regEx||exs[0];
+  let h='<div class="sec-t">Rutina actual</div>'+rutView(c)+'<div class="sec-t">Anotá tu peso</div>'+regTop(R,exs,sel);
+  const G=pastPeriods();
+  h+='<div class="sec-t">Mis rutinas anteriores</div>'+(G.length?'<div class="card hl">'+G.map(p=>'<button type="button" class="hl-r" data-hist="'+esc(p.k)+'"><span><b>'+esc(p.k==='sin'?'Otros registros':(p.rn||'Rutina'))+'</b><small>'+(p.k==='sin'?'pesos que no quedaron en ninguna rutina':rng(p))+' · '+p.ents.length+(p.ents.length===1?' peso anotado':' pesos anotados')+'</small></span><span class="hl-go">›</span></button>').join('')+'</div>'
+    :'<p class="tiny">Cuando termines tu primera rutina, acá vas a poder ver qué hiciste cada mes y los pesos que anotaste.</p>');
+  return h;
+}
+function histView(k){
+  const p=pastPeriods().find(x=>x.k===k);if(!p){st.hist=null;return persRut(catById(st.cat));}
+  const r=p.rid&&rutById(p.rid);const days=r?rutDays(r):[];const di=Math.min(st.hday||0,Math.max(0,days.length-1));
+  const by={};p.ents.forEach(e=>{const kx=nrm(e.x);(by[kx]=by[kx]||{n:e.x,l:[]}).l.push(e);});
+  const find=n=>{const kx=nrm(n);if(by[kx])return kx;return Object.keys(by).find(q=>q&&kx&&(q.startsWith(kx)||kx.startsWith(q)))||null;};
+  const used=new Set();days.forEach(d=>(d.bloques||[]).forEach(b=>(b.ejercicios||[]).forEach(e=>{const q=e.n&&find(e.n);if(q)used.add(q);})));
+  const row=(name,pres,l)=>{let h='<div class="hx"><span class="hx-n"><b>'+esc(name)+'</b>'+(pres?'<small>pautado '+esc(pres)+'</small>':'')+'</span><span class="hx-v">';
+    if(!l||!l.length)return h+'<span class="tiny">sin anotar</span></span></div>';
+    const L=l.slice().sort((a,b)=>a.f.localeCompare(b.f)||(a.t||0)-(b.t||0));const sh=L.slice(-5);
+    h+='<span class="mono">'+(L.length>5?'… → ':'')+sh.map(e=>fmtN(e.kg)).join(' → ')+' kg</span>';
+    const d=L[L.length-1].kg-L[0].kg;const ed=L.some(e=>e.ed||e.pfAdd);
+    h+='<small class="'+(d>0?'up':d<0?'dn':'')+'">'+(L.length<2?fmtD(L[0].f,{day:'numeric',month:'short'}):d>0?'▲ +'+fmtN(Math.round(d*10)/10)+' kg':d<0?'▼ −'+fmtN(Math.round(-d*10)/10)+' kg':'igual')+(ed?' · ✎ PF':'')+'</small>';
+    return h+'</span></div>';};
+  let h='<button type="button" class="lnk-back" data-hist="">‹ Mis rutinas</button><div class="card"><b class="h-t">'+esc(p.k==='sin'?'Otros registros':(p.rn||'Rutina'))+'</b><div class="tiny">'+(p.k==='sin'?'':rng(p)+' · ')+p.ents.length+(p.ents.length===1?' peso anotado':' pesos anotados')+(p.rid&&!r?' · tu profe borró esta rutina':'')+'</div>'+
+    (days.length>1?'<div class="hd-b">'+days.map((d,i)=>'<button type="button" class="'+(i===di?'on':'')+'" data-hday="'+i+'">'+esc(d.nombre||('Día '+(i+1)))+'</button>').join('')+'</div>':'')+'</div>';
+  let rows='';
+  if(days.length){(days[di].bloques||[]).forEach(b=>(b.ejercicios||[]).forEach(e=>{if(!e.n)return;const q=find(e.n);rows+=row(e.n,presText(e,b),q?by[q].l:null);}));}
+  const otros=Object.keys(by).filter(q=>!used.has(q));
+  if(rows)h+='<div class="card">'+rows+'</div>';
+  if(otros.length)h+='<div class="sec-t">'+(days.length?'Otros ejercicios que anotaste':'Lo que anotaste')+'</div><div class="card">'+otros.map(q=>row(by[q].n,'',by[q].l)).join('')+'</div>';
+  if(!rows&&!otros.length)h+='<p class="tiny">No anotaste pesos en esta rutina.</p>';
+  return h+'<p class="tiny" style="margin:8px 2px">Cada número es un peso que anotaste, del más viejo al más nuevo. Si tu profe corrigió algo, aparece con ✎.</p>';
+}
+function regTop(R,exs,sel){
+  return '<div class="card me"><div class="me-row" style="justify-content:space-between;align-items:center"><span><b>'+esc(R.nombre)+'</b>'+(R.dniFin?' <span class="tiny">· DNI …'+esc(R.dniFin)+'</span>':'')+'</span><button class="btn sm" id="pedit">Editar mis datos</button></div>'+
     '<div class="me-row"><div class="fld" style="flex:1;min-width:140px"><label for="pc">Mi peso corporal (kg)</label><input id="pc" type="number" inputmode="decimal" step="any" value="'+esc(R.pc||'')+'" placeholder="Opcional"></div></div>'+
     '<div class="add-f"><div class="fld"><label for="rx">Ejercicio</label><select id="rx">'+exs.map(x=>'<option'+(x===sel?' selected':'')+'>'+esc(x)+'</option>').join('')+'<option value="__otro">Otro…</option></select></div>'+
     '<div class="fld"><label for="rk">Kilos</label><input id="rk" type="number" inputmode="decimal" step="any" placeholder="60"></div>'+
     '<div class="fld"><label for="rr">Reps</label><input id="rr" type="number" inputmode="numeric" placeholder="1" min="1" max="20"></div>'+
     '<button class="btn pri" id="radd">Anotar</button></div><div class="fld" id="rxoBox" hidden><label for="rxo">Nombre del ejercicio</label><input id="rxo" placeholder="Ej: Remo con barra"></div>'+
     '<p class="tiny" style="margin:0">Con más de 1 rep te calculamos tu 1RM estimado (fórmula de Epley). Tu preparadora física ve lo que anotás.</p></div>';
+}
+function regView(){
+  const R=getReg();
+  if(!R.nombre||!R.ape||!R.dniH||st.editProf)return profileForm(R);
+  const exs=[...new Set(BASE_EX.concat(R.ex||[]).concat(Object.keys(R.log||{})))];
+  const sel=st.regEx||exs[0];
+  let h=regTop(R,exs,sel);
   const EL=effLog(R);const exs2=[...new Set(exs.concat(Object.keys(EL)))];
   const withData=exs2.filter(x=>(EL[x]||[]).length);
   if(!withData.length)return h+'<div class="empty"><b>Todavía no anotaste nada</b>Anotá el peso que levantaste y acá vas a ver tu progreso.</div>';
@@ -614,13 +716,16 @@ function addReg(){
 $('#app').addEventListener('click',e=>{
   const rb=e.target.closest('[data-rpe]');if(rb){const R=getReg();if(!R.nombre)return;R.rpe=(R.rpe||[]).filter(x=>!(x.a===st.asig&&x.d===+rb.dataset.rpei&&x.f===rb.dataset.rpef));
     R.rpe.push({a:st.asig,d:+rb.dataset.rpei,f:rb.dataset.rpef,v:+rb.dataset.rpe,t:Date.now()});setReg(R);render();toast('Gracias. Guardamos tu RPE: '+rb.dataset.rpe);return;}
-  const t=e.target.closest('[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],#radd,#psave,#pedit');if(!t)return;
+  const t=e.target.closest('[data-hist],[data-hday],[data-anf],[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],#radd,#psave,#pedit');if(!t)return;
   if(t.id==='psave')return saveProfile();
   if(t.dataset.regmode){st.regMode=t.dataset.regmode;return render();}
   if(t.id==='pedit'){st.editProf=true;return render();}
   const d=t.dataset;
+  if(d.hist!==undefined){st.hist=d.hist||null;st.hday=0;render();window.scrollTo(0,0);return;}
+  if(d.hday!==undefined){st.hday=+d.hday;return render();}
+  if(d.anf){st.anOpen=(st.anOpen===undefined?(anList().slice(-1)[0]||{}).f:st.anOpen)===d.anf?'':d.anf;return render();}
   if(d.cat)return go(d.cat);
-  if(d.tab){st.tab=d.tab;return render();}
+  if(d.tab){st.tab=d.tab;st.hist=null;return render();}
   if(d.asig){st.asig=d.asig;st.day=null;st.week=null;return render();}
   if(d.day){st.day=+d.day;render();if(d.rpego)setTimeout(()=>{const c=$('#rpeCard');if(c)c.scrollIntoView({behavior:'smooth',block:'center'});},60);return;}
   if(d.week){st.week=+d.week;return render();}
