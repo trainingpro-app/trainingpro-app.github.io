@@ -20,3 +20,4 @@ self.addEventListener('fetch',e=>{
     e.respondWith(caches.match(req).then(r=>r||fetch(req).then(n=>{if(n&&(n.ok||n.type==='opaque')){const c=n.clone();caches.open(V).then(x=>x.put(req,c));}return n;})));
   }
 });
+// v34 personalizados
