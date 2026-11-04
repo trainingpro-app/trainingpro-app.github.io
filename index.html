@@ -600,6 +600,17 @@ body.drag-on{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .ex-by{font-weight:700;color:var(--ink-3);margin-right:2px}
 .ej-nr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
 @media (max-width:560px){.ej-nr{grid-template-columns:1fr}}
+.ent{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:2px 6px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}
+.ent:hover{border-color:var(--accent)}
+.ent small{color:var(--ink-3)}
+.ent-ed{font-style:normal;color:#c2410c;font-size:11px}
+.ent-t{font-style:normal;background:var(--accent);color:var(--accent-ink);border-radius:3px;font-size:9.5px;font-weight:800;padding:0 4px}
+.hist-p{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:6px;background:var(--bg)}
+.hist-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hist-h b{font-family:var(--f-disp);font-size:17px;text-transform:uppercase;letter-spacing:.03em}
+.hist-x{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.hist-xn{font-weight:700;font-size:13px}
+@media (max-width:560px){.hist-x{grid-template-columns:1fr}}
 .pend-t{font-size:11px;font-weight:700;color:#c2410c;background:#fff1e6;border-radius:4px;padding:1px 6px;white-space:nowrap}
 .ex-head2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) 56px auto 88px 28px;gap:6px;padding:0 9px 0 31px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
 .ex-head2 span:nth-child(4){min-width:120px}
@@ -910,7 +921,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · pesos por rutina</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · historial de pesos</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1014,6 +1025,12 @@ const Store={
     if(this.mode==='cloud'){ this.fs.collection(coll).doc(id).set(clean(data)).catch(handleErr); NET.wrote(); return; }
     (this.local[coll]=this.local[coll]||{})[id]=clean(data); this._changed(coll);
   },
+  /* cambia solo algunos campos del documento (sin pisar el resto) */
+  async patch(coll,id,fields){
+    if(RO){roMsg();return;}
+    if(this.mode==='cloud'){ this.fs.collection(coll).doc(id).set(clean(fields),{mergeFields:Object.keys(fields)}).catch(handleErr); NET.wrote(); return; }
+    const c=(this.local[coll]=this.local[coll]||{});c[id]=Object.assign({},c[id]||{},clean(fields)); this._changed(coll);
+  },
   async getAll(coll){
     if(this.mode==='cloud'){const s=await this.fs.collection(coll).get();const o={};s.docs.forEach(d=>o[d.id]=d.data());return o;}
     return clean(this.local[coll]||{});
@@ -1033,6 +1050,11 @@ const Store={
     if(this.local[coll]) delete this.local[coll][id]; this._changed(coll);
   }
 };
+/* antes de cambiar o borrar una asignación, sus pesos quedan guardados con el nombre de la rutina */
+{const _put=Store.put,_rm=Store.remove;
+  const old=id=>(S.asigAll||[]).concat(S.asigDif||[]).find(a=>a.id===id);
+  Store.put=function(coll,id,data){if(coll==='asignaciones'){const o=old(id);if(o&&data&&o.rutina!==data.rutina)try{atlSnapAsig(o);}catch(e){}}return _put.call(this,coll,id,data);};
+  Store.remove=function(coll,id){if(coll==='asignaciones'){const o=old(id);if(o)try{atlSnapAsig(o);}catch(e){}}return _rm.call(this,coll,id);};}
 function handleErr(e){
   const c=e&&e.code;
   if(c==='permission-denied'&&RO) return roBlocked();
@@ -1174,7 +1196,7 @@ function selectCat(id){
     /* DNIs y registros de atletas: solo vos (nunca en el link de solo lectura) */
     if(!RO)catUnsubs.push(
       Store.watch('dnis','cat',id,a=>{S.dni=a;render();}),
-      Store.watch('registrosAtletas','cat',id,a=>{S.atl=a;render();difUidsCheck();}));
+      Store.watch('registrosAtletas','cat',id,a=>{S.atl=a.map(atlNorm);render();difUidsCheck();}));
   }
   renderNav();render();
 }
@@ -2672,6 +2694,137 @@ function vAtl(){
   if(sin.length)h+='<p class="tiny">Sin registros todavía: '+sin.map(j=>esc(j.nombre)).join(', ')+'.</p>';
   return h;
 }
+/* ================= historial de pesos por rutina (lo que anotan los atletas) =================
+   El atleta guarda sus pesos en su celular (registrosAtletas.log). Vos podés corregirlos sin pisar lo de él:
+   tus cambios van en el campo pf del mismo registro → e: correcciones, d: borrados, a: agregados, t: pasados a testeos,
+   per: rutinas que hizo (quedan aunque después borres o cambies la rutina). */
+function atlNorm(d){
+  const pf=d.pf||{};const E=pf.e||{},Dl=new Set(pf.d||[]);const L={};
+  Object.keys(d.log||{}).forEach(x=>(d.log[x]||[]).forEach(e=>{if(!e||Dl.has(e.id))return;const ed=E[e.id];
+    const n=Object.assign({},e,ed||{},{_d:d.id,_x:x});if(ed)n.ed=1;const xx=(ed&&ed.x)||x;(L[xx]=L[xx]||[]).push(n);}));
+  (pf.a||[]).forEach(e=>{if(!e||Dl.has(e.id))return;(L[e.x]=L[e.x]||[]).push(Object.assign({},e,{_d:d.id,_x:e.x,pfAdd:1}));});
+  return Object.assign({},d,{logRaw:d.log,log:L});
+}
+const asigEnd=a=>a.hasta||(a.semanas?addDays(a.desde,a.semanas*7-1):'9999-12-31');
+const perKind=a=>a.ind?'ind':a.dif?'dif':'eq';
+const PER_T={ind:'Rutina individual',dif:'Trabajo diferenciado',eq:'Rutina de la categoría',sin:'Sin rutina'};
+function perOf(a){const r=rutById(a.rutina);return {k:a.id+'|'+a.rutina,a:a.id,rid:a.rutina,rn:(r&&r.nombre)||'',desde:a.desde,hasta:asigEnd(a),kind:perKind(a),tipo:r&&r.tipo};}
+/* rutinas que tuvo un jugador (las que siguen cargadas + las guardadas en su registro + las que dicen sus pesos) */
+function atlPeriods(docs,j){
+  const P={};const add=p=>{if(!p||!p.k)return;const o=P[p.k];if(!o){P[p.k]=Object.assign({},p);return;}
+    if(!o.rn&&p.rn)o.rn=p.rn;if(p.desde&&(!o.desde||p.desde<o.desde))o.desde=p.desde;if(p.hasta&&(!o.hasta||p.hasta>o.hasta))o.hasta=p.hasta;};
+  const cats=new Set(docs.map(d=>d.cat).concat([S.cat]).filter(Boolean));
+  S.asigAll.filter(a=>cats.has(a.cat)&&rutById(a.rutina)&&(rutById(a.rutina).tipo||'gym')==='gym').forEach(a=>add(Object.assign(perOf(a),{live:1})));
+  S.asigDif.filter(a=>(j&&a.jugador===j.id)||docs.some(d=>(a.uids||[]).includes(d.id))).forEach(a=>add(Object.assign(perOf(a),{live:1})));
+  docs.forEach(d=>((d.pf||{}).per||[]).forEach(add));
+  return P;
+}
+function atlGroup(docs,j){
+  const P=atlPeriods(docs,j);const out={};const sin={k:'sin',rn:'',kind:'sin',ents:[]};
+  const rank={ind:0,dif:1,eq:2};
+  docs.forEach(d=>Object.keys(d.log||{}).forEach(x=>(d.log[x]||[]).forEach(e=>{
+    let p=null;
+    if(e.rid&&e.a){const k=e.a+'|'+e.rid;p=P[k];if(!p){p=P[k]={k,a:e.a,rid:e.rid,rn:e.rn||'',kind:e.kind||'eq',desde:e.f,hasta:e.f};}
+      if(e.f<p.desde)p.desde=e.f;if(e.f>p.hasta&&!p.live)p.hasta=e.f;}
+    else{const c=Object.values(P).filter(q=>q.desde&&e.f>=q.desde&&e.f<=(q.hasta||'9999')).sort((a,b)=>rank[a.kind]-rank[b.kind]||(b.desde||'').localeCompare(a.desde||''));p=c[0]||null;}
+    const g=p||sin;(out[g.k]=out[g.k]||Object.assign(g,{ents:g.ents||[]})).ents.push(Object.assign({x},e));})));
+  /* la rutina vigente aparece aunque todavía no haya anotado nada */
+  Object.values(P).forEach(p=>{if(p.live&&p.desde<=TODAY&&p.hasta>=TODAY&&!out[p.k])out[p.k]=Object.assign(p,{ents:[]});});
+  return Object.values(out).sort((a,b)=>(a.k==='sin')-(b.k==='sin')||(b.desde||'').localeCompare(a.desde||''));
+}
+/* guarda en el registro del atleta las rutinas que hizo, así no se pierden si la rutina se borra o se cambia */
+async function atlSnapAsig(a){
+  if(RO||!a||!a.desde)return;const p=perOf(a);if(!p.rn)return;delete p.live;
+  let docs;try{const all=await Store.getAll('registrosAtletas');docs=Object.keys(all).map(id=>Object.assign({id},all[id]));}catch(e){return;}
+  docs.forEach(d0=>{const d=atlNorm(d0);
+    const mine=a.ind||a.dif?((a.uids||[]).includes(d.id)):d.cat===a.cat;if(!mine)return;
+    const has=Object.values(d.log).some(l=>l.some(e=>e.f>=p.desde&&e.f<=p.hasta&&(!e.rid||e.rid===p.rid)));if(!has)return;
+    const pf=JSON.parse(JSON.stringify(d0.pf||{}));pf.per=pf.per||[];if(pf.per.some(x=>x.k===p.k))return;
+    pf.per.push(p);Store.patch('registrosAtletas',d.id,{pf});});
+}
+function atlPfSave(docId,fn){
+  const d=S.atl.find(x=>x.id===docId);if(!d)return;const pf=JSON.parse(JSON.stringify(d.pf||{}));fn(pf);
+  d.pf=pf;Object.assign(d,atlNorm(Object.assign({},d,{log:d.logRaw})));
+  Store.patch('registrosAtletas',docId,{pf});
+}
+const entTxt=e=>fmtN(e.kg)+' kg × '+(e.r||1);
+function entChip(e){return '<button type="button" class="ent" data-ent="'+esc(e._d+'|'+e.id)+'" title="Corregir o pasar a Testeos"><b class="mono">'+fmtN(e.kg)+' kg×'+(e.r||1)+'</b> <small>'+esc(ddShort(e.f))+'</small>'+(e.ed||e.pfAdd?'<i class="ent-ed" title="Lo corregiste o lo cargaste vos">✎</i>':'')+(e.tes?'<i class="ent-t" title="Ya está en Testeos">T</i>':'')+'</button>';}
+function findEnt(key){const [did,eid]=key.split('|');const d=S.atl.find(x=>x.id===did);if(!d)return null;
+  for(const x of Object.keys(d.log||{})){const e=(d.log[x]||[]).find(z=>z.id===eid);if(e)return Object.assign({x},e,{tes:((d.pf||{}).t||{})[eid]});}return null;}
+/* corregir / borrar / pasar a testeos un peso anotado */
+function openEnt(key,back,newDid){
+  const e=newDid?{_d:newDid,id:'pf'+uid(),x:'',f:TODAY,kg:'',r:1,pfAdd:1,isNew:1}:findEnt(key);if(!e)return;const d=S.atl.find(x=>x.id===e._d);const m=atlPlayer(d);
+  const docs=m.j?S.atl.filter(z=>{const k=atlPlayer(z);return k.j&&k.j.id===m.j.id;}):[d];
+  const pers=atlGroup(docs,m.j).filter(p=>p.k!=='sin');
+  const curP=(e.rid&&e.a)?e.a+'|'+e.rid:'';
+  const b='<div class="form-grid">'+
+    '<div class="field" style="grid-column:1/-1"><label for="en_x">Ejercicio</label><input id="en_x" value="'+esc(e.x)+'" placeholder="Ej: BANCO PLANO" style="text-transform:uppercase"></div>'+
+    '<div class="field"><label for="en_f">Fecha</label><input id="en_f" type="date" value="'+esc(e.f)+'"></div>'+
+    '<div class="field"><label for="en_k">Kilos</label><input id="en_k" type="number" step="any" inputmode="decimal" value="'+esc(e.kg)+'"></div>'+
+    '<div class="field"><label for="en_r">Reps</label><input id="en_r" type="number" min="1" max="30" inputmode="numeric" value="'+esc(e.r||1)+'"></div>'+
+    '<div class="field" style="grid-column:1/-1"><label for="en_p">Rutina</label><select id="en_p"><option value="">Según la fecha</option>'+pers.map(p=>'<option value="'+esc(p.k)+'"'+(p.k===curP?' selected':'')+'>'+esc((p.rn||'Rutina')+' · '+ddShort(p.desde))+'</option>').join('')+'</select></div></div>'+
+    '<p class="tiny">'+(e.isNew?'Lo cargás vos (por ejemplo, si te lo dijo y no lo anotó). Él también lo va a ver en su app.':e.pfAdd?'Este peso lo cargaste vos.':'Lo anotó '+esc((m.j&&m.j.nombre)||d.nombre||'el atleta')+(e.ed?' y vos lo corregiste.':'.'))+' Si lo cambiás, él también ve el valor corregido en su app.</p>'+
+    (e.tes?'<div class="rut-note"><span>Ya lo pasaste a Testeos ('+esc(ddShort(e.tes.f))+').</span></div>':'');
+  openModal(modalHead(e.isNew?'Cargar un peso':'Peso anotado',e.isNew?((m.j&&m.j.nombre)||d.nombre||''):e.x)+'<div class="modal-b">'+b+'</div><div class="modal-f">'+(RO||e.isNew?'':'<button class="btn danger" id="en_del">Borrar</button><button class="btn" id="en_tes"'+(m.j?'':' disabled title="Primero vinculalo a un jugador del plantel"')+'>→ Pasar a Testeos</button>')+'<div class="grow"></div><button class="btn" id="en_back">Volver</button>'+(RO?'':'<button class="btn pri" id="en_save">Guardar</button>')+'</div>',mw=>{
+    const q=s=>mw.querySelector(s);const goBack=()=>{if(back)back();else closeModal();};
+    q('#en_back').onclick=goBack;if(RO)return mw.querySelectorAll('input,select').forEach(i=>i.disabled=true);
+    const read=()=>{const x=q('#en_x').value.trim().replace(/\s+/g,' ').toLocaleUpperCase('es'),f=q('#en_f').value,kg=Number(String(q('#en_k').value).replace(',','.')),r=Math.max(1,parseInt(q('#en_r').value)||1);
+      if(!x||!f||!(kg>0)){toast('Completá ejercicio, fecha y kilos');return null;}
+      const o={x,f,kg,r};const pk=q('#en_p').value;const p=pers.find(z=>z.k===pk);
+      if(p)Object.assign(o,{a:p.a,rid:p.rid,rn:p.rn,kind:p.kind});else Object.assign(o,{a:null,rid:null,rn:null,kind:null});return o;};
+    q('#en_save').onclick=()=>{const o=read();if(!o)return;
+      atlPfSave(e._d,pf=>{if(e.isNew){pf.a=pf.a||[];pf.a.push(Object.assign({id:e.id},o));}else if(e.pfAdd){pf.a=(pf.a||[]).map(z=>z.id===e.id?Object.assign({},z,o):z);}else{pf.e=pf.e||{};pf.e[e.id]=o;}});
+      toast(e.isNew?'Peso cargado':'Peso corregido');goBack();};
+    if(e.isNew){setTimeout(()=>q('#en_x').focus(),50);return;}
+    armDelete(q('#en_del'),()=>{atlPfSave(e._d,pf=>{if(e.pfAdd)pf.a=(pf.a||[]).filter(z=>z.id!==e.id);else{pf.d=pf.d||[];if(!pf.d.includes(e.id))pf.d.push(e.id);}});toast('Peso borrado');goBack();});
+    q('#en_tes').onclick=()=>{const o=read();if(!o)return;openEntTes(Object.assign({},e,o),m.j,()=>openEnt(key,back),goBack);};
+  });
+}
+function openEntTes(e,j,back,done){
+  const exs=allExercises().filter(x=>x.u==='kg');if(!exs.length){toast('No hay tests en kilos cargados');return;}
+  const nx=normTxt(e.x);const guess=(exs.find(x=>normTxt(x.n)===nx)||exs.find(x=>nx.includes(normTxt(x.n))||normTxt(x.n).includes(nx))||exs.find(x=>atlExMatch(e.x,x.n))||{}).k;
+  const b='<div class="form-grid">'+
+    '<div class="field" style="grid-column:1/-1"><label for="et_k">Test</label><select id="et_k">'+exs.map(x=>'<option value="'+esc(x.k)+'"'+(x.k===guess?' selected':'')+'>'+esc(x.n)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label for="et_f">Fecha</label><input id="et_f" type="date" value="'+esc(e.f)+'"></div>'+
+    '<div class="field"><label for="et_kg">Kilos</label><input id="et_kg" type="number" step="any" inputmode="decimal" value="'+esc(e.kg)+'"></div>'+
+    '<div class="field"><label for="et_r">Reps</label><input id="et_r" type="number" min="1" max="20" inputmode="numeric" value="'+esc(e.r||1)+'"></div>'+
+    '<div class="field"><label for="et_fm">Fórmula</label><select id="et_fm">'+Object.keys(RM_F).map(k=>'<option value="'+k+'">'+RM_F[k].n+'</option>').join('')+'</select></div></div>'+
+    '<div class="rut-note"><span id="et_res"></span></div><p class="tiny">Va a la toma de ese test y esa fecha de '+esc(catName(S.cat))+' (si no existe, se crea). Solo se carga el valor de '+esc(j.nombre)+'.</p>';
+  openModal(modalHead('Pasar a Testeos',j.nombre)+'<div class="modal-b">'+b+'</div><div class="modal-f"><button class="btn" id="et_back">Volver</button><div class="grow"></div><button class="btn pri" id="et_ok">Pasar a Testeos</button></div>',mw=>{
+    const q=s=>mw.querySelector(s);
+    const upd=()=>{const kg=+q('#et_kg').value,r=+q('#et_r').value||1;const v=rmEst(kg,r,q('#et_fm').value);
+      q('#et_res').innerHTML=v==null?'Revisá kilos y reps.':(r>1?'1RM estimado: <b>'+fmtN(v)+' kg</b> ('+fmtN(kg)+' kg × '+r+')':'Valor: <b>'+fmtN(kg)+' kg</b>');};
+    mw.addEventListener('input',upd);mw.addEventListener('change',upd);upd();
+    q('#et_back').onclick=back;
+    q('#et_ok').onclick=async()=>{const k=q('#et_k').value,f=q('#et_f').value,kg=+q('#et_kg').value,r=+q('#et_r').value||1,fm=q('#et_fm').value;
+      const v=rmEst(kg,r,fm);if(!f||v==null){toast('Revisá fecha, kilos y reps');return;}
+      const ex=exs.find(x=>x.k===k);const id=S.cat+'__'+f+'__'+k;const t=S.tes.find(x=>x.id===id);
+      const doc=t?JSON.parse(JSON.stringify(t)):{cat:S.cat,fecha:f,ejercicio:k,nombre:ex.n,unidad:ex.u,menorMejor:!!ex.low,valores:{}};delete doc.id;
+      doc.valores=doc.valores||{};doc.valores[j.id]=v;
+      if(r>1||doc.reps){doc.carga=doc.carga||{};doc.reps=doc.reps||{};doc.carga[j.id]=kg;doc.reps[j.id]=r;doc.formula=doc.formula||fm;}
+      if(doc.intentos)delete doc.intentos[j.id];
+      await Store.put('testeos',id,doc);
+      atlPfSave(e._d,pf=>{pf.t=pf.t||{};pf.t[e.id]={k,f,v};});
+      toast('Listo: '+ex.n+' '+fmtN(v)+' kg en Testeos');(done||back)();};
+  });
+}
+/* historial por rutina (para vos) */
+function openAtlHist(id){
+  const d0=S.atl.find(x=>x.id===id);if(!d0)return;const m=atlPlayer(d0);
+  const docs=m.j?S.atl.filter(d=>{const k=atlPlayer(d);return k.j&&k.j.id===m.j.id;}):[d0];
+  const G=atlGroup(docs,m.j);const tesOf=e=>{const d=docs.find(z=>z.id===e._d);return ((d&&d.pf)||{}).t&&d.pf.t[e.id];};
+  let b='<div class="rut-note"><span>Todo lo que anotó, separado por rutina. Queda guardado aunque cambies o borres la rutina. Tocá un peso para corregirlo, borrarlo o pasarlo a <b>Testeos</b>.</span></div>';
+  b+=G.map(p=>{const by={};p.ents.forEach(e=>(by[e.x]=by[e.x]||[]).push(Object.assign({},e,{tes:tesOf(e)})));
+    const xs=Object.keys(by).sort((a,c)=>a.localeCompare(c,'es'));const live=p.live&&p.desde<=TODAY&&p.hasta>=TODAY;
+    return '<div class="hist-p"><div class="hist-h"><b>'+esc(p.k==='sin'?'Sin rutina asociada':(p.rn||'Rutina'))+'</b><span class="pill '+(live?'good':'neutral')+'">'+(live?'Vigente':PER_T[p.kind])+'</span>'+
+      (p.k!=='sin'?'<span class="tiny">'+esc(ddShort(p.desde))+(p.hasta&&p.hasta<'9999'?' → '+esc(ddShort(p.hasta)):'')+(p.rid&&!rutById(p.rid)?' · rutina borrada':'')+'</span>':'')+'</div>'+
+      (xs.length?xs.map(x=>'<div class="hist-x"><span class="hist-xn">'+esc(x)+'</span><span class="ar-l">'+by[x].sort((a,c)=>(c.f||'').localeCompare(a.f||'')).map(entChip).join('')+'</span></div>').join(''):'<p class="tiny">Todavía no anotó nada en esta rutina.</p>')+'</div>';}).join('');
+  openModal(modalHead('Historial por rutina',m.j?m.j.nombre:(d0.nombre||'Atleta'))+'<div class="modal-b">'+b+'</div><div class="modal-f">'+(RO?'':'<button class="btn" id="hAdd">+ Cargar un peso</button>')+'<div class="grow"></div><button class="btn pri" data-close>Cerrar</button></div>',mw=>{
+    mw.addEventListener('click',ev=>{const c=ev.target.closest('[data-ent]');if(c)openEnt(c.dataset.ent,()=>openAtlHist(id));});
+    const ad=mw.querySelector('#hAdd');if(ad)ad.onclick=()=>openEnt(null,()=>openAtlHist(id),d0.id);
+  });
+}
+
 /* ================= registrados: quiénes usan la app de atletas, qué rutina hacen y qué anotaron ================= */
 const actAsig=a=>a&&asigState(a)!=='fin'&&a.desde<=TODAY&&rutById(a.rutina);
 /* rutina que está haciendo ese atleta: individual > diferenciado (lesión) > la de la categoría (gym primero) */
@@ -2711,13 +2864,13 @@ function vRegs(){
 function openAtlRut(id){
   const d0=S.atl.find(x=>x.id===id);if(!d0)return;const m=atlPlayer(d0);
   const docs=m.j?S.atl.filter(d=>{const k=atlPlayer(d);return k.j&&k.j.id===m.j.id;}):[d0];
-  const A=atlAsig(d0,m);if(!A)return openAtl(id);
+  const A=atlAsig(d0,m);if(!A)return m.j?openAtlHist(id):openAtl(id);
   const r=rutById(A.a.rutina);const ds=rutDays(r);const W=A.a.semanas||r.semanas||4;const w=Math.min(weekIdx(A.a,TODAY),W-1);
   /* solo lo que anotó mientras tiene esta rutina: lo de rutinas anteriores no cuenta */
   const inA=x=>!A.a.desde||((x.f||'')>=A.a.desde&&(!A.a.hasta||(x.f||'')<=A.a.hasta));
   const ents=name=>{const o=[];docs.forEach(d=>o.push(...atlEntries(d,name).filter(inA)));return o.sort((a,b)=>(b.f||'').localeCompare(a.f||''));};
   const rpes=[];docs.forEach(d=>(d.rpe||[]).forEach(x=>{if(inA(x))rpes.push(x);}));rpes.sort((a,b)=>(b.f||'').localeCompare(a.f||''));
-  let b='<div class="rut-note"><span><b>'+esc(r.nombre)+'</b> · '+(A.kind==='categoría'?'rutina de la categoría':A.kind==='individual'?'rutina individual':'trabajo diferenciado')+' · semana '+(w+1)+' de '+W+'</span>'+(A.a.desde?'<span class="tiny">Se muestra solo lo anotado desde el '+esc(ddShort(A.a.desde))+', cuando empezó esta rutina. Lo anterior está en “Historial completo”.</span>':'')+'</div>';
+  let b='<div class="rut-note"><span><b>'+esc(r.nombre)+'</b> · '+(A.kind==='categoría'?'rutina de la categoría':A.kind==='individual'?'rutina individual':'trabajo diferenciado')+' · semana '+(w+1)+' de '+W+'</span>'+(A.a.desde?'<span class="tiny">Se muestra solo lo anotado desde el '+esc(ddShort(A.a.desde))+', cuando empezó esta rutina. Lo anterior está en “Historial por rutina”. Tocá un peso para corregirlo o pasarlo a Testeos.</span>':'')+'</div>';
   if(r.rpe||rpes.length){
     b+='<div><h3>RPE (esfuerzo percibido)</h3>'+(rpes.length?'<div class="rpe-list">'+rpes.slice(0,12).map(x=>'<span><span class="rpe-chip" style="--h:'+(120-x.v*12)+'">'+x.v+'</span> '+esc(ddShort(x.f))+(ds[x.d]?' · '+esc(ds[x.d].nombre||('Día '+(x.d+1))):'')+'</span>').join('')+'</div>':'<p class="tiny">Todavía no respondió ninguno.</p>')+'</div>';
   }
@@ -2726,9 +2879,11 @@ function openAtlRut(id){
     return '<div class="ar-day"><h3>'+esc(dd.nombre||('Día '+(di+1)))+(hh.d!=null?' <small class="tiny">'+esc(WD[hh.d])+'</small>':'')+'</h3>'+
       (bl.length?bl.map((x,bi)=>(x.ejercicios||[]).filter(e=>e.n).map((e,ei)=>{const L=ents(e.n);
         return '<div class="ar-ex"><span class="mono tiny">'+String.fromCharCode(65+bi)+(ei+1)+'</span><span class="ar-n"><b>'+esc(e.n)+'</b><small>'+prescripcion(e,x)+(e.c?' · '+esc(e.c):'')+'</small></span>'+
-          '<span class="ar-l">'+(L.length?L.slice(0,3).map(z=>'<span><b class="mono">'+fmtN(z.kg)+' kg×'+z.r+'</b> <small>'+esc(ddShort(z.f))+'</small></span>').join(''):'<small class="tiny">sin anotar</small>')+'</span></div>';}).join('')).join(''):'<p class="tiny">Día sin ejercicios.</p>')+'</div>';}).join('');
-  openModal(modalHead('Registrado · '+catName(S.cat),m.j?m.j.nombre:(d0.nombre||'Atleta'))+'<div class="modal-b">'+b+'</div><div class="modal-f"><button class="btn" id="arAll">Historial completo'+(m.j?'':' / vincular')+'</button><div class="grow"></div><button class="btn pri" data-close>Cerrar</button></div>',mw=>{
-    mw.querySelector('#arAll').onclick=()=>openAtl(id);});
+          '<span class="ar-l">'+(L.length?L.slice(0,3).map(z=>entChip(Object.assign({},z,{tes:((docs.find(q=>q.id===z._d)||{}).pf||{}).t&&docs.find(q=>q.id===z._d).pf.t[z.id]}))).join(''):'<small class="tiny">sin anotar</small>')+'</span></div>';}).join('')).join(''):'<p class="tiny">Día sin ejercicios.</p>')+'</div>';}).join('');
+  openModal(modalHead('Registrado · '+catName(S.cat),m.j?m.j.nombre:(d0.nombre||'Atleta'))+'<div class="modal-b">'+b+'</div><div class="modal-f"><button class="btn" id="arHist">Historial por rutina</button>'+(m.j?'':'<button class="btn" id="arAll">Vincular</button>')+'<div class="grow"></div><button class="btn pri" data-close>Cerrar</button></div>',mw=>{
+    const al=mw.querySelector('#arAll');if(al)al.onclick=()=>openAtl(id);
+    mw.querySelector('#arHist').onclick=()=>openAtlHist(id);
+    mw.addEventListener('click',ev=>{const c=ev.target.closest('[data-ent]');if(c)openEnt(c.dataset.ent,()=>openAtlRut(id));});});
 }
 
 function openAtl(id){

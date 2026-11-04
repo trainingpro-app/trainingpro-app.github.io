@@ -144,6 +144,11 @@ h3{font-family:var(--f-disp);font-weight:700;font-size:18px;text-transform:upper
 .hist{list-style:none;margin:0;padding:0;display:grid;gap:2px;font-size:13px}
 .hist li{display:flex;gap:10px;align-items:center;padding:4px 0;border-top:1px solid var(--line)}
 .hist li span:first-child{width:70px;color:var(--ink-3)}
+.rh-tabs{margin:12px 0 10px}
+.rh-x{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:13px;align-items:start}
+.rh-x>span:first-child{font-weight:700}
+.rh-v{display:grid;justify-items:end;gap:2px}.rh-v small{color:var(--ink-3)}
+.pf-ed{font-style:normal;font-size:10.5px;font-weight:700;color:#c2410c;white-space:nowrap}
 .hist li .x{margin-left:auto;background:none;border:0;color:var(--ink-3);font-size:16px}
 .add-f{display:grid;grid-template-columns:1.2fr 1fr .8fr auto;gap:8px;align-items:end}
 @media (max-width:420px){.add-f{grid-template-columns:1fr 1fr 1fr}.add-f .btn{grid-column:1/-1}}
@@ -510,10 +515,37 @@ function setReg(R){R.upd=Date.now();ls.set('pfat-reg',R);clearTimeout(syncT);syn
 function pushCloud(R){
   R=R||getReg();if(!R.nombre)return;
   const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now()};
-  if(FB()){if(!myUid)return;firebase.firestore().collection('registrosAtletas').doc(myUid).set(doc).catch(e=>console.warn('sync',e));}
-  else{/* prueba local: lo deja donde lo lee Pizarra PF */const L=ls.get('pfclub-local',{});L.registrosAtletas=L.registrosAtletas||{};L.registrosAtletas[ls.get('pfat-uid','')||(()=>{const u='loc'+uid();ls.set('pfat-uid',u);return u;})()]=doc;ls.set('pfclub-local',L);}
+  if(FB()){if(!myUid)return;firebase.firestore().collection('registrosAtletas').doc(myUid).set(doc,{mergeFields:Object.keys(doc)}).catch(e=>console.warn('sync',e));}
+  else{/* prueba local: lo deja donde lo lee Pizarra PF */const L=ls.get('pfclub-local',{});L.registrosAtletas=L.registrosAtletas||{};const k=ls.get('pfat-uid','')||(()=>{const u='loc'+uid();ls.set('pfat-uid',u);return u;})();L.registrosAtletas[k]=Object.assign({},L.registrosAtletas[k]||{},doc);ls.set('pfclub-local',L);}
 }
 const epley=(kg,r)=>r>1?kg*(1+r/30):kg;
+/* lo que corrige tu preparadora (pf): e correcciones, d borrados, a agregados, per rutinas que hiciste */
+let PF={};
+function pfNow(){if(!FB()){const L=ls.get('pfclub-local',{});const d=((L.registrosAtletas||{})[ls.get('pfat-uid','')]||{});PF=d.pf||{};}return PF;}
+function effLog(R){const pf=pfNow();const E=pf.e||{},Dl=new Set(pf.d||[]);const L={};
+  Object.keys(R.log||{}).forEach(x=>(R.log[x]||[]).forEach(e=>{if(!e||Dl.has(e.id))return;const ed=E[e.id];const n=Object.assign({},e,ed||{},{_x:x});if(ed)n.ed=1;const xx=(ed&&ed.x)||x;(L[xx]=L[xx]||[]).push(n);}));
+  (pf.a||[]).forEach(e=>{if(!e||Dl.has(e.id))return;(L[e.x]=L[e.x]||[]).push(Object.assign({},e,{pfAdd:1}));});
+  return L;}
+const asigEnd=a=>a.hasta||(a.semanas?addDays(a.desde,a.semanas*7-1):'9999-12-31');
+/* rutina vigente ahora en esta categoría (la que se anota con cada peso) */
+function curTag(){const c=st.cat;if(!c)return null;const list=asigFor(c).filter(a=>a.desde<=TODAY);const a=(st.asig&&list.find(x=>x.id===st.asig))||list[list.length-1];if(!a)return null;
+  const r=rutById(a.rutina);return r?{a:a.id,rid:a.rutina,rn:r.nombre||'',kind:a.ind?'ind':a.dif?'dif':'eq'}:null;}
+function myPeriods(){const P={};const u=meUid();
+  const add=p=>{if(!p||!p.k)return;const o=P[p.k];if(!o){P[p.k]=Object.assign({},p);return;}if(!o.rn&&p.rn)o.rn=p.rn;if(p.desde<o.desde)o.desde=p.desde;if(p.hasta>o.hasta)o.hasta=p.hasta;};
+  D.asig.filter(a=>(a.cat===st.cat&&!a.dif)||(a.dif&&a.cat==='dif:'+st.cat&&u&&(a.uids||[]).includes(u))).forEach(a=>{const r=rutById(a.rutina);if(!r||(r.tipo||'gym')!=='gym')return;
+    add({k:a.id+'|'+a.rutina,a:a.id,rid:a.rutina,rn:r.nombre||'',desde:a.desde,hasta:asigEnd(a),kind:a.ind?'ind':a.dif?'dif':'eq',live:1});});
+  (pfNow().per||[]).forEach(add);return P;}
+function myGroups(L){const P=myPeriods();const out={};const sin={k:'sin',rn:'',kind:'sin',ents:[]};const rank={ind:0,dif:1,eq:2};
+  Object.keys(L).forEach(x=>L[x].forEach(e=>{let p=null;
+    if(e.rid&&e.a){const k=e.a+'|'+e.rid;p=P[k];if(!p)p=P[k]={k,rn:e.rn||'',kind:e.kind||'eq',desde:e.f,hasta:e.f};if(e.f<p.desde)p.desde=e.f;if(e.f>p.hasta&&!p.live)p.hasta=e.f;}
+    else p=Object.values(P).filter(q=>e.f>=q.desde&&e.f<=q.hasta).sort((a,b)=>rank[a.kind]-rank[b.kind]||b.desde.localeCompare(a.desde))[0]||null;
+    const g=p||sin;(out[g.k]=out[g.k]||Object.assign(g,{ents:g.ents||[]})).ents.push(Object.assign({x},e));}));
+  return Object.values(out).sort((a,b)=>(a.k==='sin')-(b.k==='sin')||(b.desde||'').localeCompare(a.desde||''));}
+function rutHist(L){const G=myGroups(L);if(!G.length)return '';const T={ind:'Individual',dif:'Diferenciado',eq:'De la categoría',sin:''};
+  return '<div class="lifts">'+G.map(p=>{const by={};p.ents.forEach(e=>(by[e.x]=by[e.x]||[]).push(e));
+    const live=p.live&&p.desde<=TODAY&&p.hasta>=TODAY;
+    return '<div class="lift"><div class="lift-h"><b>'+esc(p.k==='sin'?'Otros registros':(p.rn||'Rutina'))+'</b><span class="tiny">'+(live?'Rutina actual':T[p.kind]||'')+(p.k!=='sin'&&p.desde?' · desde el '+esc(fmtD(p.desde,{day:'numeric',month:'short'})):'')+'</span></div>'+
+      Object.keys(by).sort((a,b)=>a.localeCompare(b,'es')).map(x=>'<div class="rh-x"><span>'+esc(x)+'</span><span class="rh-v">'+by[x].sort((a,b)=>b.f.localeCompare(a.f)).map(e=>'<span class="mono">'+fmtN(e.kg)+' kg × '+e.r+' <small>'+esc(fmtD(e.f,{day:'numeric',month:'short'}))+'</small>'+(e.ed||e.pfAdd?' <i class="pf-ed" title="Lo corrigió o lo cargó tu preparadora">✎ PF</i>':'')+'</span>').join('')+'</span></div>').join('')+'</div>';}).join('')+'</div>';}
 function profileForm(R){
   return '<div class="card me"><h3>Tus datos</h3><p class="tiny" style="margin:0">Antes de anotar tus pesos, completá tus datos. Así tu preparadora física sabe que sos vos. Solo los ve ella.</p>'+
     '<div class="fld"><label for="pn">Nombre</label><input id="pn" autocomplete="given-name" value="'+esc(R.nom||(R.ape?'':R.nombre)||'')+'" placeholder="Ej: Gian Franco"></div>'+
@@ -533,15 +565,18 @@ function regView(){
     '<div class="fld"><label for="rr">Reps</label><input id="rr" type="number" inputmode="numeric" placeholder="1" min="1" max="20"></div>'+
     '<button class="btn pri" id="radd">Anotar</button></div><div class="fld" id="rxoBox" hidden><label for="rxo">Nombre del ejercicio</label><input id="rxo" placeholder="Ej: Remo con barra"></div>'+
     '<p class="tiny" style="margin:0">Con más de 1 rep te calculamos tu 1RM estimado (fórmula de Epley). Tu preparadora física ve lo que anotás.</p></div>';
-  const withData=exs.filter(x=>(R.log[x]||[]).length);
+  const EL=effLog(R);const exs2=[...new Set(exs.concat(Object.keys(EL)))];
+  const withData=exs2.filter(x=>(EL[x]||[]).length);
   if(!withData.length)return h+'<div class="empty"><b>Todavía no anotaste nada</b>Anotá el peso que levantaste y acá vas a ver tu progreso.</div>';
+  h+='<div class="tabs rh-tabs"><button class="'+(st.regMode!=='rut'?'on':'')+'" data-regmode="ex">Por ejercicio</button><button class="'+(st.regMode==='rut'?'on':'')+'" data-regmode="rut">Por rutina</button></div>';
+  if(st.regMode==='rut')return h+rutHist(EL);
   h+='<div class="lifts">'+withData.map(x=>{
-    const L=(R.log[x]||[]).slice().sort((a,b)=>b.f.localeCompare(a.f));
+    const L=(EL[x]||[]).slice().sort((a,b)=>b.f.localeCompare(a.f));
     const best=Math.max(...L.map(e=>epley(e.kg,e.r)));const last=L[0];const pc=Number(R.pc)||0;
     return '<div class="lift"><div class="lift-h"><b>'+esc(x)+'</b><span class="tiny">'+L.length+(L.length===1?' registro':' registros')+'</span></div>'+
       '<div class="kpis"><div class="kpi"><small>Último</small><span>'+fmtN(last.kg)+' kg × '+last.r+'</span></div><div class="kpi"><small>Mejor 1RM</small><span class="acc">'+(L.some(e=>e.r>1&&epley(e.kg,e.r)===best)?'≈':'')+fmtN(Math.round(best*10)/10)+' kg</span></div>'+
       (pc?'<div class="kpi"><small>× peso corporal</small><span>'+(best/pc).toFixed(2)+'×</span></div>':'')+'</div>'+
-      '<ul class="hist">'+L.map(e=>'<li><span>'+esc(fmtD(e.f,{day:'numeric',month:'short'}))+'</span><span class="mono">'+fmtN(e.kg)+' kg × '+e.r+'</span><span class="tiny">1RM '+(e.r>1?'≈':'')+fmtN(Math.round(epley(e.kg,e.r)*10)/10)+'</span><button class="x" data-del="'+esc(x)+'|'+e.id+'" aria-label="Borrar">×</button></li>').join('')+'</ul></div>';
+      '<ul class="hist">'+L.map(e=>'<li><span>'+esc(fmtD(e.f,{day:'numeric',month:'short'}))+'</span><span class="mono">'+fmtN(e.kg)+' kg × '+e.r+'</span><span class="tiny">1RM '+(e.r>1?'≈':'')+fmtN(Math.round(epley(e.kg,e.r)*10)/10)+'</span>'+(e.ed||e.pfAdd?'<i class="pf-ed" title="Lo corrigió o lo cargó tu preparadora">✎ PF</i>':'')+(e.pfAdd?'':'<button class="x" data-del="'+esc(e._x||x)+'|'+e.id+'" aria-label="Borrar">×</button>')+'</li>').join('')+'</ul></div>';
   }).join('')+'</div>';
   return h;
 }
@@ -560,7 +595,7 @@ function addReg(){
   if(x==='__otro'){x=($('#rxo').value||'').trim();if(!x){toast('Escribí el nombre del ejercicio');$('#rxo').focus();return;}}
   const kg=Number(String($('#rk').value).replace(',','.')),r=Math.max(1,parseInt($('#rr').value)||1);
   if(!(kg>0)){toast('Poné los kilos');return;}
-  const R=getReg();(R.log[x]=R.log[x]||[]).push({id:uid(),f:TODAY,kg,r});if(!BASE_EX.includes(x)&&!R.ex.includes(x))R.ex.push(x);
+  const R=getReg();const tg=curTag();(R.log[x]=R.log[x]||[]).push(Object.assign({id:uid(),f:TODAY,kg,r},tg||{}));if(!BASE_EX.includes(x)&&!R.ex.includes(x))R.ex.push(x);
   R.cat=st.cat;setReg(R);st.regEx=x;render();toast('Anotado: '+x+' '+fmtN(kg)+' kg × '+r);
 }
 
@@ -568,8 +603,9 @@ function addReg(){
 $('#app').addEventListener('click',e=>{
   const rb=e.target.closest('[data-rpe]');if(rb){const R=getReg();if(!R.nombre)return;R.rpe=(R.rpe||[]).filter(x=>!(x.a===st.asig&&x.d===+rb.dataset.rpei&&x.f===rb.dataset.rpef));
     R.rpe.push({a:st.asig,d:+rb.dataset.rpei,f:rb.dataset.rpef,v:+rb.dataset.rpe,t:Date.now()});setReg(R);render();toast('Gracias. Guardamos tu RPE: '+rb.dataset.rpe);return;}
-  const t=e.target.closest('[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],#radd,#psave,#pedit');if(!t)return;
+  const t=e.target.closest('[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],#radd,#psave,#pedit');if(!t)return;
   if(t.id==='psave')return saveProfile();
+  if(t.dataset.regmode){st.regMode=t.dataset.regmode;return render();}
   if(t.id==='pedit'){st.editProf=true;return render();}
   const d=t.dataset;
   if(d.cat)return go(d.cat);
@@ -593,6 +629,7 @@ if(FB()){firebase.initializeApp(FIREBASE_CONFIG);try{firebase.firestore().enable
   firebase.auth().onAuthStateChanged(async u=>{
     if(!u){firebase.auth().signInAnonymously().catch(e=>console.warn('anon',e));return;}
     myUid=u.uid;render();
+    try{firebase.firestore().collection('registrosAtletas').doc(myUid).onSnapshot(sn=>{const n=(sn.exists&&sn.data().pf)||{};if(JSON.stringify(n)!==JSON.stringify(PF)){PF=n;render();}},()=>{});}catch(e){}
     try{const snap=await firebase.firestore().collection('registrosAtletas').doc(myUid).get();
       const R=getReg();
       if(snap.exists&&!Object.keys(R.log).some(k=>R.log[k].length)&&!R.nombre){const c=snap.data();ls.set('pfat-reg',{nombre:c.nombre,dniH:c.dniH,dniFin:c.dniFin,pc:c.pc,log:c.log||{},ex:c.ex||[],upd:c.upd});render();}
