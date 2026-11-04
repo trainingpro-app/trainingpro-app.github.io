@@ -910,7 +910,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · la guía queda al guardar</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 3 nov 2026 · TrainingPro · pesos por rutina</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2691,14 +2691,16 @@ function vRegs(){
   const groups={};const orphans=[];
   S.atl.forEach(d=>{const m=atlPlayer(d);if(m.j){(groups[m.j.id]=groups[m.j.id]||{m,docs:[]}).docs.push(d);}else orphans.push({m,docs:[d]});});
   const rows=Object.values(groups).concat(orphans).map(g=>{g.docs.sort((a,b)=>(b.upd||0)-(a.upd||0));g.d=g.docs[0];g.upd=g.d.upd||0;g.n=g.docs.reduce((t,d)=>t+atlCount(d),0);
-    g.rpe=g.docs.map(rpeLast).filter(Boolean).sort((a,b)=>(b.f||'').localeCompare(a.f||''))[0]||null;g.asg=atlAsig(g.d,g.m);return g;}).sort((a,b)=>b.upd-a.upd);
+    g.asg=atlAsig(g.d,g.m);const ad=g.asg&&g.asg.a;const inA=x=>!ad||!ad.desde||((x.f||'')>=ad.desde&&(!ad.hasta||(x.f||'')<=ad.hasta));
+    g.nr=g.docs.reduce((t,d)=>t+Object.values(d.log||{}).reduce((u,l)=>u+(l||[]).filter(inA).length,0),0);
+    g.rpe=g.docs.map(d=>rpeLast({rpe:(d.rpe||[]).filter(inA)})).filter(Boolean).sort((a,b)=>(b.f||'').localeCompare(a.f||''))[0]||null;return g;}).sort((a,b)=>b.upd-a.upd);
   const reg=new Set(Object.keys(groups));const sin=S.jug.filter(j=>!reg.has(j.id));
   let h='<div class="bar" style="margin-top:14px"><h2>Registrados</h2><span class="pill '+(reg.size?'good':'neutral')+'">'+reg.size+' de '+S.jug.length+' del plantel</span><div class="grow"></div><button class="btn" data-act="atlLink">Copiar link para los atletas</button></div>';
   if(!rows.length)return h+'<div class="empty"><b>Todavía no se registró nadie</b>Pasales el link de la app de atletas. Se registran con nombre, apellido y DNI.</div>';
   h+='<div class="regs">'+rows.map(g=>{const d=g.d,m=g.m,A=g.asg;const r=A&&rutById(A.a.rutina);
     const st=m.how==='dni'?'<span class="pill good">DNI ✓</span>':m.how==='manual'?'<span class="pill neutral">vinculado</span>':m.how==='nombre'?'<span class="pill warn">por nombre</span>':'<span class="pill bad">sin reconocer</span>';
     return '<div class="reg-row"><div class="reg-who"><b>'+esc(m.j?m.j.nombre:(d.nombre||'Sin nombre'))+'</b> '+st+
-      '<div class="tiny">'+(g.upd?'Últ. vez '+esc(ddShort(updF(g.upd))):'')+' · '+g.n+(g.n===1?' peso anotado':' pesos anotados')+(g.docs.length>1?' · '+g.docs.length+' celulares':'')+
+      '<div class="tiny">'+(g.upd?'Últ. vez '+esc(ddShort(updF(g.upd))):'')+' · '+(g.asg?g.nr+(g.nr===1?' peso anotado':' pesos anotados')+' en esta rutina':g.n+(g.n===1?' peso anotado':' pesos anotados'))+(g.docs.length>1?' · '+g.docs.length+' celulares':'')+
       (g.rpe?' · <span class="rpe-chip" style="--h:'+(120-g.rpe.v*12)+'">RPE '+g.rpe.v+'</span> '+esc(ddShort(g.rpe.f)):'')+'</div></div>'+
       (r?'<button type="button" class="reg-rut" data-atlrut="'+esc(d.id)+'"><small>'+(A.kind==='categoría'?'Rutina de la categoría':A.kind==='individual'?'Rutina individual':'Trabajo diferenciado')+'</small><b>'+esc(r.nombre)+'</b><span>Ver rutina y lo que anotó ›</span></button>':'<button type="button" class="reg-rut" data-atl="'+esc(d.id)+'"><small>Sin rutina vigente</small><b>Ver lo que anotó</b><span>›</span></button>')+
       (m.j?'':'<button type="button" class="btn sm" data-atl="'+esc(d.id)+'">Vincular</button>')+'</div>';}).join('')+'</div>';
@@ -2711,9 +2713,11 @@ function openAtlRut(id){
   const docs=m.j?S.atl.filter(d=>{const k=atlPlayer(d);return k.j&&k.j.id===m.j.id;}):[d0];
   const A=atlAsig(d0,m);if(!A)return openAtl(id);
   const r=rutById(A.a.rutina);const ds=rutDays(r);const W=A.a.semanas||r.semanas||4;const w=Math.min(weekIdx(A.a,TODAY),W-1);
-  const ents=name=>{const o=[];docs.forEach(d=>o.push(...atlEntries(d,name)));return o.sort((a,b)=>(b.f||'').localeCompare(a.f||''));};
-  const rpes=[];docs.forEach(d=>(d.rpe||[]).forEach(x=>rpes.push(x)));rpes.sort((a,b)=>(b.f||'').localeCompare(a.f||''));
-  let b='<div class="rut-note"><span><b>'+esc(r.nombre)+'</b> · '+(A.kind==='categoría'?'rutina de la categoría':A.kind==='individual'?'rutina individual':'trabajo diferenciado')+' · semana '+(w+1)+' de '+W+'</span></div>';
+  /* solo lo que anotó mientras tiene esta rutina: lo de rutinas anteriores no cuenta */
+  const inA=x=>!A.a.desde||((x.f||'')>=A.a.desde&&(!A.a.hasta||(x.f||'')<=A.a.hasta));
+  const ents=name=>{const o=[];docs.forEach(d=>o.push(...atlEntries(d,name).filter(inA)));return o.sort((a,b)=>(b.f||'').localeCompare(a.f||''));};
+  const rpes=[];docs.forEach(d=>(d.rpe||[]).forEach(x=>{if(inA(x))rpes.push(x);}));rpes.sort((a,b)=>(b.f||'').localeCompare(a.f||''));
+  let b='<div class="rut-note"><span><b>'+esc(r.nombre)+'</b> · '+(A.kind==='categoría'?'rutina de la categoría':A.kind==='individual'?'rutina individual':'trabajo diferenciado')+' · semana '+(w+1)+' de '+W+'</span>'+(A.a.desde?'<span class="tiny">Se muestra solo lo anotado desde el '+esc(ddShort(A.a.desde))+', cuando empezó esta rutina. Lo anterior está en “Historial completo”.</span>':'')+'</div>';
   if(r.rpe||rpes.length){
     b+='<div><h3>RPE (esfuerzo percibido)</h3>'+(rpes.length?'<div class="rpe-list">'+rpes.slice(0,12).map(x=>'<span><span class="rpe-chip" style="--h:'+(120-x.v*12)+'">'+x.v+'</span> '+esc(ddShort(x.f))+(ds[x.d]?' · '+esc(ds[x.d].nombre||('Día '+(x.d+1))):'')+'</span>').join('')+'</div>':'<p class="tiny">Todavía no respondió ninguno.</p>')+'</div>';
   }
