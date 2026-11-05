@@ -970,7 +970,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · personalizados</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · dos días juntos</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1869,16 +1869,25 @@ function resolveDay(dd,w){
   });});
   return c;
 }
+/* día(s) de la rutina que tocan ese día de la semana: si son dos o más (ej. diferenciado), se juntan en una sola sesión */
+function rutDayOn(a,r,wd){
+  const ix=[];(a.horario||[]).forEach((x,i)=>{if(x&&x.d===wd)ix.push(i);});
+  const all=rutDays(r);const ds=ix.map(i=>all[i]).filter(Boolean);if(!ds.length)return null;
+  const hora=ix.map(i=>(a.horario[i]||{}).hora).find(Boolean)||'';
+  if(ds.length===1)return {dd:ds[0],hora};
+  const dd=Object.assign(JSON.parse(JSON.stringify(ds[0])),{nombre:ds.map((d,k)=>d.nombre||('Día '+(ix[k]+1))).join(' + ')});
+  dd.bloques=[];ds.forEach((d,k)=>(JSON.parse(JSON.stringify(d.bloques||[]))).forEach(b=>{b.nombre=(d.nombre||('Día '+(ix[k]+1)))+(b.nombre?' · '+b.nombre:'');dd.bloques.push(b);}));
+  return {dd,hora};
+}
 function sessionsOn(f){
   const conc=S.ses.filter(s=>s.fecha===f).map(s=>Object.assign({src:'ses'},s));
   const out=conc.slice();const wd=wdOf(f);
   S.asigAll.forEach(a=>{
     if(a.cat!==S.cat||!rutActive(a,f))return;
     const r=rutById(a.rutina);if(!r)return;
-    const di=(a.horario||[]).findIndex(x=>x&&x.d===wd);if(di<0)return;
-    const dd=rutDays(r)[di];if(!dd)return;
+    const on=rutDayOn(a,r,wd);if(!on)return;const dd=on.dd;
     if(conc.some(c=>c.tipo===r.tipo&&(c.rutina===r.id||!c.rutina)))return;
-    out.push({src:'rut',tipo:r.tipo,objetivo:dd.nombre+' · '+r.nombre,hora:(a.horario[di]||{}).hora||'',rut:r,asig:a,dia:dd});
+    out.push({src:'rut',tipo:r.tipo,objetivo:dd.nombre+' · '+r.nombre,hora:on.hora,rut:r,asig:a,dia:dd});
   });
   return out.sort((a,b)=>(a.hora||'').localeCompare(b.hora||'')||a.tipo.localeCompare(b.tipo));
 }
@@ -2534,7 +2543,7 @@ function openAsig(aid,preset){
   b+='<div class="form-grid"><div class="field"><label for="a_d">Empieza</label><input type="date" id="a_d" value="'+esc(a.desde||TODAY)+'"></div>'+
     '<div class="field"><label for="a_w">Duración</label><select id="a_w">'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+(a.semanas==n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'<option value="0"'+(a.semanas===0?' selected':'')+'>Hasta nuevo aviso</option></select></div>'+
     '<div class="field" style="grid-column:1/-1"><span class="tiny" id="a_end"></span></div></div>'+
-    '<div><h3>Días y horarios <small class="tiny" style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</small></h3><p class="tiny" style="margin:0 0 6px">Podés dejar días sin día de la semana: los atletas los ven igual, pero no aparecen en el calendario hasta que les pongas uno.</p><div id="a_sched"></div></div>';
+    '<div><h3>Días y horarios <small class="tiny" style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</small></h3><p class="tiny" style="margin:0 0 6px">Podés dejar días sin día de la semana: los atletas los ven igual, pero no aparecen en el calendario hasta que les pongas uno. También podés poner dos días de la rutina el mismo día (por ejemplo, cuando algunos hacen un diferenciado): en el calendario se ven juntos y en la app cada jugador elige el suyo.</p><div id="a_sched"></div></div>';
   const foot='<div class="modal-f">'+(a0?'<button class="btn danger" id="a_del">Quitar de la categoría</button>':'')+'<div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn pri" id="a_save">'+(a0?'Guardar':'Asignar')+'</button></div>';
   openModal(modalHead('Asignar rutina',a0?'Días y fechas':(r?r.nombre:'Asignar rutina'))+'<div class="modal-b">'+b+'</div>'+foot,mw=>{
     const q=id=>mw.querySelector('#'+id);
@@ -2561,7 +2570,6 @@ function openAsig(aid,preset){
       if(!targets.length){toast('Elegí al menos una categoría');return;}
       const horario=readSched();
       const sin=horario.findIndex(h=>h.d==null);
-      const seen={};if(horario.some(h=>{if(h.d==null)return false;if(seen[h.d])return true;seen[h.d]=1;return false;})){toast('Dos días de la rutina caen el mismo día de la semana. Cambiá uno.');return;}
       const desde=q('a_d').value;if(!desde){toast('Elegí la fecha de inicio');return;}
       const semanas=+q('a_w').value;
       const keepEnd=a0&&a0.finalizada&&a0.hasta;
@@ -3950,9 +3958,9 @@ function agendaFor(f){
       out.push({cat:c,tipo:s.tipo,hora:s.hora||'',susp:!!s.suspendida,txt:s.objetivo||(s.rutDia?s.rutDia+' · ':'')+(r?r.nombre:'')});});
     S.asigAll.forEach(a=>{
       if(a.cat!==c.id||!rutActive(a,f))return;const r=rutById(a.rutina);if(!r)return;
-      const di=(a.horario||[]).findIndex(x=>x&&x.d===wd);if(di<0)return;const dd=rutDays(r)[di];if(!dd)return;
+      const on=rutDayOn(a,r,wd);if(!on)return;const dd=on.dd;
       if(conc.some(s=>s.tipo===r.tipo&&(s.rutina===r.id||!s.rutina)))return;
-      out.push({cat:c,tipo:r.tipo,hora:(a.horario[di]||{}).hora||'',txt:(dd.nombre||'')+' · '+r.nombre});
+      out.push({cat:c,tipo:r.tipo,hora:on.hora,txt:(dd.nombre||'')+' · '+r.nombre});
     });
     par.filter(p=>p.cat===c.id&&p.fecha===f).forEach(p=>out.push({cat:c,tipo:'match',hora:p.hora||'',txt:'vs '+(p.rival||'')+(p.condicion?' · '+p.condicion:'')}));
   });
