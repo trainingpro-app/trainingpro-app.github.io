@@ -213,6 +213,7 @@ h3{font-family:var(--f-disp);font-weight:700;font-size:18px;text-transform:upper
 .h-t{font-size:17px}.hd-b{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.hd-b button{border:1px solid var(--line);background:var(--surface-2,#eef0ee);border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer}.hd-b button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .hx{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.hx:last-child{border-bottom:0}
 .hx-n{display:grid;gap:1px;min-width:0}.hx-n b{font-size:14.5px}.hx-n small{font-size:12px;color:var(--ink-3)}.hx-v{display:grid;justify-items:end;gap:1px;text-align:right}.hx-v .mono{font-size:13.5px}.hx-v small{font-size:12px;font-weight:700;color:var(--ink-3)}.hx-v small.up{color:var(--good)}.hx-v small.dn{color:var(--bad)}
+.top .crest.tp{border-radius:8px;width:34px;flex-basis:34px}
 </style>
 </head>
 <body>
@@ -446,6 +447,7 @@ function render(){
   const c=st.cat&&catById(st.cat);
   if(!c){if(LOCK)return noCat();st.cat=null;return home();}
   const PC=isPersC(c);
+  {const cr=document.querySelector('.top .crest');if(cr){if(!cr.dataset.cvm)cr.dataset.cvm=cr.src;const want=PC?'icon-tp-192.png':cr.dataset.cvm;if(cr.getAttribute('src')!==want)cr.src=want;cr.classList.toggle('tp',PC);}}
   $('#back').hidden=!!LOCK||PC;$('#eye').textContent=PC?'Personalizado':(c.grupo||'Categoría');$('#ttl').textContent=PC?(getReg().nombre||'Personalizados'):c.nombre;
   const T=PC?[['rutina','Rutinas'],['an','Antropometría']]:[['rutina','Rutina actual'],['reg','Mis registros']].concat(anList().length?[['an','Antropometría']]:[]);
   if(PC&&st.tab==='reg')st.tab='rutina';if(!T.some(t=>t[0]===st.tab))st.tab='rutina';
