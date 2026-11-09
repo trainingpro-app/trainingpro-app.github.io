@@ -970,7 +970,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · alumnos registrados</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · altura en la ficha</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -3098,7 +3098,7 @@ function openFicha(jid){try{anSync(S.jug.find(x=>x.id===jid));}catch(e){}
     fd('Nacimiento',nac?esc(fmtD(nac,{day:'2-digit',month:'2-digit',year:'numeric'}))+fromApp('nac'):'–')+
     fd('Peso',peso?n1(peso)+' kg'+fromApp('pc'):'–')+
     fd('Edad',ed!=null?ed+' años':'–')+
-    (PC?fd('Objetivo',esc(j.objetivo||'–'))+fd('Modalidad',esc([j.modal,j.dias?j.dias+(+j.dias===1?' día':' días'):''].filter(Boolean).join(' · ')||'–'))+fd('Desde',j.desde?esc(fmtD(j.desde,{month:'long',year:'numeric'})):'–'):
+    (PC?fd('Altura',talla?n1(talla)+' cm'+fromApp('talla'):'–')+fd('Objetivo',esc(j.objetivo||'–'))+fd('Modalidad',esc([j.modal,j.dias?j.dias+(+j.dias===1?' día':' días'):''].filter(Boolean).join(' · ')||'–'))+fd('Desde',j.desde?esc(fmtD(j.desde,{month:'long',year:'numeric'})):'–')+fd('DNI',jd.dniFin?'…'+esc(jd.dniFin):(jd.dniH?'cargado':'–')):
     fd('DNI',jd.dniFin?'…'+esc(jd.dniFin):(jd.dniH?'cargado':'–'))+
     fd('Altura',talla?n1(talla)+' cm'+fromApp('talla'):'–')+
     fd('Posición',esc(j.pos||'–')+(j.dorsal?' · #'+esc(j.dorsal):'')))+
