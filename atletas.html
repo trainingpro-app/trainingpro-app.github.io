@@ -214,12 +214,29 @@ h3{font-family:var(--f-disp);font-weight:700;font-size:18px;text-transform:upper
 .hx{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.hx:last-child{border-bottom:0}
 .hx-n{display:grid;gap:1px;min-width:0}.hx-n b{font-size:14.5px}.hx-n small{font-size:12px;color:var(--ink-3)}.hx-v{display:grid;justify-items:end;gap:1px;text-align:right}.hx-v .mono{font-size:13.5px}.hx-v small{font-size:12px;font-weight:700;color:var(--ink-3)}.hx-v small.up{color:var(--good)}.hx-v small.dn{color:var(--bad)}
 .top .crest.tp{border-radius:8px;width:34px;flex-basis:34px}
+.wa-b{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:50;width:56px;height:56px;border-radius:50%;background:#25D366;color:#fff;display:grid;place-items:center;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.28)}.wa-b[hidden]{display:none}.wa-b svg{width:30px;height:30px}
+body.has-wa .wrap{padding-bottom:90px}
+.fi-ask{display:grid;gap:6px;border-left:5px solid var(--accent);margin-bottom:6px}.fi-ask .btn{justify-self:start}
+.fi-ok{border-left:5px solid var(--good);font-size:14px;margin-bottom:6px}
+.fi-sec{display:grid;gap:8px}.fi-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fi-les{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:9px 11px}.fi-les>div{flex:1;font-size:14px}.fi-les .x{background:none;border:0;color:var(--ink-3);font-size:16px}
+.fi-ch{display:inline-block;border-radius:99px;padding:1px 8px;font-size:11.5px;font-weight:700}.fi-ch.r{background:var(--bad-soft,#F7DDDA);color:var(--bad)}.fi-ch.w{background:#F8EBCB;color:#B87A06}.fi-ch.g{background:#DCF1E3;color:var(--good)}
+.fi-add{border:1.5px dashed var(--line);background:none;border-radius:10px;padding:10px;font:inherit;font-weight:700;color:var(--accent);cursor:pointer}
+.fi-new{border:1px solid var(--accent);border-radius:10px;padding:10px;display:grid;gap:8px}
+.fi-q{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:14px;line-height:1.3;padding:4px 0}.fi-yn{display:flex;gap:4px;flex:0 0 auto}
+.fi-yn button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 11px;font:inherit;font-size:13px;font-weight:700;color:var(--ink-2)}.fi-yn .si{background:var(--bad);border-color:var(--bad);color:#fff}.fi-yn .no{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.fi-qd{width:100%;margin:-2px 0 4px}
+.fi-dj{background:#FFF8E6;border-color:#e9cf86}.fi-djl{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;cursor:pointer}.fi-djl input{margin-top:3px;width:18px;height:18px;flex:0 0 auto}
+.fi-save{width:100%;margin:14px 0 20px;padding:13px}
+.mol-b{border-color:#d9a2a2}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:min(520px,100%);border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:9px;max-height:90vh;overflow:auto}.sh-t{font-size:17px}
 </style>
 </head>
 <body>
 <header class="top"><button class="back" id="back" hidden aria-label="Volver">←</button><img class="crest" alt="" src="data:image/png;base64,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"><div class="ttl"><div class="eye" id="eye">Club Villa Mitre</div><h1 id="ttl">Rutinas</h1></div><button class="theme-b" id="themeBtn" type="button"></button></header>
 <main class="wrap" id="app"><p class="muted" style="text-align:center;margin-top:40px">Cargando tu rutina…</p></main>
-<div id="vroot"></div><div id="troot"></div>
+<a class="wa-b" id="waBtn" hidden target="_blank" rel="noopener" aria-label="Escribile a tu profe por WhatsApp" title="Escribile a tu profe por WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2c-4.9 0-8.8 3.7-8.8 8.3 0 1.7.5 3.2 1.4 4.5L3.6 20.6l4.8-1.3c1.1.5 2.3.8 3.6.8 4.9 0 8.8-3.7 8.8-8.3S16.9 3.2 12 3.2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.6 8.4c.2-.4.5-.5.8-.5h.5c.2 0 .4.1.5.4l.7 1.6c.1.2 0 .5-.1.6l-.5.6c.6 1.1 1.5 2 2.6 2.6l.6-.5c.2-.1.4-.2.6-.1l1.6.7c.3.1.4.3.4.5v.5c0 .3-.1.6-.5.8-.6.4-1.5.5-2.3.2-2.2-.8-3.9-2.5-4.7-4.7-.3-.8-.2-1.7.2-2.3z" fill="currentColor"/></svg></a><div id="vroot"></div><div id="troot"></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -449,10 +466,11 @@ function render(){
   const PC=isPersC(c);
   {const cr=document.querySelector('.top .crest');if(cr){if(!cr.dataset.cvm)cr.dataset.cvm=cr.src;const want=PC?'icon-tp-192.png':cr.dataset.cvm;if(cr.getAttribute('src')!==want)cr.src=want;cr.classList.toggle('tp',PC);}}
   $('#back').hidden=!!LOCK||PC;$('#eye').textContent=PC?'Personalizado':(c.grupo||'Categoría');$('#ttl').textContent=PC?(getReg().nombre||'Personalizados'):c.nombre;
-  const T=PC?[['rutina','Rutinas'],['an','Antropometría']]:[['rutina','Rutina actual'],['reg','Mis registros']].concat(anList().length?[['an','Antropometría']]:[]);
+  persChrome(PC);
+  const T=PC?[['rutina','Rutinas'],['an','Antropometría'],['ficha','Mi ficha']]:[['rutina','Rutina actual'],['reg','Mis registros']].concat(anList().length?[['an','Antropometría']]:[]);
   if(PC&&st.tab==='reg')st.tab='rutina';if(!T.some(t=>t[0]===st.tab))st.tab='rutina';
   let h='<div class="tabs'+(T.length>2?' t3':'')+'">'+T.map(t=>'<button class="'+(st.tab===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>';
-  h+=st.tab==='an'?anView():PC?persRut(c):st.tab==='reg'?regView():rutView(c);
+  h+=st.tab==='ficha'?fichaView():st.tab==='an'?anView():PC?persRut(c):st.tab==='reg'?regView():rutView(c);
   $('#app').innerHTML=h;
 }
 function noCat(){
@@ -519,7 +537,7 @@ function rutView(c){
       (b.nota?'<div class="blk-nota">'+esc(b.nota)+'</div>':'')+
       (b.ejercicios||[]).filter(e=>e.n).map((e,ei)=>'<div class="ex"><span class="ex-i">'+L+(ei+1)+'</span><span class="ex-n">'+esc(e.n)+(e.obs?'<i>'+esc(e.obs)+'</i>':'')+'</span>'+
         '<span class="ex-p'+(e.progW?' chg':'')+'">'+presHtml(e,b)+'</span>'+
-        '<span class="ex-a">'+(e.c?'<span class="ex-c">'+esc(e.c)+'</span>':'')+(e.link?vidBtn(e.link):'')+'<button class="reg" data-regex="'+esc(e.n)+'">+ Anotar mi peso</button></span></div>').join('')+'</div>';});
+        '<span class="ex-a">'+(e.c?'<span class="ex-c">'+esc(e.c)+'</span>':'')+(e.link?vidBtn(e.link):'')+'<button class="reg" data-regex="'+esc(e.n)+'">+ Anotar mi peso</button>'+(isPersC(c)?'<button class="reg mol-b" data-mol="'+esc(e.n)+'">🤕 Molestia</button>':'')+'</span></div>').join('')+'</div>';});
   if(rd.principal)h+='<div class="sec card"><span class="lbl">Parte principal</span><div class="txt">'+esc(rd.principal)+'</div></div>';
   if(rd.calma)h+='<div class="sec card"><span class="lbl">Vuelta a la calma</span><div class="txt">'+esc(rd.calma)+'</div></div>';
   if(rd.notas)h+='<div class="sec card"><span class="lbl">Notas</span><div class="txt">'+esc(rd.notas)+'</div></div>';
@@ -544,7 +562,7 @@ let myUid=null,syncT=null;
 function setReg(R){R.upd=Date.now();ls.set('pfat-reg',R);clearTimeout(syncT);syncT=setTimeout(()=>pushCloud(R),400);}
 function pushCloud(R){
   R=R||getReg();if(!R.nombre)return;
-  const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',nac:R.nac||'',talla:R.talla||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now()};
+  const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',nac:R.nac||'',talla:R.talla||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now(),alta:R.alta||R.upd||Date.now()};if(R.ficha)doc.ficha=R.ficha;if(R.mol)doc.mol=R.mol;
   if(FB()){if(!myUid)return;firebase.firestore().collection('registrosAtletas').doc(myUid).set(doc,{mergeFields:Object.keys(doc)}).catch(e=>console.warn('sync',e));}
   else{/* prueba local: lo deja donde lo lee Pizarra PF */const L=ls.get('pfclub-local',{});L.registrosAtletas=L.registrosAtletas||{};const k=ls.get('pfat-uid','')||(()=>{const u='loc'+uid();ls.set('pfat-uid',u);return u;})();L.registrosAtletas[k]=Object.assign({},L.registrosAtletas[k]||{},doc);ls.set('pfclub-local',L);}
 }
@@ -588,6 +606,81 @@ function profileForm(R){
     '<button class="btn pri" id="psave">Guardar mis datos</button><p class="tiny" style="margin:0">Podés poner el DNI con o sin puntos. No se guarda escrito: se usa solo para reconocerte.</p></div>';
 }
 
+
+/* ================= PERSONALIZADOS: WhatsApp, ficha médica y molestias ================= */
+const WA_NUM='5492915164817';
+let ICON_CVM=null;
+function persChrome(PC){
+  const wa=document.getElementById('waBtn');
+  document.body.classList.toggle('has-wa',PC);if(wa){wa.hidden=!PC;if(PC){const R=getReg();wa.href='https://wa.me/'+WA_NUM+'?text='+encodeURIComponent('Hola profe! '+(R.nom?'Soy '+R.nom+'. ':'')+'Tengo una duda con respecto a ');}}
+  document.title=PC?'TrainingPro · Personalizados':'CVM · Rutinas';
+  const ic=document.querySelector('link[rel="icon"]');if(ic){if(!ICON_CVM)ICON_CVM=ic.href;const w=PC?'icon-tp-192.png':ICON_CVM;if(ic.getAttribute('href')!==w)ic.href=w;}
+}
+const ZONAS=['Cuello','Hombro','Codo','Muñeca / mano','Espalda alta','Zona lumbar','Cadera','Muslo','Rodilla','Pierna / gemelo','Tobillo','Pie','Otra'];
+const LADOS=['Derecha','Izquierda','Las dos','No aplica'];
+const SALQ=[['cor','¿Algún médico te dijo que tenés un problema de corazón o presión alta?'],['pec','¿Sentís dolor en el pecho, mareos o falta de aire al hacer ejercicio?'],['asm','¿Tenés asma u otro problema respiratorio?'],['dia','¿Diabetes u otra enfermedad que te controle un médico?'],['med','¿Tomás alguna medicación de forma habitual?'],['emb','¿Estás embarazada o tuviste un parto hace menos de un año?']];
+const OBJS_A=['Ganar músculo','Bajar grasa','Ganar fuerza','Rendimiento deportivo','Salud general','Volver de una lesión','Otro'];
+const EXP_A=['Nunca entrené','Menos de 6 meses','De 6 meses a 2 años','Más de 2 años'];
+const selA=(id,opts,v,ph)=>'<select id="'+id+'"><option value="">'+(ph||'Elegí…')+'</option>'+opts.map(o=>'<option'+(String(v)===String(o)?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select>';
+let FD=null; /* borrador de la ficha mientras la completa */
+function fichaView(){
+  const R=getReg();
+  if(!R.nombre||!R.ape||!R.dniH)return profileForm(R);
+  if(!FD)FD=JSON.parse(JSON.stringify(R.ficha||{les:[],q:{},dj:null}));FD.les=FD.les||[];FD.q=FD.q||{};
+  const done=R.ficha&&R.ficha.dj;
+  let h=done?'<div class="card fi-ok">✓ Completaste tu ficha el '+esc(fmtD(R.ficha.dj.f,{day:'numeric',month:'short',year:'numeric'}))+'. Si algo cambia, actualizala acá.</div>':'<p class="tiny" style="margin:0 4px 8px">La ve solo tu profe. Completala con la verdad: así tu entrenamiento es más seguro.</p>';
+  /* 1 · lesiones y operaciones */
+  h+='<div class="sec-t">1 · Lesiones y operaciones</div><div class="card fi-sec">';
+  h+=FD.les.length?FD.les.map((l,i)=>'<div class="fi-les"><div><b>'+esc(l.zona)+(l.lado&&l.lado!=='No aplica'?' '+esc(l.lado.toLowerCase()):'')+' · '+esc(l.tipo.toLowerCase())+'</b> <span class="fi-ch '+(l.mol==='Sí'?'r':l.mol==='A veces'?'w':'g')+'">'+(l.mol==='Sí'?'hoy molesta':l.mol==='A veces'?'a veces molesta':'no molesta')+'</span><div class="tiny">'+esc([l.anio,l.det].filter(Boolean).join(' · '))+'</div></div><button class="x" data-lesdel="'+i+'" aria-label="Quitar">✕</button></div>').join(''):'<p class="tiny" style="margin:0 0 8px">Si nunca tuviste ninguna, dejalo vacío.</p>';
+  if(st.lesNew){const yr=new Date().getFullYear();
+    h+='<div class="fi-new"><div class="fi-g2"><div class="fld"><label for="l_z">Zona</label>'+selA('l_z',ZONAS,'')+'</div><div class="fld"><label for="l_l">Lado</label>'+selA('l_l',LADOS,'')+'</div>'+
+      '<div class="fld"><label for="l_t">¿Qué fue?</label>'+selA('l_t',['Lesión','Operación'],'')+'</div><div class="fld"><label for="l_a">Año</label>'+selA('l_a',Array.from({length:31},(_,k)=>yr-k).concat(['Antes']),'')+'</div></div>'+
+      '<div class="fld"><label for="l_m">¿Te molesta hoy?</label>'+selA('l_m',['No','A veces','Sí'],'')+'</div><div class="fld"><label for="l_d">Detalle (opcional)</label><input id="l_d" placeholder="Ej: ligamento cruzado, esguince…"></div>'+
+      '<div class="fi-g2"><button class="btn" data-lesnew="0">Cancelar</button><button class="btn pri" id="lesAdd">Agregar</button></div></div>';}
+  else h+='<button class="fi-add" data-lesnew="1">+ Agregar lesión u operación</button>';
+  h+='</div>';
+  /* 2 · salud */
+  h+='<div class="sec-t">2 · Salud</div><div class="card fi-sec">'+SALQ.map(([k,t])=>{const a=FD.q[k]||{};
+    return '<div class="fi-q"><span>'+t+'</span><span class="fi-yn"><button class="'+(a.v==='si'?'si':'')+'" data-q="'+k+'" data-v="si">Sí</button><button class="'+(a.v==='no'?'no':'')+'" data-q="'+k+'" data-v="no">No</button></span></div>'+
+      (a.v==='si'?'<input class="fi-qd" data-qd="'+k+'" value="'+esc(a.d||'')+'" placeholder="Contanos un poco más (opcional)">':'');}).join('')+'</div>';
+  /* 3 · sobre vos */
+  const D=FD.datos||{};
+  h+='<div class="sec-t">3 · Sobre vos</div><div class="card fi-sec"><div class="fi-g2">'+
+    '<div class="fld"><label for="d_nac">Nacimiento</label><input type="date" id="d_nac" value="'+esc(D.nac||R.nac||'')+'"></div><div class="fld"><label for="d_sx">Sexo</label>'+selA('d_sx',['Femenino','Masculino'],D.sexo||'')+'</div>'+
+    '<div class="fld"><label for="d_pc">Peso (kg)</label><input id="d_pc" type="number" inputmode="decimal" step="any" value="'+esc(D.pc||R.pc||'')+'"></div><div class="fld"><label for="d_ta">Altura (cm)</label><input id="d_ta" type="number" inputmode="decimal" step="any" value="'+esc(D.talla||R.talla||'')+'"></div></div>'+
+    '<div class="fld"><label for="d_obj">Objetivo principal</label>'+selA('d_obj',OBJS_A,D.obj||'')+'</div>'+
+    '<div class="fld"><label for="d_dep">¿Hacés algún deporte?</label><input id="d_dep" value="'+esc(D.dep||'')+'" placeholder="Ej: básquet, running, ninguno"></div>'+
+    '<div class="fi-g2"><div class="fld"><label for="d_exp">Experiencia en gimnasio</label>'+selA('d_exp',EXP_A,D.exp||'')+'</div><div class="fld"><label for="d_dias">Días disponibles</label>'+selA('d_dias',['1','2','3','4','5','6'],D.dias||'')+'</div></div></div>';
+  /* 4 · declaración jurada */
+  h+='<div class="sec-t">4 · Declaración jurada</div><div class="card fi-dj"><label class="fi-djl"><input type="checkbox" id="dj"'+(FD.dj?' checked':'')+'> <span>Declaro que me encuentro en condiciones de salud para realizar actividad física, que la información que cargué es verdadera y completa, y que entreno bajo mi propia responsabilidad. Si mi salud cambia, lo actualizo acá y le aviso a mi profe.</span></label>'+
+    '<div class="tiny">'+esc(R.nombre)+(R.dniFin?' · DNI …'+esc(R.dniFin):'')+' · '+esc(fmtD(TODAY,{day:'numeric',month:'short',year:'numeric'}))+'</div></div>';
+  return h+'<button class="btn pri fi-save" id="fiSave">Guardar mi ficha</button>';
+}
+function fichaKeep(){if(!FD)return;const v=id=>{const x=document.getElementById(id);return x?x.value.trim():undefined;};
+  const D=FD.datos||{};[['nac','d_nac'],['sexo','d_sx'],['pc','d_pc'],['talla','d_ta'],['obj','d_obj'],['dep','d_dep'],['exp','d_exp'],['dias','d_dias']].forEach(([k,id])=>{const x=v(id);if(x!==undefined)D[k]=x;});FD.datos=D;
+  document.querySelectorAll('[data-qd]').forEach(i=>{const a=FD.q[i.dataset.qd]||{};a.d=i.value.trim();FD.q[i.dataset.qd]=a;});
+  const dj=document.getElementById('dj');if(dj)FD.djOk=dj.checked;}
+function fichaSave(){fichaKeep();
+  const falta=SALQ.filter(([k])=>!(FD.q[k]&&FD.q[k].v));if(falta.length){toast('Respondé las '+falta.length+' preguntas de salud que faltan');return;}
+  if(!FD.djOk){toast('Para guardar, marcá la declaración jurada');return;}
+  const R=getReg();const D=FD.datos||{};
+  R.ficha={les:FD.les,q:FD.q,datos:D,dj:{ok:true,f:TODAY},upd:Date.now()};
+  if(D.nac)R.nac=D.nac;if(D.pc)R.pc=D.pc;if(D.talla)R.talla=D.talla;
+  FD=null;setReg(R);st.tab='rutina';render();window.scrollTo(0,0);toast('Ficha guardada. ¡Gracias!');}
+/* molestia en un ejercicio */
+function openMol(ex){
+  const tg=curTag();
+  $('#vroot').innerHTML='<div class="sheet-bg" id="molBg"><div class="sheet"><b class="sh-t">Avisar una molestia</b><div class="tiny">'+esc(ex)+(tg&&tg.rn?' · '+esc(tg.rn):'')+'</div><div class="tiny">Le llega a tu profe. Podés completar lo que quieras, o nada y solo avisar.</div>'+
+    '<div class="fi-g2"><div class="fld"><label for="m_z">¿Dónde?</label>'+selA('m_z',ZONAS,'')+'</div><div class="fld"><label for="m_l">Lado</label>'+selA('m_l',LADOS,'')+'</div></div>'+
+    '<div class="fld"><label for="m_i">¿Cuánto te molesta? (0 a 10)</label>'+selA('m_i',['1 · casi nada','2','3','4 · molesta pero puedo seguir','5','6','7 · me cuesta seguir','8','9','10 · no pude seguir'],'')+'</div>'+
+    '<div class="fld"><label for="m_c">¿Cuándo?</label>'+selA('m_c',['Durante el ejercicio','Después de entrenar','Al día siguiente','Siempre, también sin entrenar'],'')+'</div>'+
+    '<div class="fld"><label for="m_t">Algo más (opcional)</label><input id="m_t" placeholder="Ej: al bajar en la búlgara"></div>'+
+    '<div class="fi-g2"><button class="btn" id="molNo">Cancelar</button><button class="btn pri" id="molOk">Avisar</button></div></div></div>';
+  $('#molBg').onclick=e=>{if(e.target.id==='molBg'||e.target.id==='molNo')$('#vroot').innerHTML='';};
+  $('#molOk').onclick=()=>{const z=$('#m_z').value,i=$('#m_i').value;
+    const R=getReg();R.mol=(R.mol||[]).concat({id:uid(),f:TODAY,t:Date.now(),ej:ex,rn:tg&&tg.rn||'',a:tg&&tg.a||'',zona:z,lado:$('#m_l').value,int:i?parseInt(i):null,cuando:$('#m_c').value,txt:$('#m_t').value.trim()});
+    setReg(R);$('#vroot').innerHTML='';toast('Listo, le avisamos a tu profe');};
+}
 /* ================= PERSONALIZADOS y antropometría ================= */
 const isPersC=c=>!!c&&(c.pers===true||c.id==='pers');
 const n1=v=>v==null||isNaN(v)?'–':fmtN(Math.round(v*10)/10);
@@ -634,7 +727,8 @@ function persRut(c){
   if(!R.nombre||!R.ape||!R.dniH||st.editProf)return profileForm(R);
   if(st.hist)return histView(st.hist);
   const exs=[...new Set(BASE_EX.concat(R.ex||[]).concat(Object.keys(R.log||{})))];const sel=st.regEx||exs[0];
-  let h='<div class="sec-t">Rutina actual</div>'+rutView(c)+'<div class="sec-t">Anotá tu peso</div>'+regTop(R,exs,sel);
+  const FI=R.ficha||{};
+  let h=(FI.dj?'':'<div class="card fi-ask"><b>Completá tu ficha médica</b><span class="tiny">Son 2 minutos: lesiones, salud y una declaración. La ve solo tu profe.</span><button class="btn sm pri" data-tab="ficha">Completar</button></div>')+'<div class="sec-t">Rutina actual</div>'+rutView(c)+'<div class="sec-t">Anotá tu peso</div>'+regTop(R,exs,sel);
   const G=pastPeriods();
   h+='<div class="sec-t">Mis rutinas anteriores</div>'+(G.length?'<div class="card hl">'+G.map(p=>'<button type="button" class="hl-r" data-hist="'+esc(p.k)+'"><span><b>'+esc(p.k==='sin'?'Otros registros':(p.rn||'Rutina'))+'</b><small>'+(p.k==='sin'?'pesos que no quedaron en ninguna rutina':rng(p))+' · '+p.ents.length+(p.ents.length===1?' peso anotado':' pesos anotados')+'</small></span><span class="hl-go">›</span></button>').join('')+'</div>'
     :'<p class="tiny">Cuando termines tu primera rutina, acá vas a poder ver qué hiciste cada mes y los pesos que anotaste.</p>');
@@ -718,6 +812,16 @@ function addReg(){
 $('#app').addEventListener('click',e=>{
   const rb=e.target.closest('[data-rpe]');if(rb){const R=getReg();if(!R.nombre)return;R.rpe=(R.rpe||[]).filter(x=>!(x.a===st.asig&&x.d===+rb.dataset.rpei&&x.f===rb.dataset.rpef));
     R.rpe.push({a:st.asig,d:+rb.dataset.rpei,f:rb.dataset.rpef,v:+rb.dataset.rpe,t:Date.now()});setReg(R);render();toast('Gracias. Guardamos tu RPE: '+rb.dataset.rpe);return;}
+  const fx=e.target.closest('[data-lesnew],[data-lesdel],[data-q],[data-mol],#lesAdd,#fiSave');
+  if(fx){const d=fx.dataset;
+    if(d.mol!==undefined)return openMol(d.mol);
+    fichaKeep();
+    if(d.lesnew!==undefined){st.lesNew=d.lesnew==='1';return render();}
+    if(d.lesdel!==undefined){FD.les.splice(+d.lesdel,1);return render();}
+    if(d.q){const a=FD.q[d.q]||{};a.v=d.v;FD.q[d.q]=a;return render();}
+    if(fx.id==='lesAdd'){const z=$('#l_z').value,tp=$('#l_t').value;if(!z||!tp){toast('Elegí la zona y qué fue');return;}
+      FD.les.push({zona:z,lado:$('#l_l').value,tipo:tp,anio:$('#l_a').value,mol:$('#l_m').value||'No',det:$('#l_d').value.trim()});st.lesNew=false;return render();}
+    if(fx.id==='fiSave')return fichaSave();}
   const t=e.target.closest('[data-hist],[data-hday],[data-anf],[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],#radd,#psave,#pedit');if(!t)return;
   if(t.id==='psave')return saveProfile();
   if(t.dataset.regmode){st.regMode=t.dataset.regmode;return render();}
@@ -750,7 +854,7 @@ if(FB()){firebase.initializeApp(FIREBASE_CONFIG);try{firebase.firestore().enable
     try{firebase.firestore().collection('registrosAtletas').doc(myUid).onSnapshot(sn=>{const n=(sn.exists&&sn.data().pf)||{};if(JSON.stringify(n)!==JSON.stringify(PF)){PF=n;render();}},()=>{});}catch(e){}
     try{const snap=await firebase.firestore().collection('registrosAtletas').doc(myUid).get();
       const R=getReg();
-      if(snap.exists&&!Object.keys(R.log).some(k=>R.log[k].length)&&!R.nombre){const c=snap.data();ls.set('pfat-reg',{nombre:c.nombre,dniH:c.dniH,dniFin:c.dniFin,pc:c.pc,log:c.log||{},ex:c.ex||[],upd:c.upd});render();}
+      if(snap.exists&&!Object.keys(R.log).some(k=>R.log[k].length)&&!R.nombre){const c=snap.data();ls.set('pfat-reg',{nombre:c.nombre,nom:c.nom,ape:c.ape,dniH:c.dniH,dniFin:c.dniFin,pc:c.pc,nac:c.nac,talla:c.talla,log:c.log||{},ex:c.ex||[],upd:c.upd,alta:c.alta,ficha:c.ficha,mol:c.mol});render();}
       else if(R.nombre)pushCloud(R);
     }catch(e){console.warn(e);}
   });
