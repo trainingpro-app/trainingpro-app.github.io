@@ -965,6 +965,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 .reg-h{display:grid;gap:6px;margin-top:8px}.reg-hr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:6px;font-size:13.5px}.reg-hr>span{flex:1}.danger-t{color:var(--bad)}
 .sal-gr{display:grid;grid-template-columns:170px 1fr;gap:8px 14px;font-size:13.5px;line-height:1.45;padding:4px 2px 8px}.sal-gr>span:nth-child(odd){color:var(--ink-3);font-weight:600;font-size:12.5px}
 @media (max-width:860px){.sal-gr{grid-template-columns:1fr;gap:2px}.sal-gr>span:nth-child(odd){margin-top:8px}.av-p{top:60px;right:12px}}
+.one-day .wd-pick{display:none}
 </style>
 </head>
 <body>
@@ -985,7 +986,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · ficha médica y avisos</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · sesión de 1 día</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2374,7 +2375,7 @@ function openRut(id,preset,after){
       '<label class="opt" title="Los atletas responden del 1 al 10 qué tan duro fue; si no responden les aparece un aviso naranja"><input type="checkbox" id="r_rpe"'+(r.rpe?' checked':'')+'><span>Preguntar RPE</span></label>'+
     '</div>'+
     '<div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="r_n">Nombre de la rutina</label><input id="r_n" value="'+esc(r.nombre||'')+'" placeholder="Ej: Fuerza · Mesociclo 1"></div>'+
-    '<div class="field"><label for="r_w">Duración del mesociclo</label><select id="r_w">'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+((r.semanas||4)==n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'</select></div></div>'+
+    '<div class="field"><label for="r_w">Duración del mesociclo</label><select id="r_w"><option value="d"'+(r.unDia?' selected':'')+'>1 día (sesión suelta)</option>'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+(!r.unDia&&(r.semanas||4)==n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'</select></div></div>'+
     '<div class="stype" id="r_tipo">'+['gym','cancha'].map(t=>'<button type="button" class="'+t+(t===tipo?' on':'')+'" data-rt="'+t+'"><span class="dot"></span>'+(t==='gym'?'Gym':'Cancha')+'</button>').join('')+'</div>'+
     '<div><h3>Días de entrenamiento</h3><div class="day-tabs" id="dayTabs"></div></div>'+
     '<div class="day-panel" id="dayPanel"></div>';
@@ -2503,12 +2504,12 @@ function openRut(id,preset,after){
     let base=null;setTimeout(()=>{if(q('r_n'))base=snap();},0);
     let dt;const autosave=()=>{clearTimeout(dt);dt=setTimeout(()=>{if(!q('r_n'))return;const now=snap();
       if(base!==null&&now===base){if(!dr)Draft.del(dkey);return;}
-      Draft.set(dkey,{nombre:q('r_n').value,tipo,semanas:+q('r_w').value||4,days,cur});},400);};
+      Draft.set(dkey,{nombre:q('r_n').value,tipo,semanas:q('r_w').value==='d'?1:(+q('r_w').value||4),unDia:q('r_w').value==='d',days,cur});},400);};
     mw.addEventListener('input',autosave);mw.addEventListener('change',autosave);
     mw.addEventListener('click',e=>{if(e.target.closest('.modal-b button'))autosave();});
     mw.querySelectorAll('[data-close]').forEach(x=>x.addEventListener('click',()=>{clearTimeout(dt);Draft.del(dkey);}));
     if(q('dropDraft'))q('dropDraft').onclick=()=>{Draft.del(dkey);openRut(id,preset,after);};
-    q('r_print').onclick=()=>{saveCur();printRutObj({nombre:q('r_n').value.trim(),tipo,semanas:+q('r_w').value||4,sesiones:days},null);};
+    q('r_print').onclick=()=>{saveCur();printRutObj({nombre:q('r_n').value.trim(),tipo,semanas:q('r_w').value==='d'?1:(+q('r_w').value||4),sesiones:days},null);};
     mw.querySelectorAll('[data-rt]').forEach(btn=>btn.onclick=()=>{tipo=btn.dataset.rt;mw.querySelectorAll('[data-rt]').forEach(x=>x.classList.toggle('on',x===btn));const c=panel.querySelector('.cancha-only');if(c)c.hidden=tipo!=='cancha';});
     if(q('r_del'))armDelete(q('r_del'),async()=>{
       for(const a of S.asigAll.filter(a=>a.rutina===r0.id))await Store.remove('asignaciones',a.id);
@@ -2520,7 +2521,7 @@ function openRut(id,preset,after){
       const nombre=q('r_n').value.trim();if(!nombre){toast('Ponele un nombre a la rutina');return;}
       const newId=r0?r0.id:uid();
       const keep=r0?Object.assign({},r0):(isTpl?{plantilla:true}:{});delete keep.id;
-      const data=Object.assign(keep,{nombre,tipo,semanas:+q('r_w').value||4,sesiones:days,borrador:q('r_borr').checked,rpe:q('r_rpe').checked,indiv:q('r_ind').checked,editada:Date.now()});
+      const data=Object.assign(keep,{nombre,tipo,semanas:q('r_w').value==='d'?1:(+q('r_w').value||4),unDia:q('r_w').value==='d',sesiones:days,borrador:q('r_borr').checked,rpe:q('r_rpe').checked,indiv:q('r_ind').checked,editada:Date.now()});
       try{await Store.put('rutinas',newId,data);clearTimeout(dt);Draft.del(dkey);if(!isTpl)days.forEach(d=>saveToLibrary(d.bloques||[]));
         if(isTpl){closeModal();toast('Plantilla guardada en Programas → Mis plantillas');}
         else if(isNew&&assign&&!data.indiv){toast('Rutina guardada. Ahora elegí a qué categorías va.');setTimeout(()=>openAsig(null,{rutina:newId,cat:after&&after.cat,_rut:Object.assign({id:newId},data)}),60);}
@@ -2548,15 +2549,15 @@ function openAsig(aid,preset){
   let rid=a0?a0.rutina:(preset.rutina||'');
   const getR=()=>rutById(rid)||(preset._rut&&preset._rut.id===rid?preset._rut:null);
   const r=getR();
-  const a=a0||{desde:TODAY,semanas:r?(r.semanas||4):4,horario:[]};
+  const a=a0||{desde:TODAY,semanas:r?(r.semanas||4):4,unDia:!!(r&&r.unDia),horario:[]};
   const cats=S.cats.filter(c=>!isPersC(c)).sort((x,y)=>(x.orden||0)-(y.orden||0));
   const pre=a0?[a0.cat]:(preset.cat?[preset.cat]:[]);
   let b='';
   if(!a0)b+='<div class="field"><label for="a_r">Rutina</label><select id="a_r"><option value="">Elegí una rutina…</option>'+S.rutAll.concat(preset._rut&&!rutById(preset._rut.id)?[preset._rut]:[]).slice().sort((x,y)=>(x.nombre||'').localeCompare(y.nombre||'','es')).map(x=>'<option value="'+esc(x.id)+'"'+(x.id===rid?' selected':'')+'>'+esc(x.nombre)+'</option>').join('')+'</select></div>';
   b+=a0?'<div class="rut-note">Categoría: <b>'+esc(catName(a0.cat))+'</b> · Rutina: <b>'+esc(r?r.nombre:'(borrada)')+'</b></div>'
     :'<div class="field"><label>Categorías</label><div class="cat-picks">'+cats.map(c=>'<label class="cat-pick'+(pre.includes(c.id)?' on':'')+'"><input type="checkbox" value="'+esc(c.id)+'"'+(pre.includes(c.id)?' checked':'')+'>'+esc(c.nombre)+'</label>').join('')+'</div><span class="tiny">Podés elegir varias: todas quedan con los mismos días y horarios (después podés cambiarle el horario a una sola).</span></div>';
-  b+='<div class="form-grid"><div class="field"><label for="a_d">Empieza</label><input type="date" id="a_d" value="'+esc(a.desde||TODAY)+'"></div>'+
-    '<div class="field"><label for="a_w">Duración</label><select id="a_w">'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+(a.semanas==n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'<option value="0"'+(a.semanas===0?' selected':'')+'>Hasta nuevo aviso</option></select></div>'+
+  b+='<div class="form-grid"><div class="field"><label for="a_d" id="a_dl">'+(a.unDia?'Fecha':'Empieza')+'</label><input type="date" id="a_d" value="'+esc(a.desde||TODAY)+'"></div>'+
+    '<div class="field"><label for="a_w">Duración</label><select id="a_w"><option value="d"'+(a.unDia?' selected':'')+'>1 día (sesión suelta)</option>'+[1,2,3,4,5,6,8,10,12].map(n=>'<option value="'+n+'"'+(!a.unDia&&a.semanas==n?' selected':'')+'>'+n+(n===1?' semana':' semanas')+'</option>').join('')+'<option value="0"'+(a.semanas===0?' selected':'')+'>Hasta nuevo aviso</option></select></div>'+
     '<div class="field" style="grid-column:1/-1"><span class="tiny" id="a_end"></span></div></div>'+
     '<div><h3>Días y horarios <small class="tiny" style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</small></h3><p class="tiny" style="margin:0 0 6px">Podés dejar días sin día de la semana: los atletas los ven igual, pero no aparecen en el calendario hasta que les pongas uno. También podés poner dos días de la rutina el mismo día (por ejemplo, cuando algunos hacen un diferenciado): en el calendario se ven juntos y en la app cada jugador elige el suyo.</p><div id="a_sched"></div></div>';
   const foot='<div class="modal-f">'+(a0?'<button class="btn danger" id="a_del">Quitar de la categoría</button>':'')+'<div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn pri" id="a_save">'+(a0?'Guardar':'Asignar')+'</button></div>';
@@ -2575,8 +2576,9 @@ function openAsig(aid,preset){
       const wb=e.target.closest('.sched-row .wdb');if(wb){const on=wb.classList.contains('on');wb.parentElement.querySelectorAll('.wdb').forEach(x=>x.classList.remove('on'));if(!on)wb.classList.add('on');return;}
     });
     mw.querySelectorAll('.cat-pick input').forEach(cb=>cb.onchange=()=>cb.parentElement.classList.toggle('on',cb.checked));
-    if(q('a_r'))q('a_r').onchange=()=>{a.horario=readSched();rid=q('a_r').value;const rr=getR();if(rr&&!a0){q('a_w').value=String(rr.semanas||4);endTxt();}drawSched();};
-    const endTxt=()=>{const w=+q('a_w').value,d=q('a_d').value;q('a_end').textContent=!d?'':w?'Termina el '+fmtD(addDays(d,w*7-1),{weekday:'long',day:'numeric',month:'long'})+'.':'Queda vigente hasta que la finalices.';};
+    if(q('a_r'))q('a_r').onchange=()=>{a.horario=readSched();rid=q('a_r').value;const rr=getR();if(rr&&!a0){q('a_w').value=rr.unDia?'d':String(rr.semanas||4);endTxt();}drawSched();};
+    const endTxt=()=>{const one=q('a_w').value==='d';q('a_dl').textContent=one?'Fecha':'Empieza';const sb=q('a_sched');if(sb)sb.classList.toggle('one-day',one);
+      const w=+q('a_w').value,d=q('a_d').value;q('a_end').textContent=!d?'':one?'Una sola sesión: el '+fmtD(d,{weekday:'long',day:'numeric',month:'long'})+'. Poné el horario abajo (el día ya queda puesto).':w?'Termina el '+fmtD(addDays(d,w*7-1),{weekday:'long',day:'numeric',month:'long'})+'.':'Queda vigente hasta que la finalices.';};
     q('a_w').onchange=endTxt;q('a_d').onchange=endTxt;endTxt();
     if(q('a_del'))armDelete(q('a_del'),async()=>{await Store.remove('asignaciones',a0.id);closeModal();toast('Rutina quitada de '+catName(a0.cat));});
     q('a_save').onclick=async()=>{
@@ -2586,10 +2588,11 @@ function openAsig(aid,preset){
       const horario=readSched();
       const sin=horario.findIndex(h=>h.d==null);
       const desde=q('a_d').value;if(!desde){toast('Elegí la fecha de inicio');return;}
-      const semanas=+q('a_w').value;
+      const one=q('a_w').value==='d';const semanas=one?1:+q('a_w').value;
       const keepEnd=a0&&a0.finalizada&&a0.hasta;
+      const hor=one?horario.map(h=>({d:wdOf(desde),hora:h.hora})):horario;
       for(const c of targets){
-        const data={cat:c,rutina:rr.id,desde,semanas,hasta:keepEnd?a0.hasta:(semanas?addDays(desde,semanas*7-1):''),finalizada:!!keepEnd,horario};
+        const data={cat:c,rutina:rr.id,desde,semanas,unDia:one,hasta:one?desde:keepEnd?a0.hasta:(semanas?addDays(desde,semanas*7-1):''),finalizada:!!keepEnd,horario:hor};
         await Store.put('asignaciones',a0?a0.id:uid(),data);
       }
       closeModal();toast(a0?'Guardado':'Asignada a '+targets.map(catName).join(', '));
