@@ -518,7 +518,11 @@ function rutView(c){
   if(st.week==null)st.week=nowW;
   /* día por defecto: el de hoy, si no el próximo que entrenan */
   const wd=wdOf(TODAY);
-  if(st.day==null){let best=0,bd=99;(pick.horario||[]).forEach((x,i)=>{if(x&&x.d!=null){const dd=(x.d-wd+7)%7;if(dd<bd){bd=dd;best=i;}}});st.day=Math.min(best,ds.length-1);}
+  /* trabajos: si la profe marcó jugadores en algún día, cada uno ve el suyo */
+  const HH=pick.horario||[],me=meUid();const mine=HH.map((x,i)=>x&&(x.uids||[]).includes(me)?i:-1).filter(i=>i>=0);
+  const vis=i=>{if(!mine.length)return true;const x=HH[i]||{};return !((x.uids&&x.uids.length)||(x.jug&&x.jug.length))||mine.includes(i);};
+  if(st.day!=null&&!vis(st.day))st.day=null;
+  if(st.day==null){let best=-1,bd=99;HH.forEach((x,i)=>{if(x&&x.d!=null&&vis(i)){const dd=(x.d-wd+7)%7;if(dd<bd){bd=dd;best=i;}}});if(best<0)best=ds.findIndex((_,i)=>vis(i));st.day=Math.max(0,Math.min(best,ds.length-1));}
   const d=ds[st.day]||ds[0];
   if(r.rpe&&pick.desde<=TODAY){const miss=rpeMissing(pick,ds);if(miss.length)h+='<div class="rpe-warn"><b>No respondiste tu RPE</b><span>'+miss.slice(0,3).map(m=>'<button data-day="'+m.i+'" data-rpego="1">'+esc(ds[m.i].nombre||('Día '+(m.i+1)))+' · '+esc(fmtD(m.f,{weekday:'short',day:'numeric'}))+'</button>').join('')+'</span></div>';}
   h+='<div class="rut-h"><h2>'+esc(r.nombre)+'</h2><div class="rut-meta"><span class="chip '+r.tipo+'">'+(r.tipo==='gym'?'Gimnasio':'Cancha')+'</span>'+
@@ -526,7 +530,7 @@ function rutView(c){
     (pick.hasta?'<span>Hasta el '+esc(fmtD(pick.hasta,{day:'numeric',month:'short'}))+'</span>':'')+'</div>';
   if(W>1)h+='<div class="wk"><span class="tiny">Ver semana:</span>'+Array.from({length:W},(_,i)=>'<button class="wk-b'+(i===st.week?' on':'')+(i===nowW&&pick.desde<=TODAY?' now':'')+'" data-week="'+i+'">'+(i+1)+'</button>').join('')+'</div>';
   h+='</div>';
-  h+='<div class="days">'+ds.map((x,i)=>{const hh=(pick.horario||[])[i]||{};const isHoy=hh.d===wd&&pick.desde<=TODAY;
+  h+='<div class="days">'+ds.map((x,i)=>{if(!vis(i))return '';const hh=(pick.horario||[])[i]||{};const isHoy=hh.d===wd&&pick.desde<=TODAY;
     return '<button class="day-b'+(i===st.day?' on':'')+'" data-day="'+i+'"><b>'+esc(x.nombre||('Día '+(i+1)))+(isHoy?'<span class="hoy">hoy</span>':'')+'</b><small>'+(hh.d!=null?WDL[hh.d]:'')+(hh.hora?' · '+esc(hh.hora):'')+'</small></button>';}).join('')+'</div>';
   const rd=resolveDay(d,st.week);
   if(rd.objetivo)h+='<div class="sec"><span class="lbl">Objetivo</span><b>'+esc(rd.objetivo)+'</b></div>';
