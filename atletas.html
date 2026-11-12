@@ -533,7 +533,7 @@ function rutView(c){
   h+='<div class="days">'+ds.map((x,i)=>{if(!vis(i))return '';const hh=(pick.horario||[])[i]||{};const isHoy=hh.d===wd&&pick.desde<=TODAY;
     return '<button class="day-b'+(i===st.day?' on':'')+'" data-day="'+i+'"><b>'+esc(x.nombre||('Día '+(i+1)))+(isHoy?'<span class="hoy">hoy</span>':'')+'</b><small>'+(hh.d!=null?WDL[hh.d]:'')+(hh.hora?' · '+esc(hh.hora):'')+'</small></button>';}).join('')+'</div>';
   const rd=resolveDay(d,st.week);
-  if(rd.objetivo)h+='<div class="sec"><span class="lbl">Objetivo</span><b>'+esc(rd.objetivo)+'</b></div>';
+  if(rd.objetivo||rd.md)h+='<div class="sec"><span class="lbl">Objetivo</span><b>'+esc([rd.md,rd.objetivo].filter(Boolean).join(' · '))+'</b></div>';
   if(rd.calor)h+='<div class="sec card"><span class="lbl">Entrada en calor</span><div class="txt">'+esc(rd.calor)+'</div></div>';
   const bl=toBloques(rd,r.tipo).filter(b=>(b.ejercicios||[]).some(e=>e.n));
   bl.forEach((b,bi)=>{const L=String.fromCharCode(65+bi);
