@@ -608,9 +608,9 @@ function rutHist(L){const G=myGroups(L);if(!G.length)return '';const T={ind:'Ind
       Object.keys(by).sort((a,b)=>a.localeCompare(b,'es')).map(x=>'<div class="rh-x"><span>'+esc(x)+'</span><span class="rh-v">'+by[x].sort((a,b)=>b.f.localeCompare(a.f)).map(e=>'<span class="mono">'+fmtN(e.kg)+' kg × '+e.r+' <small>'+esc(fmtD(e.f,{day:'numeric',month:'short'}))+'</small>'+(e.ed||e.pfAdd?' <i class="pf-ed" title="Lo corrigió o lo cargó tu preparadora">✎ PF</i>':'')+'</span>').join('')+'</span></div>').join('')+'</div>';}).join('')+'</div>';}
 function profileForm(R){
   return '<div class="card me"><h3>Tus datos</h3><p class="tiny" style="margin:0">Antes de anotar tus pesos, completá tus datos. Así tu preparadora física sabe que sos vos. Solo los ve ella.</p>'+
-    '<div class="fld"><label for="pn">Nombre</label><input id="pn" autocomplete="given-name" value="'+esc(R.nom||(R.ape?'':R.nombre)||'')+'" placeholder="Ej: Gian Franco"></div>'+
-    '<div class="fld"><label for="pa">Apellido</label><input id="pa" autocomplete="family-name" value="'+esc(R.ape||'')+'" placeholder="Ej: Gasparini"></div>'+
-    '<div class="fld"><label for="pd">DNI (solo números)</label><input id="pd" inputmode="numeric" autocomplete="off" placeholder="'+(R.dniFin?'Cargado: …'+esc(R.dniFin)+' (escribí otro para cambiarlo)':'Ej: 45123456')+'"></div>'+
+    '<div class="fld"><label for="pn">Nombre</label><input id="pn" autocomplete="given-name" value="'+esc(R.nom||(R.ape?'':R.nombre)||'')+'"></div>'+
+    '<div class="fld"><label for="pa">Apellido</label><input id="pa" autocomplete="family-name" value="'+esc(R.ape||'')+'"></div>'+
+    '<div class="fld"><label for="pd">DNI</label><input id="pd" inputmode="numeric" autocomplete="off" placeholder="'+(R.dniFin?'Cargado: …'+esc(R.dniFin)+' (escribí otro para cambiarlo)':'')+'"></div>'+
     '<details class="opt-d"'+(st.datosLink||R.nac||R.talla?' open':'')+'><summary>Más datos (opcional): nacimiento, peso y altura</summary>'+
     '<div class="fld"><label for="pnac">Fecha de nacimiento</label><input id="pnac" type="date" value="'+esc(R.nac||'')+'"></div>'+
     '<div class="me-row"><div class="fld" style="flex:1"><label for="ppc">Peso (kg)</label><input id="ppc" type="number" inputmode="decimal" step="any" value="'+esc(R.pc||'')+'"></div>'+
