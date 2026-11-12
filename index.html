@@ -1021,7 +1021,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · sesiones A y B</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · link de alumnos</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -3221,7 +3221,7 @@ function openFicha(jid){try{anSync(S.jug.find(x=>x.id===jid));}catch(e){}
       const mo=t.closest('[data-fmore]');if(mo){const box=mw.querySelector('[data-more="'+mo.dataset.fmore+'"]');if(!box)return;box.hidden=!box.hidden;mo.textContent=box.hidden?'+ información':'− menos';return;}
       if(t.closest('[data-fdatos]'))return openFichaDatos(jid);
       if(t.closest('[data-fedit]'))return openPlayer(jid);
-      if(t.closest('[data-flink]'))return copyTxt(atlUrl(j.cat||S.cat).replace('#','?datos#'),'Link copiado: mandáselo y completa sus datos');
+      if(t.closest('[data-flink]'))return copyTxt((j.cat||S.cat)==='pers'?atlUrl('pers')+'?datos':atlUrl(j.cat||S.cat).replace('#','?datos#'),'Link copiado: mandáselo y completa sus datos');
       if(t.closest('[data-annew]'))return openAnTake(jid,null);
       if(t.closest('[data-anpdf]'))return openAnTake(jid,null,true);
       const an=t.closest('[data-anedit]');if(an)return openAnTake(jid,an.dataset.anedit);
@@ -4253,7 +4253,7 @@ function onAgendaClick(e){
 }
 
 /* ---------- app de atletas ---------- */
-function atlUrl(cat){try{return new URL('atletas.html'+(cat?'#'+cat:''),location.href).href;}catch(e){return 'atletas.html'+(cat?'#'+cat:'');}}
+function atlUrl(cat){if(cat==='pers'){try{return new URL('personalizado.html',location.href).href;}catch(e){return 'personalizado.html';}}try{return new URL('atletas.html'+(cat?'#'+cat:''),location.href).href;}catch(e){return 'atletas.html'+(cat?'#'+cat:'');}}
 function copyTxt(t,okMsg){
   const done=()=>toast(okMsg);
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>fallback());else fallback();
