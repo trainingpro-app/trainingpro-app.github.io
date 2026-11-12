@@ -196,7 +196,7 @@ button{cursor:pointer}
 .cw-cat{border:0;background:transparent;padding:0;font:600 12.5px var(--f-body);color:var(--ink);cursor:pointer}.cw-cat:hover{text-decoration:underline}
 .cw-r.no .cw-cat{color:var(--ink-3)}
 .cw-none{color:var(--ink-3);font-size:12px;padding:2px 4px}
-.cw-pm{background:var(--match);color:var(--match-ink);border-radius:7px;margin:0 6px 6px;padding:5px 8px;font-size:12.5px;cursor:pointer}
+.cw-pm{background:var(--match);color:var(--match-ink);border-radius:7px;margin:0 6px 6px;padding:5px 8px;font-size:12.5px;cursor:pointer}.cw-lv{display:inline-block;margin-left:4px;padding:0 5px;border-radius:4px;border:1px solid currentColor;font-weight:800;font-size:11px;line-height:1.4}.cw-pm small{display:block;opacity:.75;font-size:11.5px;margin-top:1px}
 @media (max-width:860px){.cw{grid-template-columns:1fr}}
 /* ---------- main ---------- */
 .main{flex:1;min-width:0;padding-inline:24px;padding-block:18px 60px}
@@ -1121,7 +1121,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 12 nov 2026 · cronograma por día</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 12 nov 2026 · partidos con L/V</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -5708,7 +5708,7 @@ function vCrono(){
     P.sort((p,q)=>(p.p.hora||'99').localeCompare(q.p.hora||'99'));
     return '<div class="cw-day'+(m?' xd':'')+'"><h4>'+(m?'⚠️ ':'')+WDL[i]+(mode==='sem'?'<small>'+pISO(D[i]).getDate()+'/'+(pISO(D[i]).getMonth()+1)+(m?' · '+esc(m):'')+'</small>':'')+'</h4>'+
       '<div class="cw-two"><div class="cw-sub"><div class="cw-sh g">🏋️ GYM</div>'+colH('g')+'</div><div class="cw-sub"><div class="cw-sh c">🏀 CANCHA</div>'+colH('c')+'</div></div>'+
-      P.map(({c,p})=>'<div class="cw-pm" data-crcat="'+esc(c.id)+'">🆚 '+(p.hora?'<b>'+esc(fmtH(p.hora))+'</b> ':'')+'<b>'+esc(crShort(c.nombre))+'</b> '+(p.condicion==='Visitante'?'@ ':'vs ')+esc(p.rival||'')+'</div>').join('')+'</div>';
+      P.map(({c,p})=>{const lv=p.condicion==='Visitante'?'V':p.condicion==='Local'?'L':'';return '<div class="cw-pm" data-crcat="'+esc(c.id)+'"><b>'+esc(crShort(c.nombre).toUpperCase())+'</b> 🆚 '+esc(p.rival||'')+(lv?' <span class="cw-lv" title="'+(lv==='L'?'Local':'Visitante')+'">'+lv+'</span>':'')+(p.hora?'<small>'+esc(fmtH(p.hora))+'</small>':'')+'</div>';}).join('')+'</div>';
   }).join('')+'</div>';
   const sin=cats.filter(c=>!horHas(c));
   if(sin.length)h+='<p class="tiny" style="margin-top:10px">⏰ Sin horarios cargados: '+sin.map(c=>'<button type="button" class="cr-empty" data-crhor="'+esc(c.id)+'">'+esc(crShort(c.nombre))+'</button>').join(' · ')+' — tocá una para cargarlos.</p>';

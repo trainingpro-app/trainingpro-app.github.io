@@ -1,7 +1,7 @@
 /* TrainingPro · guarda la app en el celu para que abra rápido.
    Las páginas se piden siempre nuevas (si no hay señal o tarda, usa la guardada);
    las herramientas de Google (Firebase) y las fuentes se guardan y no se vuelven a bajar. */
-const V='tp-v50';
+const V='tp-v51';
 const SHELL=['./','./index.html','./atletas.html','./manifest.json','./manifest-atletas.json','./icon-tp-192.png','./icon-cvm-192.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL).catch(()=>{})));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
@@ -20,4 +20,4 @@ self.addEventListener('fetch',e=>{
     e.respondWith(caches.match(req).then(r=>r||fetch(req).then(n=>{if(n&&(n.ok||n.type==='opaque')){const c=n.clone();caches.open(V).then(x=>x.put(req,c));}return n;})));
   }
 });
-// v50
+// v51
