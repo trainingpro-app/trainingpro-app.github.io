@@ -563,10 +563,18 @@ function getReg(){
   R.log=R.log||{};R.ex=R.ex||[];return R;
 }
 let myUid=null,syncT=null;
+/* si tu profe borró tu cuenta: se limpia este celular y vuelve a pedir el registro */
+function bajaCheck(data){
+  if(!data||!data.baja)return false;const R=getReg();if(R.nombre&&(R.alta||0)>data.baja)return false;
+  try{Object.keys(localStorage).filter(k=>k==='pfat-reg'||k.indexOf('pfat-reg-')===0).forEach(k=>localStorage.removeItem(k));}catch(e){}
+  PF={};
+  if(FB()&&myUid){try{firebase.firestore().collection('registrosAtletas').doc(myUid).delete().catch(()=>{});}catch(e){}}
+  else{const L=ls.get('pfclub-local',{});if(L.registrosAtletas)delete L.registrosAtletas[ls.get('pfat-uid','')];ls.set('pfclub-local',L);}
+  st.tab=null;st.editProf=false;render();setTimeout(()=>toast('Tu cuenta fue dada de baja. Si querés, registrate de nuevo'),300);return true;}
 function setReg(R){R.upd=Date.now();ls.set('pfat-reg',R);clearTimeout(syncT);syncT=setTimeout(()=>pushCloud(R),400);}
 function pushCloud(R){
   R=R||getReg();if(!R.nombre)return;
-  const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',nac:R.nac||'',talla:R.talla||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now(),alta:R.alta||R.upd||Date.now()};if(R.ficha)doc.ficha=R.ficha;if(R.mol)doc.mol=R.mol;
+  const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',nac:R.nac||'',talla:R.talla||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now(),alta:R.alta||R.upd||Date.now()};if(FB())try{doc.baja=firebase.firestore.FieldValue.delete();}catch(e){}if(R.ficha)doc.ficha=R.ficha;if(R.mol)doc.mol=R.mol;
   if(FB()){if(!myUid)return;firebase.firestore().collection('registrosAtletas').doc(myUid).set(doc,{mergeFields:Object.keys(doc)}).catch(e=>console.warn('sync',e));}
   else{/* prueba local: lo deja donde lo lee Pizarra PF */const L=ls.get('pfclub-local',{});L.registrosAtletas=L.registrosAtletas||{};const k=ls.get('pfat-uid','')||(()=>{const u='loc'+uid();ls.set('pfat-uid',u);return u;})();L.registrosAtletas[k]=Object.assign({},L.registrosAtletas[k]||{},doc);ls.set('pfclub-local',L);}
 }
@@ -801,7 +809,7 @@ function saveProfile(){
   else if(!R.dniH){toast('Poné tu DNI (solo números)');return;}
   const nac=$('#pnac')?$('#pnac').value:'',pc2=$('#ppc')?$('#ppc').value:'',tal=$('#ptal')?$('#ptal').value:'';
   if(nac)R.nac=nac;if(pc2)R.pc=pc2;if(tal)R.talla=tal;
-  R.nombre=n;R.nom=nm;R.ape=ap;R.cat=st.cat;st.editProf=false;st.datosLink=false;setReg(R);render();toast('Listo, '+n.split(' ')[0]+'. Ya podés anotar tus pesos');
+  if(!R.nombre)R.alta=Date.now();R.nombre=n;R.nom=nm;R.ape=ap;R.cat=st.cat;st.editProf=false;st.datosLink=false;setReg(R);render();toast('Listo, '+n.split(' ')[0]+'. Ya podés anotar tus pesos');
 }
 function addReg(){
   let x=$('#rx').value;
@@ -855,14 +863,15 @@ if(FB()){firebase.initializeApp(FIREBASE_CONFIG);try{firebase.firestore().enable
   firebase.auth().onAuthStateChanged(async u=>{
     if(!u){firebase.auth().signInAnonymously().catch(e=>console.warn('anon',e));return;}
     myUid=u.uid;render();
-    try{firebase.firestore().collection('registrosAtletas').doc(myUid).onSnapshot(sn=>{const n=(sn.exists&&sn.data().pf)||{};if(JSON.stringify(n)!==JSON.stringify(PF)){PF=n;render();}},()=>{});}catch(e){}
+    try{firebase.firestore().collection('registrosAtletas').doc(myUid).onSnapshot(sn=>{if(sn.exists&&bajaCheck(sn.data()))return;const n=(sn.exists&&sn.data().pf)||{};if(JSON.stringify(n)!==JSON.stringify(PF)){PF=n;render();}},()=>{});}catch(e){}
     try{const snap=await firebase.firestore().collection('registrosAtletas').doc(myUid).get();
-      const R=getReg();
-      if(snap.exists&&!Object.keys(R.log).some(k=>R.log[k].length)&&!R.nombre){const c=snap.data();ls.set('pfat-reg',{nombre:c.nombre,nom:c.nom,ape:c.ape,dniH:c.dniH,dniFin:c.dniFin,pc:c.pc,nac:c.nac,talla:c.talla,log:c.log||{},ex:c.ex||[],upd:c.upd,alta:c.alta,ficha:c.ficha,mol:c.mol});render();}
+      const R=getReg();if(snap.exists&&bajaCheck(snap.data()))return;
+      if(snap.exists&&!snap.data().baja&&!Object.keys(R.log).some(k=>R.log[k].length)&&!R.nombre){const c=snap.data();ls.set('pfat-reg',{nombre:c.nombre,nom:c.nom,ape:c.ape,dniH:c.dniH,dniFin:c.dniFin,pc:c.pc,nac:c.nac,talla:c.talla,log:c.log||{},ex:c.ex||[],upd:c.upd,alta:c.alta,ficha:c.ficha,mol:c.mol});render();}
       else if(R.nombre)pushCloud(R);
     }catch(e){console.warn(e);}
   });
 }
+if(!FB()){try{const L=ls.get('pfclub-local',{});bajaCheck((L.registrosAtletas||{})[ls.get('pfat-uid','')]);}catch(e){}}
 const fromHash=decodeURIComponent((location.hash||'').slice(1));
 st.cat=LOCK||(fromHash==='todas'?'':fromHash)||(fromHash==='todas'?null:ls.get('pfat-cat',''))||null;
 watch('categorias',a=>{D.cats=a;D.ready.c=1;render();});

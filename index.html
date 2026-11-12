@@ -1021,7 +1021,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 4 nov 2026 · TrainingPro · link de alumnos</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 12 nov 2026 · borrar cuentas de alumnos</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1313,7 +1313,7 @@ function selectCat(id){
     /* DNIs y registros de atletas: solo vos (nunca en el link de solo lectura) */
     if(!RO)catUnsubs.push(
       Store.watch('dnis','cat',id,a=>{S.dni=a;render();}),
-      Store.watch('registrosAtletas','cat',id,a=>{S.atl=a.map(atlNorm);render();difUidsCheck();trabSync();}));
+      Store.watch('registrosAtletas','cat',id,a=>{S.atl=a.filter(d=>!d.baja).map(atlNorm);render();difUidsCheck();trabSync();}));
   }
   renderNav();render();
 }
@@ -2908,13 +2908,15 @@ function atlGroup(docs,j){
 /* guarda en el registro del atleta las rutinas que hizo, así no se pierden si la rutina se borra o se cambia */
 async function atlSnapAsig(a){
   if(RO||!a||!a.desde)return;const p=perOf(a);if(!p.rn)return;delete p.live;
-  let docs;try{const all=await Store.getAll('registrosAtletas');docs=Object.keys(all).map(id=>Object.assign({id},all[id]));}catch(e){return;}
+  let docs;try{const all=await Store.getAll('registrosAtletas');docs=Object.keys(all).filter(id=>!all[id].baja).map(id=>Object.assign({id},all[id]));}catch(e){return;}
   docs.forEach(d0=>{const d=atlNorm(d0);
     const mine=a.ind||a.dif?((a.uids||[]).includes(d.id)):d.cat===a.cat;if(!mine)return;
     const has=Object.values(d.log).some(l=>l.some(e=>e.f>=p.desde&&e.f<=p.hasta&&(!e.rid||e.rid===p.rid)));if(!has)return;
     const pf=JSON.parse(JSON.stringify(d0.pf||{}));pf.per=pf.per||[];if(pf.per.some(x=>x.k===p.k))return;
     pf.per.push(p);Store.patch('registrosAtletas',d.id,{pf});});
 }
+/* dar de baja la cuenta de un alumno/jugador: se borran sus datos y su celular vuelve a la pantalla de registro */
+function atlBaja(id){if(!id)return;return Store.put('registrosAtletas',id,{baja:Date.now()});}
 function atlPfSave(docId,fn){
   const d=S.atl.find(x=>x.id===docId);if(!d)return;const pf=JSON.parse(JSON.stringify(d.pf||{}));fn(pf);
   d.pf=pf;Object.assign(d,atlNorm(Object.assign({},d,{log:d.logRaw})));
@@ -3900,7 +3902,7 @@ function openPlayer(id){
     (ia?'<p class="tiny" style="margin:6px 0 0">'+(asigState(ia)==='fin'?'Ya terminó (el '+esc(fmtD(ia.hasta,{day:'numeric',month:'short'}))+').':'Vigente hasta el '+esc(fmtD(ia.hasta,{day:'numeric',month:'short'}))+'.')+'</p>':'')+
     (hasApp?'':'<p class="tiny" style="margin:6px 0 0">Todavía no entró a la app de atletas con su DNI: le va a aparecer apenas entre.</p>')+'</div>';
   openModal(modalHead(PC?'Alumno':'Jugador',j.nombre||(PC?'Nuevo alumno':'Jugador'))+'<div class="modal-b">'+b+ib+'</div><div class="modal-f">'+(isNew?'':'<button class="btn danger" id="delP">'+(PC?'Quitar alumno':'Quitar del plantel')+'</button>')+'<div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn pri" id="saveP">Guardar</button></div>',mw=>{
-    if(!isNew)armDelete(mw.querySelector('#delP'),async()=>{if(PC){const ds=jugDocs(id);if(ds.length){const AV=avState();ds.forEach(d=>{AV.desc[d.id]=Date.now();});avSave(AV);}}await Store.remove('jugadores',id);if(jd.dniH)Store.remove('dnis',id);closeModal();toast('Jugador quitado');});
+    if(!isNew)armDelete(mw.querySelector('#delP'),async()=>{if(PC){const ds=jugDocs(id);if(ds.length){const AV=avState();ds.forEach(d=>{delete AV.desc[d.id];atlBaja(d.id);});avSave(AV);}}await Store.remove('jugadores',id);if(jd.dniH)Store.remove('dnis',id);closeModal();toast('Jugador quitado');});
     {const sel=mw.querySelector('#e_ir'),sem=mw.querySelector('#e_irs');const fit=()=>{const r=rutById(sel.value);if(r&&!j.indSem)sem.value=String(r.semanas||4);};if(!j.indSem)fit();sel.onchange=fit;}
     mw.querySelector('#saveP').onclick=async()=>{const v=i=>mw.querySelector('#'+i).value.trim();if(!v('e_n'))return;
       const dn=cleanDni(v('e_dni'));if(dn&&(dn.length<7||dn.length>9)){toast('Revisá el DNI: tiene que tener 7 u 8 números');return;}
@@ -4054,7 +4056,7 @@ $('#view').addEventListener('click',e=>{
   if(e.target.closest('[data-regshow]')){S.regShow=!S.regShow;return render();}
   const r=e.target.closest('[data-regr]');if(r){const AV=avState();delete AV.desc[r.dataset.regr];avSave(AV);render();toast('Recuperado');return;}
   const dl=e.target.closest('[data-regdel]');if(dl){if(!dl.dataset.ok){dl.dataset.ok=1;dl.textContent='¿Seguro? Tocá de nuevo';setTimeout(()=>{if(dl.isConnected){delete dl.dataset.ok;dl.textContent='Borrar del todo';}},3000);return;}
-    const id=dl.dataset.regdel;Store.remove('registrosAtletas',id);const AV=avState();delete AV.desc[id];avSave(AV);toast('Registro borrado');}
+    const id=dl.dataset.regdel;atlBaja(id);const AV=avState();delete AV.desc[id];avSave(AV);toast('Cuenta borrada. En su celular se cierra y le pide registrarse de nuevo');}
 });
 
 /* ================= varias sesiones el mismo día (Sesión A, B, C…) ================= */
@@ -4879,7 +4881,7 @@ function startData(){
   Store.watch('ideales',null,null,a=>{S.ideales=a;render();});
   Store.watch('testeosLista',null,null,a=>{S.testList=a;render();});
   Store.watch('config',null,null,a=>{S.cfg=a;renderNav();avPaint();});
-  if(!RO)Store.watch('registrosAtletas','cat','pers',a=>{S.pAtl=a;renderNav();avPaint();if(S.cat==='pers'&&S.view==='cat'&&!$('#mw'))render();});
+  if(!RO)Store.watch('registrosAtletas','cat','pers',a=>{S.pAtl=a.filter(d=>!d.baja);renderNav();avPaint();if(S.cat==='pers'&&S.view==='cat'&&!$('#mw'))render();});
   /* agenda: lo de hoy y mañana de TODAS las categorías */
   Store.watch('sesiones','fecha',TODAY,a=>{S.sesHoy=a;renderAgenda();});
   Store.watch('partidos','fecha',TODAY,a=>{S.parHoy=a;renderAgenda();});
