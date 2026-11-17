@@ -231,6 +231,12 @@ body.has-wa .wrap{padding-bottom:90px}
 .mol-b{border-color:#d9a2a2}
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--surface);width:min(520px,100%);border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:9px;max-height:90vh;overflow:auto}.sh-t{font-size:17px}
+
+.an-f{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:var(--surface-2,#E7EBE8);border-radius:10px;padding:8px 10px;margin:2px 0 8px}
+.an-f .fld{width:86px;margin:0}.an-f input{width:100%}
+.an-last{flex-basis:100%;font-size:12px;color:var(--ink-3,#7A847D)}
+.reg.on{background:var(--accent,#00963E);color:#fff;border-color:var(--accent,#00963E)}
+.me-slim{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -508,7 +514,7 @@ function rpeCard(a,i,dayName){
 /* ---------- rutina actual ---------- */
 function rutView(c){
   const list=asigFor(c.id);const cur=list.filter(a=>a.desde<=TODAY);const prox=list.filter(a=>a.desde>TODAY);
-  if(!list.length)return '<div class="empty"><b>Todavía no hay rutina</b>Cuando tu preparadora física cargue una, la vas a ver acá.</div>';
+  if(!list.length)return '<div class="empty"><b>Todavía no hay rutina</b></div>';
   const pick=(st.asig&&list.find(a=>a.id===st.asig))||cur[cur.length-1]||prox[0];st.asig=pick.id;
   let h=list[0].dif&&!isPersC(c)?'<div class="card" style="border-left:5px solid var(--accent);margin-bottom:10px"><b>'+(list[0].ind?'Tu rutina individual':'Tu trabajo diferenciado')+'</b><div class="tiny">'+(list[0].ind?'Tu preparadora física te armó esta rutina para vos. Hacé esta en lugar de la del grupo.':'Tu preparadora física te armó esta rutina mientras te recuperás. Hacé esta en lugar de la del grupo.')+'</div></div>':'';
   if(list.length>1)h+='<div class="days" style="margin-top:0">'+list.map(a=>{const r=rutById(a.rutina);return '<button class="day-b'+(a.id===pick.id?' on':'')+'" data-asig="'+esc(a.id)+'"><b>'+esc(r.nombre)+'</b><small>'+(a.desde>TODAY?'Empieza '+esc(fmtD(a.desde,{day:'numeric',month:'short'})):'Vigente')+'</small></button>';}).join('')+'</div>';
@@ -541,7 +547,7 @@ function rutView(c){
       (b.nota?'<div class="blk-nota">'+esc(b.nota)+'</div>':'')+
       (b.ejercicios||[]).filter(e=>e.n).map((e,ei)=>'<div class="ex"><span class="ex-i">'+L+(ei+1)+'</span><span class="ex-n">'+esc(e.n)+(e.obs?'<i>'+esc(e.obs)+'</i>':'')+'</span>'+
         '<span class="ex-p'+(e.progW?' chg':'')+'">'+presHtml(e,b)+'</span>'+
-        '<span class="ex-a">'+(e.c?'<span class="ex-c">'+esc(e.c)+'</span>':'')+(e.link?vidBtn(e.link):'')+'<button class="reg" data-regex="'+esc(e.n)+'">+ Anotar mi peso</button>'+(isPersC(c)?'<button class="reg mol-b" data-mol="'+esc(e.n)+'">🤕 Molestia</button>':'')+'</span></div>').join('')+'</div>';});
+        '<span class="ex-a">'+(e.c?'<span class="ex-c">'+esc(e.c)+'</span>':'')+(e.link?vidBtn(e.link):'')+'<button class="reg'+(st.anEx===L+(ei+1)?' on':'')+'" data-regex="'+esc(e.n)+'" data-anid="'+L+(ei+1)+'">+ Anotar mi peso</button>'+(isPersC(c)?'<button class="reg mol-b" data-mol="'+esc(e.n)+'">🤕 Molestia</button>':'')+'</span></div>'+(st.anEx===L+(ei+1)?anForm(e):'')).join('')+'</div>';});
   if(rd.principal)h+='<div class="sec card"><span class="lbl">Parte principal</span><div class="txt">'+esc(rd.principal)+'</div></div>';
   if(rd.calma)h+='<div class="sec card"><span class="lbl">Vuelta a la calma</span><div class="txt">'+esc(rd.calma)+'</div></div>';
   if(rd.notas)h+='<div class="sec card"><span class="lbl">Notas</span><div class="txt">'+esc(rd.notas)+'</div></div>';
@@ -607,14 +613,13 @@ function rutHist(L){const G=myGroups(L);if(!G.length)return '';const T={ind:'Ind
     return '<div class="lift"><div class="lift-h"><b>'+esc(p.k==='sin'?'Otros registros':(p.rn||'Rutina'))+'</b><span class="tiny">'+(live?'Rutina actual':T[p.kind]||'')+(p.k!=='sin'&&p.desde?' · desde el '+esc(fmtD(p.desde,{day:'numeric',month:'short'})):'')+'</span></div>'+
       Object.keys(by).sort((a,b)=>a.localeCompare(b,'es')).map(x=>'<div class="rh-x"><span>'+esc(x)+'</span><span class="rh-v">'+by[x].sort((a,b)=>b.f.localeCompare(a.f)).map(e=>'<span class="mono">'+fmtN(e.kg)+' kg × '+e.r+' <small>'+esc(fmtD(e.f,{day:'numeric',month:'short'}))+'</small>'+(e.ed||e.pfAdd?' <i class="pf-ed" title="Lo corrigió o lo cargó tu preparadora">✎ PF</i>':'')+'</span>').join('')+'</span></div>').join('')+'</div>';}).join('')+'</div>';}
 function profileForm(R){
-  return '<div class="card me"><h3>Tus datos</h3><p class="tiny" style="margin:0">Antes de anotar tus pesos, completá tus datos. Así tu preparadora física sabe que sos vos. Solo los ve ella.</p>'+
+  return '<div class="card me"><h3>Tus datos</h3>'+
     '<div class="fld"><label for="pn">Nombre</label><input id="pn" autocomplete="given-name" value="'+esc(R.nom||(R.ape?'':R.nombre)||'')+'"></div>'+
     '<div class="fld"><label for="pa">Apellido</label><input id="pa" autocomplete="family-name" value="'+esc(R.ape||'')+'"></div>'+
     '<div class="fld"><label for="pd">DNI</label><input id="pd" inputmode="numeric" autocomplete="off" placeholder="'+(R.dniFin?'Cargado: …'+esc(R.dniFin)+' (escribí otro para cambiarlo)':'')+'"></div>'+
-    '<details class="opt-d"'+(st.datosLink||R.nac||R.talla?' open':'')+'><summary>Más datos (opcional): nacimiento, peso y altura</summary>'+
+    '<details class="opt-d"'+(st.datosLink||R.nac||R.talla?' open':'')+'><summary>Más datos (opcional): nacimiento y altura</summary>'+
     '<div class="fld"><label for="pnac">Fecha de nacimiento</label><input id="pnac" type="date" value="'+esc(R.nac||'')+'"></div>'+
-    '<div class="me-row"><div class="fld" style="flex:1"><label for="ppc">Peso (kg)</label><input id="ppc" type="number" inputmode="decimal" step="any" value="'+esc(R.pc||'')+'"></div>'+
-    '<div class="fld" style="flex:1"><label for="ptal">Altura (cm)</label><input id="ptal" type="number" inputmode="decimal" step="any" value="'+esc(R.talla||'')+'" placeholder="Ej: 185"></div></div></details>'+
+    '<div class="me-row"><div class="fld" style="flex:1"><label for="ptal">Altura (cm)</label><input id="ptal" type="number" inputmode="decimal" step="any" value="'+esc(R.talla||'')+'" placeholder="Ej: 185"></div></div></details>'+
     '<button class="btn pri" id="psave">Guardar mis datos</button><p class="tiny" style="margin:0">Podés poner el DNI con o sin puntos. No se guarda escrito: se usa solo para reconocerte.</p></div>';
 }
 
@@ -639,8 +644,8 @@ function fichaView(){
   const R=getReg();
   if(!R.nombre||!R.ape||!R.dniH)return profileForm(R);
   if(!FD)FD=JSON.parse(JSON.stringify(R.ficha||{les:[],q:{},dj:null}));FD.les=FD.les||[];FD.q=FD.q||{};
-  const done=R.ficha&&R.ficha.dj;
-  let h=done?'<div class="card fi-ok">✓ Completaste tu ficha el '+esc(fmtD(R.ficha.dj.f,{day:'numeric',month:'short',year:'numeric'}))+'. Si algo cambia, actualizala acá.</div>':'<p class="tiny" style="margin:0 4px 8px">La ve solo tu profe. Completala con la verdad: así tu entrenamiento es más seguro.</p>';
+  const done=R.ficha&&R.ficha.dj;const meTop=regTop(R);
+  let h=meTop+(done?'<div class="card fi-ok">✓ Completaste tu ficha el '+esc(fmtD(R.ficha.dj.f,{day:'numeric',month:'short',year:'numeric'}))+'. Si algo cambia, actualizala acá.</div>':'<p class="tiny" style="margin:0 4px 8px">La ve solo tu profe. Completala con la verdad: así tu entrenamiento es más seguro.</p>');
   /* 1 · lesiones y operaciones */
   h+='<div class="sec-t">1 · Lesiones y operaciones</div><div class="card fi-sec">';
   h+=FD.les.length?FD.les.map((l,i)=>'<div class="fi-les"><div><b>'+esc(l.zona)+(l.lado&&l.lado!=='No aplica'?' '+esc(l.lado.toLowerCase()):'')+' · '+esc(l.tipo.toLowerCase())+'</b> <span class="fi-ch '+(l.mol==='Sí'?'r':l.mol==='A veces'?'w':'g')+'">'+(l.mol==='Sí'?'hoy molesta':l.mol==='A veces'?'a veces molesta':'no molesta')+'</span><div class="tiny">'+esc([l.anio,l.det].filter(Boolean).join(' · '))+'</div></div><button class="x" data-lesdel="'+i+'" aria-label="Quitar">✕</button></div>').join(''):'<p class="tiny" style="margin:0 0 8px">Si nunca tuviste ninguna, dejalo vacío.</p>';
@@ -740,10 +745,10 @@ function persRut(c){
   if(st.hist)return histView(st.hist);
   const exs=[...new Set(BASE_EX.concat(R.ex||[]).concat(Object.keys(R.log||{})))];const sel=st.regEx||exs[0];
   const FI=R.ficha||{};
-  let h=(FI.dj?'':'<div class="card fi-ask"><b>Completá tu ficha médica</b><span class="tiny">Son 2 minutos: lesiones, salud y una declaración. La ve solo tu profe.</span><button class="btn sm pri" data-tab="ficha">Completar</button></div>')+'<div class="sec-t">Rutina actual</div>'+rutView(c)+'<div class="sec-t">Anotá tu peso</div>'+regTop(R,exs,sel);
+  let h=(FI.dj?'':'<div class="card fi-ask"><b>Completá tu ficha médica</b><button class="btn sm pri" data-tab="ficha">Completar</button></div>')+'<div class="sec-t">Rutina actual</div>'+rutView(c);
   const G=pastPeriods();
-  h+='<div class="sec-t">Mis rutinas anteriores</div>'+(G.length?'<div class="card hl">'+G.map(p=>'<button type="button" class="hl-r" data-hist="'+esc(p.k)+'"><span><b>'+esc(p.k==='sin'?'Otros registros':(p.rn||'Rutina'))+'</b><small>'+(p.k==='sin'?'pesos que no quedaron en ninguna rutina':rng(p))+' · '+p.ents.length+(p.ents.length===1?' peso anotado':' pesos anotados')+'</small></span><span class="hl-go">›</span></button>').join('')+'</div>'
-    :'<p class="tiny">Cuando termines tu primera rutina, acá vas a poder ver qué hiciste cada mes y los pesos que anotaste.</p>');
+  if(G.length)h+='<div class="sec-t">Mis rutinas anteriores</div>'+('<div class="card hl">'+G.map(p=>'<button type="button" class="hl-r" data-hist="'+esc(p.k)+'"><span><b>'+esc(p.k==='sin'?'Otros registros':(p.rn||'Rutina'))+'</b><small>'+(p.k==='sin'?'pesos que no quedaron en ninguna rutina':rng(p))+' · '+p.ents.length+(p.ents.length===1?' peso anotado':' pesos anotados')+'</small></span><span class="hl-go">›</span></button>').join('')+'</div>'
+    );
   return h;
 }
 function histView(k){
@@ -769,24 +774,24 @@ function histView(k){
   if(!rows&&!otros.length)h+='<p class="tiny">No anotaste pesos en esta rutina.</p>';
   return h+'<p class="tiny" style="margin:8px 2px">Cada número es un peso que anotaste, del más viejo al más nuevo. Si tu profe corrigió algo, aparece con ✎.</p>';
 }
-function regTop(R,exs,sel){
-  return '<div class="card me"><div class="me-row" style="justify-content:space-between;align-items:center"><span><b>'+esc(R.nombre)+'</b>'+(R.dniFin?' <span class="tiny">· DNI …'+esc(R.dniFin)+'</span>':'')+'</span><button class="btn sm" id="pedit">Editar mis datos</button></div>'+
-    '<div class="me-row"><div class="fld" style="flex:1;min-width:140px"><label for="pc">Mi peso corporal (kg)</label><input id="pc" type="number" inputmode="decimal" step="any" value="'+esc(R.pc||'')+'" placeholder="Opcional"></div></div>'+
-    '<div class="add-f"><div class="fld"><label for="rx">Ejercicio</label><select id="rx">'+exs.map(x=>'<option'+(x===sel?' selected':'')+'>'+esc(x)+'</option>').join('')+'<option value="__otro">Otro…</option></select></div>'+
-    '<div class="fld"><label for="rk">Kilos</label><input id="rk" type="number" inputmode="decimal" step="any" placeholder="60"></div>'+
-    '<div class="fld"><label for="rr">Reps</label><input id="rr" type="number" inputmode="numeric" placeholder="1" min="1" max="20"></div>'+
-    '<button class="btn pri" id="radd">Anotar</button></div><div class="fld" id="rxoBox" hidden><label for="rxo">Nombre del ejercicio</label><input id="rxo" placeholder="Ej: Remo con barra"></div>'+
-    '<p class="tiny" style="margin:0">Con más de 1 rep te calculamos tu 1RM estimado (fórmula de Epley). Tu preparadora física ve lo que anotás.</p></div>';
+/* anotar el peso ahí mismo, debajo del ejercicio */
+function anForm(e){const R=getReg();const EL=effLog(R);const k=Object.keys(EL).find(x=>x.toLowerCase()===String(e.n).toLowerCase());
+  const L=k?(EL[k]||[]).slice().sort((a,b)=>b.f.localeCompare(a.f)||(b.t||0)-(a.t||0)):[];const last=L[0];
+  const rr=String((e.reps||[])[0]||'').match(/\d+/);
+  return '<div class="an-f"><div class="fld"><label for="ak">Kilos</label><input id="ak" type="number" inputmode="decimal" step="any"></div><div class="fld"><label for="ar">Reps</label><input id="ar" type="number" inputmode="numeric" min="1" max="30" value="'+(rr?rr[0]:'')+'"></div><button class="btn pri" id="aok" data-anx="'+esc(e.n)+'">Anotar</button>'+
+    (last?'<span class="an-last">Última vez: <b>'+fmtN(last.kg)+' kg × '+last.r+'</b> · '+esc(fmtD(last.f,{day:'numeric',month:'short'}))+'</span>':'')+'</div>';}
+function regTop(R){
+  return '<div class="card me me-slim"><span><b>'+esc(R.nombre)+'</b>'+(R.dniFin?' <span class="tiny">· DNI …'+esc(R.dniFin)+'</span>':'')+'</span><button class="btn sm" id="pedit">Editar mis datos</button></div>';
 }
 function regView(){
   const R=getReg();
   if(!R.nombre||!R.ape||!R.dniH||st.editProf)return profileForm(R);
   const exs=[...new Set(BASE_EX.concat(R.ex||[]).concat(Object.keys(R.log||{})))];
   const sel=st.regEx||exs[0];
-  let h=regTop(R,exs,sel);
+  let h=regTop(R);
   const EL=effLog(R);const exs2=[...new Set(exs.concat(Object.keys(EL)))];
   const withData=exs2.filter(x=>(EL[x]||[]).length);
-  if(!withData.length)return h+'<div class="empty"><b>Todavía no anotaste nada</b>Anotá el peso que levantaste y acá vas a ver tu progreso.</div>';
+  if(!withData.length)return h+'<div class="empty"><b>Todavía no anotaste nada</b>Anotá tus pesos desde tu rutina, con “+ Anotar mi peso”.</div>';
   h+='<div class="tabs rh-tabs"><button class="'+(st.regMode!=='rut'?'on':'')+'" data-regmode="ex">Por ejercicio</button><button class="'+(st.regMode==='rut'?'on':'')+'" data-regmode="rut">Por rutina</button></div>';
   if(st.regMode==='rut')return h+rutHist(EL);
   h+='<div class="lifts">'+withData.map(x=>{
@@ -834,7 +839,7 @@ $('#app').addEventListener('click',e=>{
     if(fx.id==='lesAdd'){const z=$('#l_z').value,tp=$('#l_t').value;if(!z||!tp){toast('Elegí la zona y qué fue');return;}
       FD.les.push({zona:z,lado:$('#l_l').value,tipo:tp,anio:$('#l_a').value,mol:$('#l_m').value||'No',det:$('#l_d').value.trim()});st.lesNew=false;return render();}
     if(fx.id==='fiSave')return fichaSave();}
-  const t=e.target.closest('[data-hist],[data-hday],[data-anf],[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],#radd,#psave,#pedit');if(!t)return;
+  const t=e.target.closest('[data-hist],[data-hday],[data-anf],[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],#aok,#radd,#psave,#pedit');if(!t)return;
   if(t.id==='psave')return saveProfile();
   if(t.dataset.regmode){st.regMode=t.dataset.regmode;return render();}
   if(t.id==='pedit'){st.editProf=true;return render();}
@@ -850,7 +855,12 @@ $('#app').addEventListener('click',e=>{
   if(d.vid){const em=ytEmbed(d.vid);if(em){$('#vroot').innerHTML='<div class="vmodal" id="vm"><div class="vbox"><iframe src="'+esc(em)+'" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Video del ejercicio"></iframe><button class="btn" id="vclose">Cerrar video</button></div></div>';
       $('#vm').onclick=ev=>{if(ev.target.id==='vm'||ev.target.id==='vclose')$('#vroot').innerHTML='';};}
     else window.open(d.vid,'_blank','noopener');return;}
-  if(d.regex){const rx=BASE_EX.find(b=>b.toLowerCase()===d.regex.toLowerCase())||d.regex;st.tab='reg';st.regEx=rx;const R=getReg();if(!BASE_EX.includes(rx)&&!R.ex.includes(rx)){R.ex.push(rx);ls.set('pfat-reg',R);}render();window.scrollTo(0,0);setTimeout(()=>{const k=$('#rk');if(k)k.focus();},50);return;}
+  if(d.regex){const R=getReg();if(!R.nombre){toast('Primero completá tus datos');st.editProf=true;if(!isPersC(catById(st.cat)))st.tab='reg';render();window.scrollTo(0,0);return;}
+    st.anEx=st.anEx===d.anid?null:d.anid;render();setTimeout(()=>{const k=$('#ak');if(k)k.focus();},30);return;}
+  if(t.id==='aok'){const x=t.dataset.anx;const kg=Number(String($('#ak').value).replace(',','.')),r=Math.max(1,parseInt($('#ar').value)||1);
+    if(!(kg>0)){toast('Poné los kilos');$('#ak').focus();return;}
+    const R=getReg();const tg=curTag();(R.log[x]=R.log[x]||[]).push(Object.assign({id:uid(),f:TODAY,kg,r,t:Date.now()},tg||{}));if(!BASE_EX.includes(x)&&!R.ex.includes(x))R.ex.push(x);
+    R.cat=st.cat;setReg(R);st.anEx=null;render();toast('Anotado: '+fmtN(kg)+' kg × '+r);return;}
   if(d.del){const [x,id]=d.del.split('|');const R=getReg();R.log[x]=(R.log[x]||[]).filter(z=>z.id!==id);setReg(R);return render();}
   if(t.id==='radd')return addReg();
 });
