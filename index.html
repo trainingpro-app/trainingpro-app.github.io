@@ -1191,6 +1191,13 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 .av-bell{position:fixed;top:14px;right:18px;margin:0;z-index:70;width:44px;height:44px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .top{padding-right:56px}
 @media (max-width:860px){.av-bell{top:10px;right:12px;width:40px;height:40px}.top{padding-right:48px}}
+
+.eg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.eg-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"i t" "i s";column-gap:10px;align-items:center;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 12px;cursor:pointer;font:inherit;color:var(--ink);min-width:0}
+.eg-card:hover{border-color:var(--ink-3)}
+.eg-card.on{border-color:var(--rc,var(--accent));background:color-mix(in srgb,var(--rc,var(--accent)) 12%,var(--surface))}
+.eg-ic{grid-area:i;font-size:21px}.eg-card b{grid-area:t;font-family:var(--f-disp);font-size:15px;letter-spacing:.04em;text-transform:uppercase;line-height:1.1;overflow-wrap:anywhere}.eg-card small{grid-area:s;font-size:11.5px;color:var(--ink-3)}
+@media (max-width:600px){.eg-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.eg-card{padding:8px 9px;column-gap:7px}.eg-card b{font-size:13.5px}.eg-ic{font-size:18px}}
 </style>
 </head>
 <body>
@@ -1211,7 +1218,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · campanita fija</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · ejercicios por grupos</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2010,16 +2017,16 @@ const CB={box:null,inp:null,i:-1,chip:'',
     const used=new Set(ctx.prev.map(p=>p.id));
     let secs;
     if(this.chip==='sug'&&ctx.obj){secs=ejSuggest(ctx.obj,ctx.idx,ctx.prev,list,ctx);}
-    else if(this.chip&&this.chip!=='all'&&this.chip!=='sug'){const arr=list.filter(e=>e.rol===this.chip&&!used.has(e.id));const last=ctx.prev[ctx.prev.length-1];
-      const same=last?arr.filter(e=>e.pat===last.pat):[];secs=same.length?[[ROL[this.chip]+' · mismo patrón',same],[ROL[this.chip]+' · otros',arr.filter(e=>!same.includes(e))]]:[[ROL[this.chip],arr]];}
+    else if(this.chip&&this.chip!=='all'&&this.chip!=='sug'){const G=grOf(this.chip);const gn=G?G[1]:'';const arr=list.filter(e=>(e.gr===this.chip||e.gr2===this.chip)&&!used.has(e.id));const last=ctx.prev[ctx.prev.length-1];
+      const same=last?arr.filter(e=>e.pat===last.pat):[];secs=same.length?[[gn+' · mismo patrón',same],[gn+' · otros',arr.filter(e=>!same.includes(e))]]:[[gn,arr]];}
     else secs=[['',list]];
     secs=secs.map(([t,a])=>[t,a.filter(match)]).filter(s=>s[1].length);
     if(q&&this.chip!=='all'){const shown=new Set();secs.forEach(s=>s[1].forEach(e=>shown.add(e.id)));const rest=list.filter(e=>match(e)&&!shown.has(e.id));if(rest.length)secs.push(['Otros que coinciden',rest]);}
     const hl=n=>{if(!q)return esc(n);const k=normTxt(n).indexOf(q);return k<0?esc(n):esc(n.slice(0,k))+'<mark>'+esc(n.slice(k,k+q.length))+'</mark>'+esc(n.slice(k+q.length));};
     const last=ctx.prev[ctx.prev.length-1];
     const head=ctx.obj?(last?'Después de <b>'+esc(last.nombre)+'</b>'+(last.pat?' · '+esc(patName(last.pat).toLowerCase()):''):'Primer ejercicio · <b>'+esc(OBJS[ctx.obj].t)+'</b>')+(CUR_FORM?' · formativas':''):'';
-    const chips=(ctx.obj?[['sug','Sugeridos']]:[]).concat(ROLS.filter(r=>r!=='m').map(r=>[r,ROL[r]]),[['all','Todos']]);
-    const it=e=>'<button type="button" role="option" data-cbv="'+esc(e.nombre)+'"><i class="cb-th" style="background:'+ROLC[e.rol||'x']+'">'+(EJIMG.m[e.id]?'<img alt="" src="'+esc(EJIMG.m[e.id])+'">':esc(e.nombre.split(/\s+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('')))+'</i><span>'+hl(e.nombre)+(e.rol?'<small>'+esc(ROL[e.rol])+(e.pat?' · '+esc(patName(e.pat)):'')+'</small>':'')+'</span></button>';
+    const chips=(ctx.obj?[['sug','Sugeridos']]:[]).concat(EJGR.map(g=>[g[0],g[1]]),[['all','Todos']]);
+    const it=e=>'<button type="button" role="option" data-cbv="'+esc(e.nombre)+'"><i class="cb-th" style="background:'+ROLC[e.rol||'x']+'">'+(EJIMG.m[e.id]?'<img alt="" src="'+esc(EJIMG.m[e.id])+'">':esc(e.nombre.split(/\s+/).filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('')))+'</i><span>'+hl(e.nombre)+(e.rol?'<small>'+esc(grOf(e.gr)?grOf(e.gr)[1]:ROL[e.rol])+(e.pat?' · '+esc(patName(e.pat)):'')+'</small>':'')+'</span></button>';
     let box=this.box;
     if(!box){box=document.createElement('div');box.className='cb-list';box.setAttribute('role','listbox');
       box.addEventListener('mousedown',e=>e.preventDefault());
@@ -4814,10 +4821,29 @@ function ejGuess2(nombre){
   if(!impl.length&&/dominada|flexion|push up|plancha|nordic|copenhag|cophenag|salto|cmj|drop|fondos|bicho muerto|sprint|skipping|abdominal|estocada|carpa|sit up|twist|bulgar|step up|vallas|multisaltos|coordinacion|alcances|puente de/.test(n))impl.push('Peso corporal');
   const g={rol,pat,uni,impl};EJG.set(nombre,g);return g;
 }
+/* grupos de la biblioteca (característica principal del ejercicio) */
+const EJGR=[['zm','Zona media','🧱','k','#5c6b62'],['dlo','DLO','🏋️','e','#c0510c'],['bas','Básicos de fuerza','💪','b','#2f6fd6'],['acc1','Accesorios 1','🔩','s','#3f9a62'],['acc2','Accesorios 2','🔧','a','#7950f2'],['pot','Potencia','💥','e','#e8590c'],['pli','Pliométricos','🦘','e','#d9480f'],['pre','Prevención','🛡️','p','#c2255c'],['vel','Velocidad / carrera','⚡','e','#e67700'],['act','Activación','🔥','m','#f08c00'],['mov','Movilidad articular','🌀','m','#868e96']];
+const grOf=k=>EJGR.find(g=>g[0]===k)||null;
+const GR_RULES=[
+  ['dlo',/cargada|arranque|envion|segundo tiempo|2do tiempo|clean|snatch|jerk|high pull|tiron|despegue/],
+  ['vel',/sprint|carrera|aceleracion|cambios? de direccion|skipping|trineo|tecnica de carrera/],
+  ['pli',/salto|cmj|drop|jump|vallas|bound|multisalto|pliometr|rebote|saltitos/],
+  ['pot',/lanzamiento|balistic|swing|slam|push press|medball|balon medicinal|potencia/],
+  ['zm',/plancha|pallof|bicho muerto|dead ?bug|bird ?dog|rueda|abdominal|hollow|carpa|sit up|twist|antirrotac|anti rotac|crunch|core|rotaciones? (sin|con) pivot/],
+  ['pre',/nordic|nordico|copenhag|cophenag|manguito|rotador|rotacion externa|\by t a\b|tobillo|propiocep|excentrico de isquio/],
+  ['act',/activacion|monster|clam|almeja|gluteo medio|caminata lateral|lateral walk/],
+  ['mov',/movilidad|estiramiento|elongacion|90\/90|gato|camello|cossack|world/],
+  ['acc2',/apertura|face pull|biceps|triceps|frances|vuelo|elevaciones? laterales|silla de cuadriceps|extension de cuadriceps|camilla|curl femoral (acostado|sentado|en maquina)|gemelo|pantorrilla|abductor|aductor en maquina|encogimiento|pullover|pajaro|martillo|patada/],
+  ['acc1',/bulgar|estocada|zancada|step ?up|subida|subir al cajon|una pierna|1 pierna|unilateral|un brazo|1 brazo|alternad|goblet|landmine|mancuerna|\bmanc\b|fitball|puente|elevacion de cadera|flexiones|fondos|remo invertido|australian|asistid/],
+  ['bas',/sentadilla|peso muerto|banco plano|press de banca|press militar|hip thrust|dominada|remo con barra|press plano|press inclinado/]];
+const ROL_GR={b:'bas',s:'acc1',a:'acc2',k:'zm',p:'pre',m:'mov',e:'pot'};
+function grGuess(e){const n=' '+normTxt(e.nombre||'')+' ';const r=GR_RULES.find(([k,re])=>re.test(n));return r?r[0]:(ROL_GR[e.rol]||'acc1');}
+const grBadge=(k,auto)=>{const g=grOf(k);return g?'<i class="rol-b'+(auto?' auto':'')+'" style="--rc:'+g[4]+'">'+esc(g[1])+'</i>':'';};
 /* etiquetas efectivas: lo guardado manda; si falta, lo adivinado (y queda marcado como "auto") */
 function ejEff(e){
   const g=ejGuess2(e.nombre);
-  e.auto=!e.rol;e.rol=e.rol||g.rol;e.pat=e.pat||g.pat;e.uni=(e.uni===true||e.uni===false)?e.uni:g.uni;
+  e.auto=!e.gr;e.rol=e.rol||g.rol;e.pat=e.pat||g.pat;e.uni=(e.uni===true||e.uni===false)?e.uni:g.uni;
+  if(!e.gr)e.gr=grGuess(e);if(e.auto&&grOf(e.gr))e.rol=grOf(e.gr)[3];
   if(!(e.impl||[]).length){e.impl=g.impl;e.implAuto=true;}
   return e;
 }
@@ -5051,37 +5077,41 @@ function ejShrink(file){return new Promise((res,rej)=>{
 /* filtros (los usa la biblioteca y el panel del editor) */
 function ejFilter(list,f){
   const q=normTxt(f.q||'');
-  return list.filter(e=>(!q||normTxt(e.nombre).includes(q))&&(!f.rol||e.rol===f.rol)&&(!f.pat||e.pat===f.pat)&&(!f.impl||(e.impl||[]).includes(f.impl))&&(!f.sin||e.auto));
+  return list.filter(e=>(!q||normTxt(e.nombre).includes(q))&&(!f.gr||e.gr===f.gr||e.gr2===f.gr)&&(!f.uni||e.uni)&&(!f.rol||e.rol===f.rol)&&(!f.pat||e.pat===f.pat)&&(!f.impl||(e.impl||[]).includes(f.impl))&&(!f.sin||e.auto));
 }
 const rolBadge=(r,auto)=>r?'<i class="rol-b'+(auto?' auto':'')+'" style="--rc:'+ROLC[r]+'">'+esc(ROL[r])+'</i>':'';
-function ejFiltersHtml(f,list){
-  const cnt=k=>list.filter(e=>e.rol===k).length;
-  return '<div class="ej-filt"><input class="inp ej-q" data-ejq placeholder="Buscar ejercicio…" value="'+esc(f.q||'')+'" autocomplete="off">'+
-    '<div class="ej-chips"><button type="button" class="ej-chip'+(!f.rol?' on':'')+'" data-ejr="">Todo</button>'+ROLS.map(r=>'<button type="button" class="ej-chip rc'+(f.rol===r?' on':'')+'" style="--rc:'+ROLC[r]+'" data-ejr="'+r+'">'+ROL[r]+' <small>'+cnt(r)+'</small></button>').join('')+'</div>'+
+function ejFiltersHtml(f,list,cards){
+  const cnt=k=>list.filter(e=>e.gr===k||e.gr2===k).length;
+  const grs=cards?'<div class="eg-cards"><button type="button" class="eg-card'+(!f.gr?' on':'')+'" data-ejg=""><span class="eg-ic">📚</span><b>Todos</b><small>'+list.length+' ejercicios</small></button>'+EJGR.map(g=>'<button type="button" class="eg-card'+(f.gr===g[0]?' on':'')+'" style="--rc:'+g[4]+'" data-ejg="'+g[0]+'"><span class="eg-ic">'+g[2]+'</span><b>'+esc(g[1])+'</b><small>'+cnt(g[0])+' ejercicios</small></button>').join('')+'</div>'
+    :'<div class="ej-chips"><button type="button" class="ej-chip'+(!f.gr?' on':'')+'" data-ejg="">Todos</button>'+EJGR.map(g=>'<button type="button" class="ej-chip rc'+(f.gr===g[0]?' on':'')+'" style="--rc:'+g[4]+'" data-ejg="'+g[0]+'">'+g[2]+' '+esc(g[1])+' <small>'+cnt(g[0])+'</small></button>').join('')+'</div>';
+  return '<div class="ej-filt"><input class="inp ej-q" data-ejq placeholder="Buscar ejercicio…" value="'+esc(f.q||'')+'" autocomplete="off">'+grs+
     '<div class="ej-sels"><select class="inp" data-ejp aria-label="Patrón"><option value="">Patrón: todos</option>'+PATS.map(p=>'<option value="'+p[0]+'"'+(f.pat===p[0]?' selected':'')+'>'+esc(p[1])+'</option>').join('')+'</select>'+
     '<select class="inp" data-eji aria-label="Implemento"><option value="">Implemento: todos</option>'+EJ_IMPL.map(t=>'<option'+(f.impl===t?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select>'+
-    ((f.q||f.rol||f.pat||f.impl||f.sin)?'<button type="button" class="btn sm ghost" data-ejclr>Limpiar filtros</button>':'')+'</div></div>';
+    '<button type="button" class="ej-chip'+(f.uni?' on':'')+'" data-ejuni>Unilateral</button>'+
+    ((f.q||f.gr||f.uni||f.rol||f.pat||f.impl||f.sin)?'<button type="button" class="btn sm ghost" data-ejclr>Limpiar filtros</button>':'')+'</div></div>';
 }
 /* un mismo manejador de filtros para la vista y el panel */
 function ejFiltEvents(root,f,redraw){
   root.addEventListener('input',e=>{if(e.target.matches('[data-ejq]')){f.q=e.target.value;redraw(true);}});
   root.addEventListener('change',e=>{if(e.target.matches('[data-ejp]')){f.pat=e.target.value;redraw();}if(e.target.matches('[data-eji]')){f.impl=e.target.value;redraw();}});
   root.addEventListener('click',e=>{const z=e.target.closest('[data-ejr]');if(z){f.rol=z.dataset.ejr;redraw();return;}
-    if(e.target.closest('[data-ejclr]')){f.q='';f.rol='';f.pat='';f.impl='';f.sin=false;redraw();return;}
+    const g=e.target.closest('[data-ejg]');if(g){f.gr=g.dataset.ejg;f.rol='';redraw();return;}
+    if(e.target.closest('[data-ejuni]')){f.uni=!f.uni;redraw();return;}
+    if(e.target.closest('[data-ejclr]')){f.q='';f.gr='';f.uni=false;f.rol='';f.pat='';f.impl='';f.sin=false;redraw();return;}
     if(e.target.closest('[data-ejsin]')){f.sin=!f.sin;redraw();}});
 }
-S.ejF={q:'',rol:'',pat:'',impl:'',sin:false};
+S.ejF={q:'',gr:'',uni:false,rol:'',pat:'',impl:'',sin:false};
 function vEjs(){
   ejImgStart();
   const all=ejAll(),f=S.ejF,list=ejFilter(all,f);
   const auto=all.filter(e=>e.auto).length;
   let h='<div class="bar" style="margin-top:14px"><div class="grow"><p class="tiny" style="margin:0">'+all.length+' ejercicios · tocá uno para ver o cargar foto, video y etiquetas</p></div>'+
     (RO?'':'<button class="btn pri" data-ejnew>+ Nuevo ejercicio</button>')+'</div>';
-  h+=ejFiltersHtml(f,all);
+  h+=ejFiltersHtml(f,all,true);
   if(auto&&!RO)h+='<div class="ej-auto"><span><b>'+auto+'</b> con etiquetas que puso la app según el nombre (en gris). Si alguna no te convence, tocá el ejercicio y corregila.</span><button type="button" class="btn sm ghost" data-ejsin>'+(f.sin?'Ver todos':'Ver solo esos')+'</button></div>';
   if(!list.length)return h+'<p class="muted" style="margin-top:14px">No hay ejercicios con esos filtros.</p>';
   h+='<div class="ej-grid">'+list.map(e=>'<button type="button" class="ej-card" data-ejopen="'+esc(e.id)+'">'+ejThumb(e)+
-    '<b>'+esc(e.nombre)+'</b><span class="ej-tags'+(e.auto?' auto':'')+'">'+rolBadge(e.rol,e.auto)+[patName(e.pat),e.uni?'Unilateral':''].concat(e.impl||[]).filter(Boolean).map(t=>'<i>'+esc(t)+'</i>').join('')+'</span>'+
+    '<b>'+esc(e.nombre)+'</b><span class="ej-tags'+(e.auto?' auto':'')+'">'+grBadge(e.gr,e.auto)+(e.gr2?grBadge(e.gr2,e.auto):'')+[patName(e.pat),e.uni?'Unilateral':''].concat(e.impl||[]).filter(Boolean).map(t=>'<i>'+esc(t)+'</i>').join('')+'</span>'+
     (e.uso?'<small class="ej-uso">'+e.uso+(e.uso===1?' rutina':' rutinas')+'</small>':'')+'</button>').join('')+'</div>';
   return h;
 }
@@ -5101,7 +5131,7 @@ function openEj(id,onSaved){
   const e0=id?ejAll(true).find(x=>x.id===id):null;
   const e=e0?Object.assign({},e0):{id:'',nombre:'',link:'',impl:[],rol:'',pat:'',uni:false};
   const auto=!!(e0&&e0.auto);
-  const st={rol:e.rol||'',pat:e.pat||'',uni:!!e.uni,impl:(e.impl||[]).slice(),img:EJIMG.m[e.id]||'',imgCh:false,prep:prepOf(e).slice(),prepCh:false};
+  const st={gr:e.gr||'',gr2:e.gr2||'',rol:e.rol||'',pat:e.pat||'',uni:!!e.uni,impl:(e.impl||[]).slice(),img:EJIMG.m[e.id]||'',imgCh:false,prep:prepOf(e).slice(),prepCh:false};
   const chip=(attr,v,on,txt,col)=>'<button type="button" class="ej-chip'+(col?' rc':'')+(on?' on':'')+'"'+(col?' style="--rc:'+col+'"':'')+' '+attr+'="'+esc(v)+'">'+esc(txt)+'</button>';
   const draw=()=>{
     const th=st.img?'<img alt="" src="'+esc(st.img)+'">':(e.link&&vidInfo(e.link)&&vidInfo(e.link).thumb?'<img alt="" src="'+esc(vidInfo(e.link).thumb)+'"><small>portada del video</small>':'<span>Sin foto</span>');
@@ -5113,7 +5143,8 @@ function openEj(id,onSaved){
       '<p class="tiny" style="margin:-6px 0 0">La observación se copia sola cuando sumás este ejercicio a una rutina (después la podés cambiar ahí).</p>'+
       '<div class="field"><label for="ej_l">Link de video (YouTube o Drive)</label><input id="ej_l" type="url" inputmode="url" value="'+esc(e.link||'')+'" placeholder="Pegá el link"></div>'+
       (auto?'<p class="tiny ej-sug">Estas etiquetas las puso la app según el nombre. Revisalas y tocá Guardar.</p>':'')+
-      '<div class="field"><label>Rol en la sesión</label><div class="ej-chips">'+ROLS.map(r=>chip('data-fr',r,st.rol===r,ROL[r],ROLC[r])).join('')+'</div></div>'+
+      '<div class="field"><label>Grupo principal</label><div class="ej-chips">'+EJGR.map(g=>chip('data-fg',g[0],st.gr===g[0],g[2]+' '+g[1],g[4])).join('')+'</div></div>'+
+      '<div class="field"><label>También sirve como <small class="tiny">(opcional)</small></label><div class="ej-chips">'+EJGR.filter(g=>g[0]!==st.gr).map(g=>chip('data-fg2',g[0],st.gr2===g[0],g[2]+' '+g[1],g[4])).join('')+'</div></div>'+
       '<div class="field"><label>Patrón de movimiento</label><div class="ej-chips">'+PATS.map(p=>chip('data-fp',p[0],st.pat===p[0],p[1])).join('')+chip('data-fu','1',st.uni,'Unilateral / a una pierna')+'</div></div>'+
       (['m','p','k'].includes(st.rol)?'<div class="field"><label>Prepara para <small class="tiny">(en un bloque de movilidad/activación se sugiere cuando el día tiene estos patrones)</small></label><div class="ej-chips">'+PREP_OPTS.map(p=>chip('data-fprep',p[0],st.prep.includes(p[0]),p[1])).join('')+'</div></div>':'')+
       '<div class="field"><label>Implemento <small class="tiny">(podés marcar varios)</small></label><div class="ej-chips">'+EJ_IMPL.map(t=>chip('data-fi',t,st.impl.includes(t),t)).join('')+'</div></div>'+
@@ -5126,6 +5157,8 @@ function openEj(id,onSaved){
     const redraw=()=>{keep();body.innerHTML=draw();};
     body.addEventListener('click',ev=>{const t=ev.target;
       const r=t.closest('[data-fr]');if(r){st.rol=st.rol===r.dataset.fr?'':r.dataset.fr;return redraw();}
+      const gg=t.closest('[data-fg]');if(gg){st.gr=gg.dataset.fg;st.rol=grOf(st.gr)[3];if(st.gr2===st.gr)st.gr2='';return redraw();}
+      const g2=t.closest('[data-fg2]');if(g2){st.gr2=st.gr2===g2.dataset.fg2?'':g2.dataset.fg2;return redraw();}
       const p=t.closest('[data-fp]');if(p){st.pat=st.pat===p.dataset.fp?'':p.dataset.fp;if(!st.prepCh)st.prep=(PREP[st.pat]||[]).slice();return redraw();}
       if(t.closest('[data-fu]')){st.uni=!st.uni;return redraw();}
       const pp=t.closest('[data-fprep]');if(pp){const v=pp.dataset.fprep;st.prep=st.prep.includes(v)?st.prep.filter(x=>x!==v):st.prep.concat(v);st.prepCh=true;return redraw();}
@@ -5143,7 +5176,7 @@ function openEj(id,onSaved){
       let nid=e.id||slug(n);
       /* si le cambiaste el nombre, queda como ejercicio nuevo y el viejo se oculta */
       if(e0&&slug(n)!==e.id){nid=slug(n);ejPut(e.id,{oculto:true});if(EJIMG.m[e.id]&&!st.imgCh){st.imgCh=true;}}
-      ejPut(nid,{nombre:n,link:e.link.trim(),obs:String(e.obs||'').trim()||null,rol:st.rol,pat:st.pat,uni:st.uni,impl:st.impl,prep:(st.prepCh&&['m','p','k'].includes(st.rol))?st.prep:(e.prep||null),oculto:false,foto:!!st.img,zona:null,tipo:null});
+      ejPut(nid,{nombre:n,link:e.link.trim(),obs:String(e.obs||'').trim()||null,gr:st.gr||null,gr2:st.gr2||null,rol:st.gr?grOf(st.gr)[3]:st.rol,pat:st.pat,uni:st.uni,impl:st.impl,prep:(st.prepCh&&['m','p','k'].includes(st.rol))?st.prep:(e.prep||null),oculto:false,foto:!!st.img,zona:null,tipo:null});
       if(st.imgCh){if(st.img){EJIMG.m[nid]=st.img;Store.put('ejImg',nid,{d:st.img});}else{delete EJIMG.m[nid];Store.remove('ejImg',nid);}}
       closeModal();ejRedrawView();if(EJP.box)EJP.draw();toast('Ejercicio guardado');if(onSaved)onSaved(nid);
     };
@@ -5151,7 +5184,7 @@ function openEj(id,onSaved){
 }
 
 /* ---------- panel de la biblioteca adentro del editor: tocás y se agrega al bloque ---------- */
-const EJP={box:null,f:{q:'',rol:'',pat:'',impl:'',sin:false},blk:null,
+const EJP={box:null,f:{q:'',gr:'',uni:false,rol:'',pat:'',impl:'',sin:false},blk:null,
   blocks(){const mw=$('#mw');return mw?[...mw.querySelectorAll('#blocks .blk')]:[];},
   open(){const mw=$('#mw');if(!mw)return;ejImgStart();this.close();
     const bs=this.blocks();if(!this.blk||!bs.includes(this.blk))this.blk=bs[bs.length-1]||null;
@@ -5173,7 +5206,7 @@ const EJP={box:null,f:{q:'',rol:'',pat:'',impl:'',sin:false},blk:null,
     const fo=keepFocus&&document.activeElement&&document.activeElement.matches('.ejp [data-ejq]');
     this.box.querySelector('.ejp-f').innerHTML=ejFiltersHtml(this.f,all);
     if(fo){const i=this.box.querySelector('[data-ejq]');i.focus();i.setSelectionRange(i.value.length,i.value.length);}
-    this.box.querySelector('.ejp-l').innerHTML=list.length?list.map(e=>'<button type="button" class="ejp-it" data-ejadd="'+esc(e.id)+'">'+ejThumb(e,'ej-th sm')+'<span class="ejp-tx"><b>'+esc(e.nombre)+'</b><small>'+[e.rol?ROL[e.rol]:'',patName(e.pat)].filter(Boolean).map(esc).join(' · ')+'</small></span><i class="ejp-plus">+</i></button>').join(''):'<p class="muted" style="padding:10px">No hay ejercicios con esos filtros.</p>';},
+    this.box.querySelector('.ejp-l').innerHTML=list.length?list.map(e=>'<button type="button" class="ejp-it" data-ejadd="'+esc(e.id)+'">'+ejThumb(e,'ej-th sm')+'<span class="ejp-tx"><b>'+esc(e.nombre)+'</b><small>'+[grOf(e.gr)?grOf(e.gr)[1]:'',patName(e.pat)].filter(Boolean).map(esc).join(' · ')+'</small></span><i class="ejp-plus">+</i></button>').join(''):'<p class="muted" style="padding:10px">No hay ejercicios con esos filtros.</p>';},
   add(id){const e=ejAll(true).find(x=>x.id===id);if(!e)return;
     let bk=this.blk;if(!bk||!document.contains(bk)){const bs=this.blocks();bk=bs[bs.length-1];}
     if(!bk){const add=$('#mw [data-addblk]');if(add){add.click();bk=this.blocks().pop();}}
