@@ -1155,6 +1155,9 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 .lib-cats{max-width:280px;justify-content:flex-end}
 .lib-cats:empty{display:none}
 @media (max-width:860px){.lib-row{grid-template-columns:1fr}.lib-cats{max-width:none;justify-content:flex-start}}
+
+.reg-acts{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.reg-rut b{font-size:15px}
 </style>
 </head>
 <body>
@@ -1175,7 +1178,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 16 nov 2026 · biblioteca con nombres</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · registrados más simple</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -3531,11 +3534,9 @@ function vRegs(){
   if(!rows.length)return h+'<div class="empty"><b>Todavía no se registró nadie</b>Pasales el link de la app de atletas. Se registran con nombre, apellido y DNI.</div>';
   h+='<div class="regs">'+rows.map(g=>{const d=g.d,m=g.m,A=g.asg;const r=A&&rutById(A.a.rutina);
     const st=m.how==='dni'?'<span class="pill good">DNI ✓</span>':m.how==='manual'?'<span class="pill neutral">vinculado</span>':m.how==='nombre'?'<span class="pill warn">por nombre</span>':'<span class="pill bad">sin reconocer</span>';
-    return '<div class="reg-row"><div class="reg-who"><b>'+esc(m.j?m.j.nombre:(d.nombre||'Sin nombre'))+'</b> '+st+
-      '<div class="tiny">'+(g.upd?'Últ. vez '+esc(ddShort(updF(g.upd))):'')+' · '+(g.asg?g.nr+(g.nr===1?' peso anotado':' pesos anotados')+' en esta rutina':g.n+(g.n===1?' peso anotado':' pesos anotados'))+(g.docs.length>1?' · '+g.docs.length+' celulares':'')+
-      (g.rpe?' · <span class="rpe-chip" style="--h:'+(120-g.rpe.v*12)+'">RPE '+g.rpe.v+'</span> '+esc(ddShort(g.rpe.f)):'')+'</div></div>'+
-      (r?'<button type="button" class="reg-rut" data-atlrut="'+esc(d.id)+'"><small>'+(A.kind==='categoría'?'Rutina de la categoría':A.kind==='individual'?'Rutina individual':'Trabajo diferenciado')+'</small><b>'+esc(r.nombre)+'</b><span>Ver rutina y lo que anotó ›</span></button>':'<button type="button" class="reg-rut" data-atl="'+esc(d.id)+'"><small>Sin rutina vigente</small><b>Ver lo que anotó</b><span>›</span></button>')+
-      (m.j?'':'<button type="button" class="btn sm" data-atl="'+esc(d.id)+'">Vincular</button>')+'</div>';}).join('')+'</div>';
+    return '<div class="reg-row"><div class="reg-who"><b>'+esc(m.j?m.j.nombre:(d.nombre||'Sin nombre'))+'</b> '+st+'</div>'+
+      (r?'<button type="button" class="reg-rut" data-atlrut="'+esc(d.id)+'" title="Ver la rutina y lo que anotó"><b>'+esc(r.nombre)+'</b></button>':'<button type="button" class="reg-rut" data-atl="'+esc(d.id)+'" title="Ver lo que anotó"><b>Sin rutina vigente</b></button>')+
+      (m.j?'':'<div class="reg-acts"><button type="button" class="btn sm" data-atl="'+esc(d.id)+'">Vincular</button><button type="button" class="btn sm danger" data-regbaja="'+esc(g.docs.map(x=>x.id).join(','))+'" title="Borra esta cuenta: en su celular le pide registrarse de nuevo">Eliminar</button></div>')+'</div>';}).join('')+'</div>';
   if(sin.length)h+='<p class="tiny" style="margin-top:12px"><b>Todavía no se registraron:</b> '+sin.map(j=>esc(j.nombre)).join(', ')+'.</p>';
   return h;
 }
@@ -4326,6 +4327,8 @@ $('#view').addEventListener('click',e=>{
   const x=e.target.closest('[data-regx]');if(x){const AV=avState();AV.desc[x.dataset.regx]=Date.now();avSave(AV);render();toast('Descartado. Lo podés recuperar desde “Ver descartados”');return;}
   if(e.target.closest('[data-regshow]')){S.regShow=!S.regShow;return render();}
   const r=e.target.closest('[data-regr]');if(r){const AV=avState();delete AV.desc[r.dataset.regr];avSave(AV);render();toast('Recuperado');return;}
+  const rbj=e.target.closest('[data-regbaja]');if(rbj){if(!rbj.dataset.ok){rbj.dataset.ok=1;rbj.textContent='¿Seguro?';setTimeout(()=>{if(rbj.isConnected){delete rbj.dataset.ok;rbj.textContent='Eliminar';}},3000);return;}
+    rbj.dataset.regbaja.split(',').filter(Boolean).forEach(id=>atlBaja(id));toast('Cuenta eliminada. En su celular le pide registrarse de nuevo');return;}
   const dl=e.target.closest('[data-regdel]');if(dl){if(!dl.dataset.ok){dl.dataset.ok=1;dl.textContent='¿Seguro? Tocá de nuevo';setTimeout(()=>{if(dl.isConnected){delete dl.dataset.ok;dl.textContent='Borrar del todo';}},3000);return;}
     const id=dl.dataset.regdel;atlBaja(id);const AV=avState();delete AV.desc[id];avSave(AV);toast('Cuenta borrada. En su celular se cierra y le pide registrarse de nuevo');}
 });
