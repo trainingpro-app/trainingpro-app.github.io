@@ -560,7 +560,7 @@ body.side-open .modal-wrap.full{left:264px}
 .linkish.on{color:var(--accent)}
 .st-min{font-weight:700}
 #agenda{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:45}
-.ag-card{width:min(400px,calc(100vw - 32px));max-height:min(60vh,520px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.ag-card{width:min(470px,calc(100vw - 32px));max-height:min(60vh,520px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
 .ag-h{display:flex;align-items:center;gap:8px;padding:10px 10px 8px 12px;border-bottom:1px solid var(--line)}
 .ag-seg button{padding:4px 10px;font-size:12px}
 .ag-seg button.on{background:var(--ink);color:var(--bg)}
@@ -1180,6 +1180,12 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 .rv-inl-h h2{margin:2px 0 0;font-family:var(--f-disp);font-size:28px;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
 .rv-inl-b{display:grid;gap:12px;min-width:0}
 .rv-inl-f{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:12px}.rv-inl-f .grow{flex:1}
+
+.ag-f{margin-left:auto}
+.ag-f button.on.gym{background:var(--gym);color:#fff}
+.ag-f button.on.cancha{background:var(--cancha);color:#fff}
+.ag-h .ag-date{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:520px){.ag-h .ag-date{display:none}.ag-f{margin-left:auto}}
 </style>
 </head>
 <body>
@@ -1200,7 +1206,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · rutinas más simple</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · agenda con filtro</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -4535,25 +4541,27 @@ function renderAgenda(){
     box.addEventListener('click',onAgendaClick);}
   if(!S.catsLoaded){box.innerHTML='';return;}
   const st=agState();
-  const items=agendaFor(AG.day);
+  const AGF=ls.get('pf-agf','all');
+  const items=agendaFor(AG.day).filter(x=>AGF==='all'||x.tipo==='match'||x.tipo===AGF);
   const nTrain=agendaFor(TODAY).filter(x=>x.tipo!=='match'&&!x.susp).length;
   if(st==='closed'){box.className='';box.innerHTML='';return;}
   if(st==='min'){box.className='ag-min';box.innerHTML='<button class="ag-pill" data-ag="open" aria-label="Abrir agenda de hoy"><b>Hoy</b> · '+nTrain+(nTrain===1?' entrenamiento':' entrenamientos')+'</button>';return;}
   box.className='ag-open';
-  const label=fmtD(AG.day,{weekday:'long',day:'numeric',month:'short'});
+  const label=WD[wdOf(AG.day)]+' '+pISO(AG.day).getDate()+'/'+(pISO(AG.day).getMonth()+1);
   box.innerHTML='<div class="ag-card" role="region" aria-label="Agenda del día">'+
     '<div class="ag-h"><div class="seg ag-seg"><button class="'+(AG.day===TODAY?'on':'')+'" data-agday="hoy">Hoy</button><button class="'+(AG.day===TOMORROW?'on':'')+'" data-agday="man">Mañana</button></div>'+
-    '<span class="ag-date">'+esc(label)+'</span><button class="ag-btn" data-ag="min" title="Minimizar" aria-label="Minimizar">–</button><button class="ag-btn" data-ag="closed" title="Cerrar hasta mañana" aria-label="Cerrar">×</button></div>'+
+    '<span class="ag-date">'+esc(label)+'</span><div class="seg ag-seg ag-f" role="group" aria-label="Filtrar">'+[['gym','Gym'],['cancha','Cancha']].map(([k,n])=>'<button class="'+(AGF==='all'||AGF===k?'on '+k:'')+'" data-agf="'+k+'" title="'+(AGF===k?'Ver gym y cancha':'Ver solo '+n.toLowerCase())+'">'+n+'</button>').join('')+'</div><button class="ag-btn" data-ag="min" title="Minimizar" aria-label="Minimizar">–</button><button class="ag-btn" data-ag="closed" title="Cerrar hasta mañana" aria-label="Cerrar">×</button></div>'+
     (items.length?'<ul class="ag-list">'+items.map(x=>'<li><button class="ag-row'+(x.susp?' susp':'')+'" data-agcat="'+esc(x.cat.id)+'">'+
       '<span class="ag-hora mono">'+esc(x.hora||'—')+'</span>'+
       '<span class="ag-cat">'+esc(x.cat.nombre)+'</span>'+
       '<span class="chip '+(x.tipo==='match'?'match':x.tipo)+'">'+(x.tipo==='match'?'Partido':x.tipo==='gym'?'Gym':'Cancha')+(x.susp?' · suspendido':'')+'</span>'+
       (x.txt?'<span class="ag-txt">'+esc(x.txt)+'</span>':'')+'</button></li>').join('')+'</ul>'
-      :'<p class="ag-empty">'+(AG.day===TODAY?'Hoy':'Mañana')+' no hay entrenamientos ni partidos cargados.</p>')+
+      :'<p class="ag-empty">'+(AG.day===TODAY?'Hoy':'Mañana')+' no hay '+(AGF==='gym'?'gym':AGF==='cancha'?'cancha':'entrenamientos ni partidos')+' cargados.</p>')+
     '</div>';
 }
 function onAgendaClick(e){
   const a=e.target.closest('[data-ag]');if(a)return setAg(a.dataset.ag);
+  const fb=e.target.closest('[data-agf]');if(fb){const k=fb.dataset.agf;const cur=ls.get('pf-agf','all');ls.set('pf-agf',cur===k?'all':k);return renderAgenda();}
   const d=e.target.closest('[data-agday]');if(d){AG.day=d.dataset.agday==='hoy'?TODAY:TOMORROW;return renderAgenda();}
   const r=e.target.closest('[data-agcat]');
   if(r){S.view='cat';ls.set('pf-view','cat');S.calDate=AG.day;S.calView='dia';ls.set('pf-calview','dia');S.tab='calendario';ls.set('pf-tab','calendario');
