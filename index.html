@@ -1186,6 +1186,11 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 .ag-f button.on.cancha{background:var(--cancha);color:#fff}
 .ag-h .ag-date{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:520px){.ag-h .ag-date{display:none}.ag-f{margin-left:auto}}
+
+/* campanita de avisos: siempre fija arriba a la derecha */
+.av-bell{position:fixed;top:14px;right:18px;margin:0;z-index:70;width:44px;height:44px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.top{padding-right:56px}
+@media (max-width:860px){.av-bell{top:10px;right:12px;width:40px;height:40px}.top{padding-right:48px}}
 </style>
 </head>
 <body>
@@ -1206,7 +1211,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · agenda con filtro</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · campanita fija</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
