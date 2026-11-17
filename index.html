@@ -1158,6 +1158,15 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 
 .reg-acts{display:flex;flex-direction:column;gap:6px;align-items:stretch}
 .reg-rut b{font-size:15px}
+
+.tg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin:4px 0 12px}
+.tg-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"i t" "i s";column-gap:10px;align-items:center;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;cursor:pointer;font:inherit;color:var(--ink)}
+.tg-card:hover{border-color:var(--ink-3)}
+.tg-card.on{border-color:var(--accent);background:var(--accent-soft)}
+.tg-ic{grid-area:i;font-size:22px}.tg-card b{grid-area:t;font-family:var(--f-disp);font-size:16px;letter-spacing:.04em;text-transform:uppercase;line-height:1.1}.tg-card small{grid-area:s;font-size:11.5px;color:var(--ink-3)}
+.tl-gh{margin:10px 0 4px;font-size:15px}
+.tg-card{min-width:0}.tg-card b{overflow-wrap:anywhere}
+@media (max-width:600px){.tg-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.tg-card{padding:8px 9px;column-gap:7px}.tg-card b{font-size:14px}.tg-ic{font-size:18px}}
 </style>
 </head>
 <body>
@@ -1178,7 +1187,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · registrados más simple</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · testeos por grupos</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1362,10 +1371,14 @@ function setStatus(kind){
 
 /* ================= constantes ================= */
 const DEFAULT_CATS=[['primera-masc','Primera masculino','Primera'],['primera-fem','Primera femenino','Primera'],['u21-a','U21 A','U21'],['u21-b','U21 B','U21'],['u21-fem','U21 femenino','U21'],['u17-a','U17 A','U17'],['u17-b','U17 B','U17'],['u17-fem','U17 femenino','U17'],['u15-a','U15 A','U15'],['u15-b','U15 B','U15'],['u15-fem','U15 femenino','U15'],['u13-a','U13 A','U13'],['u13-b','U13 B','U13'],['u13-fem','U13 femenino','U13']];
+const TGROUPS=[['fuerza','Fuerza','🏋️'],['salto','Salto','🦘'],['resistencia','Resistencia','🫁'],['func','Evaluaciones funcionales','🧩'],['ihp','Funcionales IHP','🔁'],['vel','Velocidad','⚡'],['otros','Otros','📋']];
 const EXERCISES=[
-  {k:'sentadilla',n:'Sentadilla',u:'kg'},{k:'peso-muerto',n:'Peso muerto',u:'kg'},{k:'banco-plano',n:'Banco plano',u:'kg'},{k:'hip-thrust',n:'Hip thrust',u:'kg'},{k:'press-militar',n:'Press militar',u:'kg'},
-  {k:'cmj',n:'CMJ',u:'cm'},{k:'sj',n:'SJ',u:'cm'},{k:'drop-jump',n:'Drop jump',u:'cm'},{k:'rsi',n:'RSI (drop)',u:'m/s'},
-  {k:'sprint-10',n:'Sprint 10 m',u:'s',low:true},{k:'sprint-30',n:'Sprint 30 m',u:'s',low:true},{k:'yoyo-ir1',n:'Yo-Yo IR1',u:'m'}
+  {k:'sentadilla',n:'Sentadilla',u:'kg',g:'fuerza'},{k:'despegue',n:'Despegue',u:'kg',g:'fuerza'},{k:'banco-plano',n:'Banco plano',u:'kg',g:'fuerza'},{k:'press-militar',n:'Press militar',u:'kg',g:'fuerza'},{k:'peso-muerto',n:'Peso muerto',u:'kg',g:'fuerza'},{k:'hip-thrust',n:'Hip thrust',u:'kg',g:'fuerza'},
+  {k:'cmj',n:'CMJ',u:'cm',g:'salto'},{k:'drop-jump',n:'Drop jump',u:'cm',g:'salto'},{k:'rsi',n:'RSI (drop)',u:'m/s',g:'salto'},{k:'salto-horizontal',n:'Salto horizontal',u:'cm',g:'salto'},{k:'sj',n:'SJ',u:'cm',g:'salto'},
+  {k:'ift-30-15',n:'30-15 IFT',u:'km/h',g:'resistencia'},{k:'yoyo-ir1',n:'Yo-Yo IR1',u:'m',g:'resistencia'},
+  {k:'single-hop-izq',n:'Single hop · izq',u:'cm',g:'func'},{k:'single-hop-der',n:'Single hop · der',u:'cm',g:'func'},{k:'triple-hop-izq',n:'Triple hop · izq',u:'cm',g:'func'},{k:'triple-hop-der',n:'Triple hop · der',u:'cm',g:'func'},{k:'crossover-hop-izq',n:'Crossover hop · izq',u:'cm',g:'func'},{k:'crossover-hop-der',n:'Crossover hop · der',u:'cm',g:'func'},{k:'timed-hop-izq',n:'Timed hop 6 m · izq',u:'s',g:'func',low:true},{k:'timed-hop-der',n:'Timed hop 6 m · der',u:'s',g:'func',low:true},{k:'lunge-test-izq',n:'Dorsiflexión (lunge test) · izq',u:'cm',g:'func'},{k:'lunge-test-der',n:'Dorsiflexión (lunge test) · der',u:'cm',g:'func'},{k:'sl-squat-izq',n:'Single leg squat · izq',u:'pts',g:'func'},{k:'sl-squat-der',n:'Single leg squat · der',u:'pts',g:'func'},{k:'hurdle-izq',n:'Hurdle test · izq',u:'pts',g:'func'},{k:'hurdle-der',n:'Hurdle test · der',u:'pts',g:'func'},{k:'star-izq',n:'Star test (balance) · izq',u:'%',g:'func'},{k:'star-der',n:'Star test (balance) · der',u:'%',g:'func'},{k:'sentadilla-arranque',n:'Sentadilla de arranque',u:'pts',g:'func'},{k:'thomas-izq',n:'Test de Thomas · izq',u:'grados',g:'func'},{k:'thomas-der',n:'Test de Thomas · der',u:'grados',g:'func'},
+  {k:'ihp-alcance-izq',n:'Alcance a una pierna · izq',u:'reps',g:'ihp'},{k:'ihp-alcance-der',n:'Alcance a una pierna · der',u:'reps',g:'ihp'},{k:'ihp-sl-squat-izq',n:'Sentadilla a una pierna · izq',u:'reps',g:'ihp'},{k:'ihp-sl-squat-der',n:'Sentadilla a una pierna · der',u:'reps',g:'ihp'},{k:'ihp-squat',n:'Sentadilla a dos piernas',u:'reps',g:'ihp'},{k:'ihp-estocada-izq',n:'Estocada · izq',u:'reps',g:'ihp'},{k:'ihp-estocada-der',n:'Estocada · der',u:'reps',g:'ihp'},{k:'ihp-flexiones',n:'Flexiones de brazos',u:'reps',g:'ihp'},{k:'ihp-remo-trx',n:'Remo en TRX',u:'reps',g:'ihp'},{k:'ihp-rot-sin-izq',n:'Rotación sin pivot · izq',u:'reps',g:'ihp'},{k:'ihp-rot-sin-der',n:'Rotación sin pivot · der',u:'reps',g:'ihp'},{k:'ihp-rot-con-izq',n:'Rotación con pivot · izq',u:'reps',g:'ihp'},{k:'ihp-rot-con-der',n:'Rotación con pivot · der',u:'reps',g:'ihp'},
+  {k:'sprint-10',n:'Sprint 10 m',u:'s',low:true,g:'vel'},{k:'sprint-30',n:'Sprint 30 m',u:'s',low:true,g:'vel'}
 ];
 const DEFAULT_LIB=['Sentadilla trasera','Sentadilla frontal','Sentadilla búlgara','Peso muerto','Peso muerto rumano','Hip thrust','Puente de glúteos','Banco plano','Press militar','Remo con barra','Remo con mancuerna','Dominadas','Estocadas','Step up','Nórdicos','Copenhagen','Curl femoral','Extensión de cuádriceps','Elevación de gemelos','Press Pallof','Plancha','Plancha lateral','Curl de bíceps','Tríceps en polea','CMJ','Saltos al cajón','Drop jump','Saltos con vallas','Skipping','Sprint 10 m','Sprint 30 m','Cambios de dirección'];
 const COLLS=['config','dnis','categorias','rutinas','asignaciones','ideales','testeosLista','jugadores','sesiones','partidos','asistencia','testeos','lesiones','ejercicios'];
@@ -3031,21 +3044,22 @@ function openMatch(id){
 /* lista de testeos = los que vienen de fábrica + los que agregaste − los que quitaste */
 function allExercises(withHidden){
   const m={};EXERCISES.forEach((e,i)=>m[e.k]=Object.assign({o:i},e));
-  S.tes.forEach(t=>{if(!m[t.ejercicio])m[t.ejercicio]={k:t.ejercicio,n:t.nombre||t.ejercicio,u:t.unidad||'',low:!!t.menorMejor,o:500};});
-  S.testList.forEach(d=>{m[d.id]=Object.assign({o:m[d.id]?m[d.id].o:1000},m[d.id]||{},{k:d.id},d.n?{n:d.n,u:d.u||'',low:!!d.low}:{},d.int?{int:d.int,calc:d.calc||'prom'}:{},{hid:!!d.oculto});});
-  const arr=Object.values(m).sort((a,b)=>a.o-b.o);
+  S.tes.forEach(t=>{if(!m[t.ejercicio])m[t.ejercicio]={k:t.ejercicio,n:t.nombre||t.ejercicio,u:t.unidad||'',low:!!t.menorMejor,o:500,g:'otros'};});
+  S.testList.forEach(d=>{m[d.id]=Object.assign({o:m[d.id]?m[d.id].o:1000},m[d.id]||{},{k:d.id},d.n?{n:d.n,u:d.u||'',low:!!d.low}:{},d.g?{g:d.g}:{},d.int?{int:d.int,calc:d.calc||'prom'}:{},{hid:!!d.oculto});});
+  const arr=Object.values(m).sort((a,b)=>a.o-b.o);arr.forEach(e=>{if(!e.g||!TGROUPS.some(g=>g[0]===e.g))e.g='otros';});
   return withHidden?arr:arr.filter(e=>!e.hid);
 }
 function openTestList(){
   const draw=()=>{
     const all=allExercises(true);const vis=all.filter(e=>!e.hid),hid=all.filter(e=>e.hid);
     const cnt={};S.tes.forEach(t=>cnt[t.ejercicio]=(cnt[t.ejercicio]||0)+1);
-    return '<div class="tl-list">'+vis.map(e=>'<div class="tl-row"><b>'+esc(e.n)+'</b><span class="tiny">'+esc(e.u||'—')+(e.low?' · menos es mejor':'')+((e.int||1)>1?' · '+e.int+' intentos ('+(e.calc==='mejor'?'mejor':'promedio')+')':'')+(cnt[e.k]?' · '+cnt[e.k]+' tomas en esta categoría':'')+'</span><button class="btn sm ghost danger" data-tlhide="'+esc(e.k)+'">Quitar</button></div>').join('')+'</div>'+
+    return TGROUPS.filter(g=>vis.some(e=>e.g===g[0])).map(g=>'<h3 class="tl-gh">'+g[2]+' '+esc(g[1])+'</h3><div class="tl-list">'+vis.filter(e=>e.g===g[0]).map(e=>'<div class="tl-row"><b>'+esc(e.n)+'</b><span class="tiny">'+esc(e.u||'—')+(e.low?' · menos es mejor':'')+((e.int||1)>1?' · '+e.int+' intentos ('+(e.calc==='mejor'?'mejor':'promedio')+')':'')+(cnt[e.k]?' · '+cnt[e.k]+' tomas en esta categoría':'')+'</span><button class="btn sm ghost danger" data-tlhide="'+esc(e.k)+'">Quitar</button></div>').join('')+'</div>').join('')+
       (hid.length?'<h3 style="margin-top:6px">Quitados</h3><div class="tl-list">'+hid.map(e=>'<div class="tl-row off"><b>'+esc(e.n)+'</b><span class="tiny">'+esc(e.u||'—')+'</span><button class="btn sm" data-tlshow="'+esc(e.k)+'">Volver a mostrar</button></div>').join('')+'</div>':'');
   };
   const b='<form class="panel tl-add" id="tlForm"><h3>Agregar ejercicio</h3><div class="form-grid">'+
     '<div class="field" style="grid-column:1/-1"><label for="tl_n">Nombre</label><input id="tl_n" placeholder="Ej: Press militar, Remo, Salto horizontal"></div>'+
-    '<div class="field"><label for="tl_u">Unidad</label><select id="tl_u"><option>kg</option><option>cm</option><option>s</option><option>m</option><option>reps</option><option>m/s</option><option>N</option><option value="">Sin unidad</option></select></div>'+
+    '<div class="field"><label for="tl_g">Grupo</label><select id="tl_g">'+TGROUPS.map(g=>'<option value="'+g[0]+'"'+(g[0]===(S.tgSel||'fuerza')?' selected':'')+'>'+g[1]+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label for="tl_u">Unidad</label><select id="tl_u"><option>kg</option><option>cm</option><option>s</option><option>m</option><option>reps</option><option>pts</option><option>%</option><option>grados</option><option>km/h</option><option>m/s</option><option>N</option><option value="">Sin unidad</option></select></div>'+
     '<label class="check" style="align-self:end"><input type="checkbox" id="tl_low"> Menos es mejor (tiempos)</label>'+
     '<div class="field"><label for="tl_i">Intentos por jugador</label><select id="tl_i">'+[1,2,3,4,5].map(n=>'<option value="'+n+'">'+n+'</option>').join('')+'</select></div>'+
     '<div class="field"><label for="tl_c">Si son varios, usar</label><select id="tl_c"><option value="prom">El promedio</option><option value="mejor">El mejor intento</option></select></div></div>'+
@@ -3057,15 +3071,15 @@ function openTestList(){
     mw.querySelector('#tlForm').addEventListener('submit',e=>{
       e.preventDefault();const n=mw.querySelector('#tl_n').value.trim();if(!n){toast('Poné el nombre del ejercicio');return;}
       const k=slug(n);const ex=allExercises(true).find(x=>x.k===k);
-      const d={n,u:mw.querySelector('#tl_u').value,low:mw.querySelector('#tl_low').checked,oculto:false,int:Number(mw.querySelector('#tl_i').value)||1,calc:mw.querySelector('#tl_c').value};
+      const d={n,u:mw.querySelector('#tl_u').value,low:mw.querySelector('#tl_low').checked,oculto:false,int:Number(mw.querySelector('#tl_i').value)||1,calc:mw.querySelector('#tl_c').value,g:mw.querySelector('#tl_g').value};S.tgSel=d.g;ls.set('pf-tg',d.g);
       if(ex&&!ex.hid){toast(n+' ya está en la lista');return;}
       setLocal(k,d);Store.put('testeosLista',k,d);mw.querySelector('#tl_n').value='';S.exSel=k;ls.set('pf-ex',k);redraw();toast(n+' agregado');
     });
     body.addEventListener('click',e=>{
       const h=e.target.closest('[data-tlhide]'),sh=e.target.closest('[data-tlshow]');
       if(h){const k=h.dataset.tlhide;if(!h.dataset.arm){h.dataset.arm=1;h.textContent='¿Quitar? Tocá de nuevo';setTimeout(()=>{if(h.isConnected){delete h.dataset.arm;h.textContent='Quitar';}},3500);return;}
-        const ex=allExercises(true).find(x=>x.k===k);const d={n:ex.n,u:ex.u||'',low:!!ex.low,oculto:true,int:ex.int||1,calc:ex.calc||'prom'};setLocal(k,d);Store.put('testeosLista',k,d);redraw();toast(ex.n+' quitado de la lista');}
-      if(sh){const k=sh.dataset.tlshow;const ex=allExercises(true).find(x=>x.k===k);const d={n:ex.n,u:ex.u||'',low:!!ex.low,oculto:false,int:ex.int||1,calc:ex.calc||'prom'};setLocal(k,d);Store.put('testeosLista',k,d);redraw();toast(ex.n+' vuelve a la lista');}
+        const ex=allExercises(true).find(x=>x.k===k);const d={n:ex.n,u:ex.u||'',low:!!ex.low,oculto:true,int:ex.int||1,calc:ex.calc||'prom',g:ex.g||'otros'};setLocal(k,d);Store.put('testeosLista',k,d);redraw();toast(ex.n+' quitado de la lista');}
+      if(sh){const k=sh.dataset.tlshow;const ex=allExercises(true).find(x=>x.k===k);const d={n:ex.n,u:ex.u||'',low:!!ex.low,oculto:false,int:ex.int||1,calc:ex.calc||'prom',g:ex.g||'otros'};setLocal(k,d);Store.put('testeosLista',k,d);redraw();toast(ex.n+' vuelve a la lista');}
     });
   });
 }
@@ -3619,13 +3633,19 @@ function bwOf(jid,t){const s=t&&t.pc&&t.pc[jid];if(s)return Number(s);const j=S.
 
 const tesSeg=()=>'<div class="seg cal-seg tes-seg"><button class="'+(S.tesMode!=='atl'?'on':'')+'" data-tesmode="tes">Testeos</button><button class="'+(S.tesMode==='atl'?'on':'')+'" data-tesmode="atl">Registros de atletas'+(S.atl.length?' · '+S.atl.length:'')+'</button></div>';
 function vTests(){
-  const exs=allExercises();
+  const exsAll=allExercises();
+  if(!S.tgSel)S.tgSel=ls.get('pf-tg','')||((exsAll.find(e=>e.k===S.exSel)||{}).g)||'fuerza';
+  const gHas=g=>exsAll.some(e=>e.g===g);
+  if(!gHas(S.tgSel)){const f=TGROUPS.find(g=>gHas(g[0]));S.tgSel=f?f[0]:'fuerza';}
+  const exs=exsAll.filter(e=>e.g===S.tgSel);
   if(!exs.length)return '<div class="bar"><h2>Testeos</h2><div class="grow"></div><button class="btn pri" data-act="testList">Ejercicios</button></div><div class="empty"><b>No hay ejercicios en la lista</b>Agregá uno con el botón Ejercicios.</div>';
   if(!exs.find(e=>e.k===S.exSel))S.exSel=exs[0].k;
   const ex=exs.find(e=>e.k===S.exSel);
   const id=idealOf(ex.k);
   const count={};S.tes.forEach(t=>count[t.ejercicio]=(count[t.ejercicio]||0)+1);
   let h='<div class="bar"><h2>Testeos</h2><div class="grow"></div><button class="btn" data-act="testList">Ejercicios</button><button class="btn pri" data-act="newTest">+ Cargar testeo</button></div>';
+  {const cntG={};S.tes.forEach(t=>{const e=exsAll.find(x=>x.k===t.ejercicio);if(e)cntG[e.g]=(cntG[e.g]||0)+1;});
+   h+='<div class="tg-cards">'+TGROUPS.filter(g=>gHas(g[0])).map(g=>'<button type="button" class="tg-card'+(g[0]===S.tgSel?' on':'')+'" data-tg="'+g[0]+'"><span class="tg-ic">'+g[2]+'</span><b>'+esc(g[1])+'</b><small>'+exsAll.filter(e=>e.g===g[0]).length+' evaluaciones'+(cntG[g[0]]?' · '+cntG[g[0]]+' tomas':'')+'</small></button>').join('')+'</div>';}
   h+='<div class="ex-chips">'+exs.map(e=>'<button class="ex-chip'+(e.k===S.exSel?' on':'')+'" data-ex="'+esc(e.k)+'">'+esc(e.n)+'<small>'+esc(e.u)+(count[e.k]?' · '+count[e.k]:'')+'</small></button>').join('')+'</div>';
   h+='<div class="ideal-bar"><span class="f-lbl">Ideal '+(catRama()==='f'?'femenino':'masculino')+'</span>'+
     (id?'<b>'+esc(idealLabel(id,ex))+'</b>':'<span class="muted">Sin ideal definido</span>')+
@@ -3816,7 +3836,7 @@ function openTest(id){
         if(mu){doc.intentos=intentos;doc.calc=calcSel.value;}
         /* el ejercicio recuerda cuántos intentos se usan */
         const nI=mu?Number(niSel.value):1;
-        if(k!=='__otro'&&((ex.int||1)!==nI||(mu&&(ex.calc||'prom')!==calcSel.value))){const ld={n:ex.n,u:ex.u||'',low:!!ex.low,oculto:false,int:nI,calc:calcSel.value};Store.put('testeosLista',k,ld);const i=S.testList.findIndex(x=>x.id===k);if(i>=0)S.testList[i]=Object.assign({id:k},ld);else S.testList.push(Object.assign({id:k},ld));}
+        if(k!=='__otro'&&((ex.int||1)!==nI||(mu&&(ex.calc||'prom')!==calcSel.value))){const ld={n:ex.n,u:ex.u||'',low:!!ex.low,oculto:false,int:nI,calc:calcSel.value,g:ex.g||'otros'};Store.put('testeosLista',k,ld);const i=S.testList.findIndex(x=>x.id===k);if(i>=0)S.testList[i]=Object.assign({id:k},ld);else S.testList.push(Object.assign({id:k},ld));}
         await Store.put('testeos',t?t.id:(S.cat+'__'+fecha+'__'+k),doc);
         /* el peso corporal nuevo también queda en la ficha del jugador */
         if(withBw)for(const jid of Object.keys(pc)){const j=S.jug.find(x=>x.id===jid);if(j&&Number(j.peso)!==pc[jid]){const d=Object.assign({},j,{peso:pc[jid]});delete d.id;Store.put('jugadores',jid,d);}}
@@ -4400,7 +4420,7 @@ function trabSync(){if(RO||!S.atl)return;S.asigAll.concat(S.asigCal||[]).filter(
 /* ================= eventos de la vista ================= */
 const view=$('#view');
 view.addEventListener('click',e=>{
-  const t=e.target.closest('[data-ficha],[data-rutarch],[data-libarch],[data-tesmode],[data-atl],[data-atlrut],[data-rutind],[data-act],[data-calview],[data-godia],[data-day],[data-att],[data-adate],[data-match],[data-ex],[data-test],[data-inj],[data-editj],[data-stats],[data-stmode],[data-stsort],[data-rutprint],[data-rut],[data-rutdup],[data-asig],[data-asignew],[data-asigend]');if(!t)return;
+  const t=e.target.closest('[data-ficha],[data-rutarch],[data-libarch],[data-tesmode],[data-atl],[data-atlrut],[data-rutind],[data-act],[data-calview],[data-godia],[data-day],[data-att],[data-adate],[data-match],[data-tg],[data-ex],[data-test],[data-inj],[data-editj],[data-stats],[data-stmode],[data-stsort],[data-rutprint],[data-rut],[data-rutdup],[data-asig],[data-asignew],[data-asigend]');if(!t)return;
   const d=t.dataset;
   if(d.ficha)return openFicha(d.ficha);
   if(RO){
@@ -4418,6 +4438,7 @@ view.addEventListener('click',e=>{
   if(d.att){const m=Object.assign({},curAtt());m[d.att]=m[d.att]===d.v?undefined:d.v;if(m[d.att]===undefined)delete m[d.att];return queueAtt(m);}
   if(d.adate){S.attDate=d.adate;return render();}
   if(d.match)return openMatch(d.match);
+  if(d.tg){S.tgSel=d.tg;ls.set('pf-tg',d.tg);const f=allExercises().find(e=>e.g===d.tg);if(f){S.exSel=f.k;ls.set('pf-ex',f.k);}return render();}
   if(d.ex){S.exSel=d.ex;ls.set('pf-ex',d.ex);return render();}
   if(d.test)return openTest(d.test);
   if(d.inj)return openInj(d.inj);
