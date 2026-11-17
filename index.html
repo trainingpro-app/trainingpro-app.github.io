@@ -1198,6 +1198,21 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 .eg-card.on{border-color:var(--rc,var(--accent));background:color-mix(in srgb,var(--rc,var(--accent)) 12%,var(--surface))}
 .eg-ic{grid-area:i;font-size:21px}.eg-card b{grid-area:t;font-family:var(--f-disp);font-size:15px;letter-spacing:.04em;text-transform:uppercase;line-height:1.1;overflow-wrap:anywhere}.eg-card small{grid-area:s;font-size:11.5px;color:var(--ink-3)}
 @media (max-width:600px){.eg-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.eg-card{padding:8px 9px;column-gap:7px}.eg-card b{font-size:13.5px}.eg-ic{font-size:18px}}
+
+.p1{border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent-soft) 55%,var(--surface));border-radius:12px;padding:10px 12px;margin:4px 0 12px}
+.p1.empty-p1{border-style:dashed}
+.p1-h{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}.p1-h b{font-family:var(--f-disp);font-size:17px;letter-spacing:.03em;text-transform:uppercase}
+.p1-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.p1-c{border-radius:10px;padding:8px 10px;font-size:13px}.p1-c.reg{background:#DDF3F3}.p1-c.comp{background:var(--cancha-soft)}
+.p1-ch{font-family:var(--f-disp);font-weight:800;letter-spacing:.05em;font-size:15px;text-transform:uppercase;display:flex;justify-content:space-between;gap:6px;margin-bottom:4px}.p1-ch small{font-family:var(--f-body);font-weight:600;letter-spacing:0;text-transform:none;font-size:11px;opacity:.8}
+.p1-c.reg .p1-ch{color:#0E7C7C}.p1-c.comp .p1-ch{color:var(--cancha)}
+.p1-c ul{list-style:none;margin:0;padding:0}.p1-c li{display:flex;justify-content:space-between;gap:8px;padding:2px 0;color:var(--ink)}.p1-c li i{font-style:normal;font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3)}
+.p1-ask{margin-top:8px;background:var(--warn-soft);border-radius:9px;padding:7px 10px;font-size:12.5px;display:flex;gap:6px 10px;flex-wrap:wrap;align-items:center}
+.p1-a{display:inline-flex;gap:6px;align-items:center}
+.p1-f{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+:root[data-theme=dark] .p1-c.reg{background:#0f3333}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .p1-c.reg{background:#0f3333}}
+@media (max-width:600px){.p1-g{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1218,7 +1233,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · ejercicios por grupos</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · MD+1 con grupos</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -2440,10 +2455,12 @@ function openDay(fecha,tipo,edit,nav){
       if(exists&&s.multi&&s.multi.length)SS=JSON.parse(JSON.stringify(s.multi));
       else if(!exists&&cur&&cur.trab&&asg){const w=weekIdx(asg,fecha);const all=rutDays(rut);const wdx=wdOf(fecha);SS=[];(asg.horario||[]).forEach((h,i)=>{if(h&&h.d===wdx&&all[i]){const r0=resolveDay(all[i],w);SS.push(Object.assign(r0,{n:all[i].nombre||('Día '+(i+1)),hora:h.hora||'',jug:(h.jug||[]).slice()}));}});}
       else SS=[Object.assign({},s)];
+      if(!exists&&!SS[0].md&&S.par.some(p=>p.fecha===addDays(fecha,-1)))SS[0].md='MD+1';
       S.dayEdit={key:docId,SS,si:Math.min(S.daySi||0,SS.length-1)};}
     const DE=S.dayEdit;const SS=DE.SS,si=DE.si;
     const dr=Draft.get('ses-'+docId);
     if(dr&&SS.length===1){SS[0]=Object.assign({},SS[0],dr.content);b+=draftNote(dr.t);}
+    b+=md1Panel(fecha,SS,si);
     b+=sesTabsHtml(SS,si,true);
     b+=contentHtml(SS[si],tipo,{form:catIsForm(S.cat)});
     foot='<div class="modal-f">'+(exists&&!rut?'<button class="btn danger" id="delSes">Borrar sesión</button>':'')+'<button class="btn" id="goAtt">Tomar asistencia</button><div class="grow"></div><button class="btn" '+(exists||rut?'id="toFicha"':'data-close')+'>Cancelar</button><button class="btn pri" id="saveSes">Guardar</button></div>';
@@ -2455,6 +2472,7 @@ function openDay(fecha,tipo,edit,nav){
     if(s.suspendida)return;
     wireContent(mw);
     wireSesTabs(mw,fecha,tipo,docId);
+    wireMd1(mw,fecha,tipo);
     if(q('editRut'))q('editRut').onclick=()=>openRut(rut.id);
     if(q('suspend'))q('suspend').onclick=async()=>{await Store.put('sesiones',docId,{cat:S.cat,fecha,tipo,hora:s.hora||'',rutina:rut.id,rutDia:s.rutDia||'',suspendida:true});closeModal();toast('Día suspendido');};
     if(q('backRut'))armDelete(q('backRut'),async()=>{await Store.remove('sesiones',docId);closeModal();toast('Volvió a la rutina original');});
@@ -4390,9 +4408,45 @@ function sesParts(x,f){if(!x)return null;
     (x.asig.horario||[]).forEach((h,i)=>{if(h&&h.d===wdx&&all[i])out.push({n:SSL(out.length),dn:all[i].nombre||'',hora:h.hora||'',jug:h.jug||[],content:resolveDay(all[i],w)});});
     return out.length>1?out:null;}
   return null;}
+
+/* ---------- MD+1: grupos del post partido (planilla de estadísticas) ---------- */
+function md1Groups(p){const cfg=recCfg();const st=p.stats||{};const rc=p.recup||{};const G={reg:[],comp:[],ask:[],cfg};
+  sortedJug().forEach(j=>{const m=(st[j.id]||{}).min;const c=recClass(m,cfg);const it={j,m,c};
+    if(c==='reg')G.reg.push(it);else if(c==='ask'){if(rc[j.id]==='reg')G.reg.push(Object.assign(it,{dec:1}));else if(rc[j.id]==='comp')G.comp.push(Object.assign(it,{dec:1}));else G.ask.push(it);}
+    else G.comp.push(it);});
+  return G;}
+function md1Panel(fecha,SS,si){
+  if(RO)return '';const md=(SS[si]||{}).md||'';if(md!=='MD+1')return '';
+  const p=S.par.filter(x=>x.fecha===addDays(fecha,-1)).sort((a,b)=>(b.hora||'').localeCompare(a.hora||''))[0];
+  if(!p)return '';
+  const tit='<div class="p1-h"><b>📊 Post partido · vs '+esc(p.rival||'')+' ('+esc(WD[wdOf(p.fecha)].toLowerCase()+' '+pISO(p.fecha).getDate()+'/'+(pISO(p.fecha).getMonth()+1))+')</b>';
+  const hasSt=p.stats&&Object.keys(p.stats).some(k=>p.stats[k]&&p.stats[k].min!=null);
+  if(!hasSt)return '<div class="p1 empty-p1">'+tit+'</div><p class="tiny" style="margin:4px 0 8px">Todavía no cargaste las estadísticas de ese partido.</p><button type="button" class="btn sm" data-p1stats="'+esc(p.id)+'">Cargar estadísticas</button></div>';
+  const G=md1Groups(p);const mm=it=>it.c==='nj'?'banco':it.c==='nc'?'no convocado':fmtMin(it.m);
+  const li=it=>'<li><span>'+esc(it.j.nombre)+'</span><i>'+mm(it)+'</i></li>';
+  let h='<div class="p1">'+tit+'<span class="tiny">según los minutos de la planilla de estadísticas</span></div>'+
+    '<div class="p1-g"><div class="p1-c reg"><div class="p1-ch">🛁 Regenerativo <small>más de '+G.cfg.reg+' min</small></div><ul>'+(G.reg.map(li).join('')||'<li class="tiny">Nadie</li>')+'</ul></div>'+
+    '<div class="p1-c comp"><div class="p1-ch">💪 Compensación <small>menos de '+G.cfg.comp+' min</small></div><ul>'+(G.comp.map(li).join('')||'<li class="tiny">Nadie</li>')+'</ul></div></div>';
+  if(G.ask.length)h+='<div class="p1-ask">⚖️ <b>A decidir ('+G.cfg.comp+' a '+G.cfg.reg+' min):</b> '+G.ask.map(it=>'<span class="p1-a">'+esc(it.j.nombre)+' '+fmtMin(it.m)+' <span class="seg mini"><button type="button" data-p1rc="'+esc(it.j.id)+'" data-v="reg" data-p="'+esc(p.id)+'">Regen.</button><button type="button" data-p1rc="'+esc(it.j.id)+'" data-v="comp" data-p="'+esc(p.id)+'">Comp.</button></span></span>').join(' ')+'</div>';
+  h+='<div class="p1-f"><button type="button" class="btn pri sm" data-p1arm="'+esc(p.id)+'">'+(SS.length>1?'Actualizar jugadores de Sesión A (Regenerativo) y B (Compensación)':'Armar Sesión A (Regenerativo) y Sesión B (Compensación)')+'</button><span class="tiny">con los jugadores ya marcados</span></div></div>';
+  return h;}
+function wireMd1(mw,fecha,tipo){
+  const re=()=>openDay(fecha,tipo,true);
+  const sm=mw.querySelector('#s_md');if(sm)sm.addEventListener('change',()=>{const was=(S.dayEdit&&S.dayEdit.SS[S.dayEdit.si]||{}).md;if((sm.value==='MD+1')!==(was==='MD+1')){sesKeep(mw,tipo);const sc=mw.querySelector('.modal-b');if(sc)S.dayScroll=sc.scrollTop;re();}});
+  mw.addEventListener('click',async e=>{const DE=S.dayEdit;if(!DE)return;
+    const st=e.target.closest('[data-p1stats]');if(st){sesKeep(mw,tipo);openStats(st.dataset.p1stats);return;}
+    const rc=e.target.closest('[data-p1rc]');if(rc){sesKeep(mw,tipo);const p=S.par.find(x=>x.id===rc.dataset.p);if(!p)return;const recup=Object.assign({},p.recup||{});recup[rc.dataset.p1rc]=rc.dataset.v;p.recup=recup;Store.patch('partidos',p.id,{recup});const sc=mw.querySelector('.modal-b');if(sc)S.dayScroll=sc.scrollTop;return re();}
+    const ar=e.target.closest('[data-p1arm]');if(ar){sesKeep(mw,tipo);const p=S.par.find(x=>x.id===ar.dataset.p1arm);if(!p)return;const G=md1Groups(p);
+      const R=G.reg.map(x=>x.j.id),C=G.comp.map(x=>x.j.id);const SS=DE.SS;
+      if(!SS[0].objetivo)SS[0].objetivo='Regenerativo';SS[0].md='MD+1';SS[0].jug=R;
+      if(SS.length<2)SS.push({hora:SS[0].hora||'',md:'MD+1',objetivo:'Compensación',jug:C,bloques:[{nombre:'Bloque 1',ejercicios:[{},{}]}]});
+      else{SS[1].jug=C;if(!SS[1].objetivo)SS[1].objetivo='Compensación';if(!SS[1].md)SS[1].md='MD+1';SS.forEach((x,k)=>{if(k>1)x.jug=(x.jug||[]).filter(id=>!R.includes(id)&&!C.includes(id));});}
+      DE.si=0;toast('Listo: Sesión A '+R.length+(R.length===1?' jugador':' jugadores')+' · Sesión B '+C.length+(G.ask.length?' · faltan decidir '+G.ask.length:''));return re();}
+  });
+}
 function sesTabsHtml(SS,si,edit){
   if(!edit&&SS.length<2)return '';
-  let h='<div class="ss-bar"><div class="ss-tabs">'+SS.map((x,i)=>'<button type="button" class="ss-t c'+(i%4)+(i===si?' on':'')+'" '+(edit?'data-ssi':'data-ssv')+'="'+i+'">'+esc(edit?SSL(i):(x.n||SSL(i)))+'</button>').join('')+
+  let h='<div class="ss-bar"><div class="ss-tabs">'+SS.map((x,i)=>'<button type="button" class="ss-t c'+(i%4)+(i===si?' on':'')+'" '+(edit?'data-ssi':'data-ssv')+'="'+i+'">'+esc(edit?SSL(i)+(SS.length>1&&x.objetivo&&String(x.objetivo).length<=18?' · '+x.objetivo:''):(x.n||SSL(i)))+'</button>').join('')+
     (edit?'<button type="button" class="ss-t ss-add" data-ssadd title="Agregar otra sesión para este día">+</button>':'')+'</div>'+
     (edit?'<label class="ss-h">Hora <input id="s_hora" type="time" value="'+esc(SS[si].hora||'')+'"></label>'+(SS.length>1?'<button type="button" class="ss-del" data-ssdel title="Quitar '+SSL(si)+'">Quitar '+SSL(si)+'</button>':''):'')+'</div>';
   if(SS.length>1){const J=new Set(SS[si].jug||[]);const inO=id=>SS.some((x,k)=>k!==si&&(x.jug||[]).includes(id));
