@@ -1167,6 +1167,19 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 .tl-gh{margin:10px 0 4px;font-size:15px}
 .tg-card{min-width:0}.tg-card b{overflow-wrap:anywhere}
 @media (max-width:600px){.tg-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.tg-card{padding:8px 9px;column-gap:7px}.tg-card b{font-size:14px}.tg-ic{font-size:18px}}
+
+.rl-h{margin:16px 0 6px}
+.rl-list{display:flex;flex-direction:column;gap:6px;max-width:560px}
+.rl-item{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px 14px;font-family:var(--f-disp);font-weight:800;font-size:19px;letter-spacing:.03em;text-transform:uppercase;color:var(--ink);cursor:pointer}
+.rl-item:hover{border-color:var(--ink-3)}
+.rl-item.vig{border:1.5px solid var(--accent);background:var(--accent-soft)}
+.rl-item.fin{color:var(--ink-3);font-size:16px;padding:9px 14px}
+.rl-item::after{content:'›';font-size:22px;color:var(--ink-3)}
+.rv-inl{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:12px}
+.rv-inl-h{display:flex;align-items:flex-start;gap:12px;justify-content:space-between}
+.rv-inl-h h2{margin:2px 0 0;font-family:var(--f-disp);font-size:28px;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
+.rv-inl-b{display:grid;gap:12px;min-width:0}
+.rv-inl-f{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:12px}.rv-inl-f .grow{flex:1}
 </style>
 </head>
 <body>
@@ -1187,7 +1200,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · testeos por grupos</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · rutinas más simple</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1546,7 +1559,7 @@ function render(){
   const f={alumnos:vAlu,calendario:vCal,asistencia:vAtt,partidos:vMatches,testeos:vTests,lesionados:vInj,plantel:vRoster,registrados:vRegs,rutinas:vRut,estadisticas:vStats}[S.tab]||vCal;
   v.innerHTML=f();
 }
-$('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;ls.set('pf-tab',S.tab);render();});
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.rvInl=null;S.tab=b.dataset.tab;ls.set('pf-tab',S.tab);render();});
 
 function attStats(){
   const st={};S.jug.forEach(j=>st[j.id]={P:0,A:0,J:0,L:0,t:0});
@@ -2543,24 +2556,21 @@ async function migrateRutinas(){
 /* ----- pestaña Rutinas dentro de una categoría ----- */
 function vRut(){
   const mine=asigOfCat(S.cat);
-  let h='<div class="bar"><h2>Rutinas</h2><div class="grow"></div><button class="btn" data-act="atlLink">Link para los atletas</button><button class="btn" data-act="goLib">Ver biblioteca</button><button class="btn pri" data-act="newAsig">+ Asignar rutina</button></div>'+
+  let h='<div class="bar"><div class="grow"></div><button class="btn" data-act="atlLink">Link para los atletas</button><button class="btn" data-act="goLib">Ver biblioteca</button><button class="btn pri" data-act="newAsig">+ Asignar rutina</button></div>'+
     '<p class="tiny" style="margin:-6px 0 12px">Las rutinas se cargan en la <b>biblioteca</b> (menú lateral) y se asignan a una o varias categorías, cada una con sus días y horarios.</p>';
   const side=vRutInd();
-  if(S.cat===PERS)return '<div class="bar"><h2>Rutinas de mis alumnos</h2><div class="grow"></div><button class="btn" data-act="goLib">Ver biblioteca</button></div><p class="tiny" style="margin:-6px 0 12px">Cada alumno tiene su rutina. Se la asignás desde su ficha o acá con <b>+ Rutina individual</b>.</p>'+side;
-  h+='<div class="rut-cols"><div class="rut-col"><h2 class="rut-col-t">Rutina de equipo</h2>';
+  if(S.rvInl&&S.rvInl.cat===S.cat&&rutById(S.rvInl.id))return vRutInline();
+  if(S.cat===PERS)return '<div class="bar"><div class="grow"></div><button class="btn" data-act="goLib">Ver biblioteca</button></div><p class="tiny" style="margin:-6px 0 12px">Cada alumno tiene su rutina. Se la asignás desde su ficha o acá con <b>+ Rutina individual</b>.</p>'+side;
+  h+='<div class="rut-cols"><div class="rut-col"><h2 class="rut-col-t">Equipo</h2>';
   if(!mine.length)return h+'<div class="empty"><b>Sin rutinas asignadas</b>Asigná una de la biblioteca o creá una nueva.<div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri" data-act="newAsig">Asignar rutina</button><button class="btn" data-act="newRutHere">Crear rutina nueva</button></div></div>'+'</div>'+side+'</div>';
   const groups={vig:[],prox:[],fin:[]};mine.forEach(a=>groups[asigState(a)].push(a));
-  const titles={vig:'Vigentes',prox:'Próximas',fin:'Finalizadas'};
+  const titles={vig:'',prox:'Próximas',fin:'Finalizadas'};
   ['vig','prox','fin'].forEach(k=>{
     const arr=groups[k].sort((a,b)=>k==='fin'?b.desde.localeCompare(a.desde):a.desde.localeCompare(b.desde));if(!arr.length)return;
-    h+='<h3 style="margin-top:14px">'+titles[k]+'</h3><div class="rut-cards">'+arr.map(a=>{
+    h+=(titles[k]?'<h3 class="rl-h">'+titles[k]+'</h3>':'')+'<div class="rl-list">'+arr.map(a=>{
       const r=rutById(a.rutina);
-      if(!r)return '<div class="rut-card fin"><div class="rut-name">Rutina borrada</div><div class="rut-acts"><button class="btn sm" data-asig="'+esc(a.id)+'">Quitar</button></div></div>';
-      const others=S.asigAll.filter(x=>x.rutina===r.id&&x.cat!==S.cat&&asigState(x)!=='fin').map(x=>catName(x.cat));
-      return '<div class="rut-card'+(k==='fin'?' fin':'')+'"><div style="display:flex;gap:8px;align-items:start;justify-content:space-between"><div class="rut-name">'+esc(r.nombre)+'</div><span class="chip '+r.tipo+'">'+(r.tipo==='gym'?'Gym':'Cancha')+'</span></div>'+
-        '<div class="rut-daylist">'+schedText(r,a)+'</div><div class="tiny">'+esc(vigText(a))+(r.editada?' · <span class="mod-t">'+modTxt(r)+'</span>':'')+'</div>'+
-        (others.length?'<div class="tiny">También la hacen: '+others.map(esc).join(', ')+'</div>':'')+
-        '<div class="rut-acts"><button class="btn sm" data-rut="'+esc(r.id)+'">Ver rutina</button><button class="btn sm ghost" data-asig="'+esc(a.id)+'">Días y fechas</button><button class="btn sm ghost" data-rutprint="'+esc(r.id)+'" data-asigid="'+esc(a.id)+'">Imprimir planilla</button>'+(k==='vig'?'<button class="btn sm ghost" data-asigend="'+esc(a.id)+'">Finalizar hoy</button>':'')+'</div></div>';
+      if(!r)return '<div class="rl-item fin"><span>Rutina borrada</span><button class="btn sm" data-asig="'+esc(a.id)+'">Quitar</button></div>';
+      return '<button type="button" class="rl-item'+(k==='fin'?' fin':k==='vig'?' vig':'')+'" data-rvopen="'+esc(r.id)+'" data-rvasig="'+esc(a.id)+'">'+esc(r.nombre)+'</button>';
     }).join('')+'</div>';
   });
   return h+'</div>'+side+'</div>';
@@ -3009,7 +3019,7 @@ function vMatches(){
   const up=S.par.filter(p=>p.fecha>=TODAY&&(p.gf===''||p.gf==null)).sort((a,b)=>a.fecha.localeCompare(b.fecha));
   const played=S.par.filter(p=>!up.includes(p)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
   const rec={G:0,E:0,P:0};played.forEach(p=>{const r=res(p);if(r)rec[r]++;});
-  let h='<div class="bar"><h2>Calendario de partidos</h2><span class="muted mono">'+rec.G+'G · '+rec.E+'E · '+rec.P+'P</span><div class="grow"></div><button class="btn pri" data-act="newMatch">+ Partido</button></div>';
+  let h='<div class="bar"><span class="muted mono">'+rec.G+'G · '+rec.E+'E · '+rec.P+'P</span><div class="grow"></div><button class="btn pri" data-act="newMatch">+ Partido</button></div>';
   if(!S.par.length) return h+'<div class="empty"><b>Sin partidos cargados</b>Sumá el fixture y lo vas a ver también en el calendario.</div>';
   h+='<h3 style="margin-top:6px">Próximos</h3>'+(up.length?'<div class="match-list">'+up.map(matchRow).join('')+'</div>':'<p class="muted">No hay partidos por jugar.</p>');
   h+='<h3 style="margin-top:20px">Jugados</h3>'+(played.length?'<div class="match-list">'+played.map(matchRow).join('')+'</div>':'<p class="muted">Todavía no hay resultados.</p>');
@@ -3544,7 +3554,7 @@ function vRegs(){
     g.nr=g.docs.reduce((t,d)=>t+Object.values(d.log||{}).reduce((u,l)=>u+(l||[]).filter(inA).length,0),0);
     g.rpe=g.docs.map(d=>rpeLast({rpe:(d.rpe||[]).filter(inA)})).filter(Boolean).sort((a,b)=>(b.f||'').localeCompare(a.f||''))[0]||null;return g;}).sort((a,b)=>b.upd-a.upd);
   const reg=new Set(Object.keys(groups));const sin=S.jug.filter(j=>!reg.has(j.id));
-  let h='<div class="bar" style="margin-top:14px"><h2>Registrados</h2><span class="pill '+(reg.size?'good':'neutral')+'">'+reg.size+' de '+S.jug.length+' del plantel</span><div class="grow"></div><button class="btn" data-act="atlLink">Copiar link para los atletas</button></div>';
+  let h='<div class="bar" style="margin-top:14px"><span class="pill '+(reg.size?'good':'neutral')+'">'+reg.size+' de '+S.jug.length+' del plantel</span><div class="grow"></div><button class="btn" data-act="atlLink">Copiar link para los atletas</button></div>';
   if(!rows.length)return h+'<div class="empty"><b>Todavía no se registró nadie</b>Pasales el link de la app de atletas. Se registran con nombre, apellido y DNI.</div>';
   h+='<div class="regs">'+rows.map(g=>{const d=g.d,m=g.m,A=g.asg;const r=A&&rutById(A.a.rutina);
     const st=m.how==='dni'?'<span class="pill good">DNI ✓</span>':m.how==='manual'?'<span class="pill neutral">vinculado</span>':m.how==='nombre'?'<span class="pill warn">por nombre</span>':'<span class="pill bad">sin reconocer</span>';
@@ -3638,12 +3648,12 @@ function vTests(){
   const gHas=g=>exsAll.some(e=>e.g===g);
   if(!gHas(S.tgSel)){const f=TGROUPS.find(g=>gHas(g[0]));S.tgSel=f?f[0]:'fuerza';}
   const exs=exsAll.filter(e=>e.g===S.tgSel);
-  if(!exs.length)return '<div class="bar"><h2>Testeos</h2><div class="grow"></div><button class="btn pri" data-act="testList">Ejercicios</button></div><div class="empty"><b>No hay ejercicios en la lista</b>Agregá uno con el botón Ejercicios.</div>';
+  if(!exs.length)return '<div class="bar"><div class="grow"></div><button class="btn pri" data-act="testList">Ejercicios</button></div><div class="empty"><b>No hay ejercicios en la lista</b>Agregá uno con el botón Ejercicios.</div>';
   if(!exs.find(e=>e.k===S.exSel))S.exSel=exs[0].k;
   const ex=exs.find(e=>e.k===S.exSel);
   const id=idealOf(ex.k);
   const count={};S.tes.forEach(t=>count[t.ejercicio]=(count[t.ejercicio]||0)+1);
-  let h='<div class="bar"><h2>Testeos</h2><div class="grow"></div><button class="btn" data-act="testList">Ejercicios</button><button class="btn pri" data-act="newTest">+ Cargar testeo</button></div>';
+  let h='<div class="bar"><div class="grow"></div><button class="btn" data-act="testList">Ejercicios</button><button class="btn pri" data-act="newTest">+ Cargar testeo</button></div>';
   {const cntG={};S.tes.forEach(t=>{const e=exsAll.find(x=>x.k===t.ejercicio);if(e)cntG[e.g]=(cntG[e.g]||0)+1;});
    h+='<div class="tg-cards">'+TGROUPS.filter(g=>gHas(g[0])).map(g=>'<button type="button" class="tg-card'+(g[0]===S.tgSel?' on':'')+'" data-tg="'+g[0]+'"><span class="tg-ic">'+g[2]+'</span><b>'+esc(g[1])+'</b><small>'+exsAll.filter(e=>e.g===g[0]).length+' evaluaciones'+(cntG[g[0]]?' · '+cntG[g[0]]+' tomas':'')+'</small></button>').join('')+'</div>';}
   h+='<div class="ex-chips">'+exs.map(e=>'<button class="ex-chip'+(e.k===S.exSel?' on':'')+'" data-ex="'+esc(e.k)+'">'+esc(e.n)+'<small>'+esc(e.u)+(count[e.k]?' · '+count[e.k]:'')+'</small></button>').join('')+'</div>';
@@ -4085,7 +4095,7 @@ function postSummary(p){
 function vStats(){
   const games=S.par.filter(p=>p.stats&&Object.keys(p.stats).length).sort((a,b)=>a.fecha.localeCompare(b.fecha));
   const mode=S.stMode||'prom';
-  let h='<div class="bar"><h2>Estadísticas</h2><span class="muted">'+games.length+(games.length===1?' partido cargado':' partidos cargados')+'</span><div class="grow"></div>'+
+  let h='<div class="bar"><span class="muted">'+games.length+(games.length===1?' partido cargado':' partidos cargados')+'</span><div class="grow"></div>'+
     '<div class="seg cal-seg"><button class="'+(mode==='prom'?'on':'')+'" data-stmode="prom">Promedios</button><button class="'+(mode==='tot'?'on':'')+'" data-stmode="tot">Totales</button></div></div>';
   if(!games.length)return h+'<div class="empty"><b>Todavía no hay estadísticas</b>Andá a <b>Partidos</b>, abrí un partido jugado y tocá <b>Estadísticas</b>.</div>';
   const rows=S.jug.map(j=>{
@@ -4110,7 +4120,7 @@ const EST={activa:['Activa','bad'],readaptacion:['En readaptación','warn'],alta
 function vInj(){
   const all=lesOf();const act=all.filter(activeInj).sort((a,b)=>a.fecha.localeCompare(b.fecha));
   const hist=all.filter(l=>!activeInj(l)).sort((a,b)=>(b.fechaAlta||b.fecha).localeCompare(a.fechaAlta||a.fecha));
-  let h='<div class="bar"><h2>Lesionados</h2><span class="pill '+(act.length?'bad':'good')+'">'+act.length+' activos</span><div class="grow"></div><button class="btn pri" data-act="newInj"'+(S.jug.length?'':' disabled')+'>+ Registrar lesión</button></div>';
+  let h='<div class="bar"><span class="pill '+(act.length?'bad':'good')+'">'+act.length+' activos</span><div class="grow"></div><button class="btn pri" data-act="newInj"'+(S.jug.length?'':' disabled')+'>+ Registrar lesión</button></div>';
   if(!S.jug.length) return h+noPlayers();
   h+=act.length?'<div class="inj-cards">'+act.map(l=>{const d=daysBetween(l.fecha,TODAY);const ret=l.retorno?daysBetween(TODAY,l.retorno):null;
     return '<button class="inj'+(l.estado==='readaptacion'?' readapt':'')+'" data-inj="'+esc(l.id)+'" style="font:inherit;color:inherit"><div style="display:flex;justify-content:space-between;gap:8px;align-items:start"><span class="who">'+esc(jugName(l.jugador))+'</span><span class="pill '+EST[l.estado||'activa'][1]+'">'+EST[l.estado||'activa'][0]+'</span></div>'+
@@ -4168,7 +4178,7 @@ function vRoster(){
   const regOf={},sinVinc=[];S.atl.forEach(d=>{const m=atlPlayer(d);if(m.j){const o=regOf[m.j.id];if(!o||(d.upd||0)>(o.d.upd||0))regOf[m.j.id]={d,how:m.how};}else if(d.nombre||d.dniFin)sinVinc.push(d);});
   const nApp=S.jug.filter(j=>regOf[j.id]).length;
   const dd=t=>t?fmtD(new Date(t).toISOString().slice(0,10),{day:'numeric',month:'short'}):'';
-  let h='<div class="grid2"><div><div class="bar"><h2>Plantel</h2><span class="muted">'+S.jug.length+' jugadores</span>'+(S.jug.length&&!RO?'<span class="pill '+(nApp?'good':'neutral')+'" title="Jugadores que ya cargaron sus datos en la app de atletas">📱 '+nApp+' de '+S.jug.length+' en la app</span>':'')+'</div>';
+  let h='<div class="grid2"><div><div class="bar"><span class="muted">'+S.jug.length+' jugadores</span>'+(S.jug.length&&!RO?'<span class="pill '+(nApp?'good':'neutral')+'" title="Jugadores que ya cargaron sus datos en la app de atletas">📱 '+nApp+' de '+S.jug.length+' en la app</span>':'')+'</div>';
   h+=S.jug.length?'<div class="roster" style="grid-template-columns:1fr">'+sortedJug().map(j=>{const inj=lesOf().find(l=>l.jugador===j.id&&activeInj(l));const p=(st[j.id]||{}).pct;
     return '<div class="pl"><span class="dor">'+esc(j.dorsal||'·')+'</span><div class="info pl-click" data-ficha="'+esc(j.id)+'" title="Ver ficha"><div class="nm">'+esc(j.nombre)+'</div><div class="tiny">'+esc(j.pos||'Sin posición')+(p!=null?' · '+p+'% asist.':'')+'</div></div>'+(inj?'<span class="pill bad">lesión</span>':'')+(indOf(j.id)?'<span class="pill neutral" title="Hace una rutina individual">rutina individual</span>':'')+
       (RO?'':(regOf[j.id]?'<button type="button" class="app-b on" data-atl="'+esc(regOf[j.id].d.id)+'" title="Ya está en la app de atletas'+(regOf[j.id].how==='nombre'?' (reconocido por nombre)':'')+'. Tocá para ver lo que anotó.">📱 en la app'+(regOf[j.id].d.upd?' · '+esc(dd(regOf[j.id].d.upd)):'')+'</button>':'<span class="app-b" title="Todavía no cargó sus datos en la app de atletas">sin app</span>'))+
@@ -4585,6 +4595,39 @@ function openShare(){
   });
 }
 /* ---------- rutina en modo lectura (por día y semana) ---------- */
+function rutViewParts(id,di,w,inline){
+  const r=rutById(id);if(!r)return null;const ds=rutDays(r);if(!ds.length)return null;
+  const a=(inline&&inline.aid&&S.asigAll.find(x=>x.id===inline.aid))||S.asigAll.find(x=>x.rutina===id&&x.cat===S.cat&&asigState(x)!=='fin')||S.asigAll.find(x=>x.rutina===id&&x.cat===S.cat);
+  const W=(a&&a.semanas)||r.semanas||4;
+  di=Math.min(di||0,ds.length-1);
+  if(w==null)w=a&&a.desde<=TODAY?Math.min(W-1,weekIdx(a,TODAY)):0;
+  const d=ds[di];const sd=resolveDay(d,w);sd.rutDia=d.nombre;sd.semana=w+1;sd.semTot=W;
+  let b='';
+  if(ds.length>1)b+='<div class="seg cal-seg" style="flex-wrap:wrap">'+ds.map((x,i)=>'<button type="button" data-rok data-rvd="'+i+'" class="'+(i===di?'on':'')+'">'+esc(x.nombre||('Día '+(i+1)))+'</button>').join('')+'</div>';
+  b+='<div class="seg cal-seg" style="flex-wrap:wrap">'+Array.from({length:W},(_,i)=>'<button type="button" data-rok data-rvw="'+i+'" class="'+(i===w?'on':'')+'">Sem '+(i+1)+'</button>').join('')+'</div>';
+  const back=inline?()=>{}:()=>openRutView(id,di,w);
+  if(a){const wk=addDays(a.desde,7*w);ATLCTX={desde:wk,hasta:addDays(wk,6),sem:w+1,back};}
+  else ATLCTX={desde:null,hasta:null,sem:null,back};
+  b+=fichaHtml(sd,r.tipo,null,r);ATLCTX_LAST=ATLCTX;ATLCTX=null;
+  if(!RO&&a)b+='<p class="tiny" style="margin:0">Tocá un ejercicio para ver qué cargaron los atletas en la semana '+(w+1)+' ('+esc(fmtD(addDays(a.desde,7*w),{day:'numeric',month:'short'}))+' al '+esc(fmtD(addDays(a.desde,7*w+6),{day:'numeric',month:'short'}))+').</p>';
+  return {r,a,b,di,w,sub:(a?catName(a.cat)+' · '+vigText(a):'Rutina')+(r.editada?' · '+modTxt(r):'')};
+}
+/* rutina abierta dentro de la pestaña Rutinas (no como ventana al costado) */
+function vRutInline(){
+  const I=S.rvInl;const P=rutViewParts(I.id,I.di,I.w,{aid:I.aid});if(!P){S.rvInl=null;return vRut();}
+  I.di=P.di;I.w=P.w;const a=P.a;const vig=a&&asigState(a)==='vig';
+  return '<div class="rv-inl"><div class="rv-inl-h"><div><div class="eyebrow">'+esc(P.sub)+'</div><h2>'+esc(P.r.nombre)+'</h2></div><button type="button" class="btn" data-rvclose>✕ Cerrar</button></div>'+
+    '<div class="rv-inl-b">'+P.b+'</div>'+
+    '<div class="rv-inl-f"><button class="btn" type="button" data-rutprint="'+esc(P.r.id)+'"'+(a?' data-asigid="'+esc(a.id)+'"':'')+'>Imprimir planilla</button>'+(RO?'':'<button class="btn" type="button" data-rvedit>Editar rutina</button>'+(a?'<button class="btn" type="button" data-asig="'+esc(a.id)+'">Días y fechas</button>':'')+(vig?'<button class="btn" type="button" data-asigend="'+esc(a.id)+'">Finalizar hoy</button>':''))+'<div class="grow"></div><button class="btn pri" type="button" data-rvclose>Cerrar</button></div></div>';
+}
+document.getElementById('view').addEventListener('click',e=>{
+  const o=e.target.closest('[data-rvopen]');if(o){S.rvInl={id:o.dataset.rvopen,aid:o.dataset.rvasig||'',cat:S.cat,di:0,w:null};render();const v=document.querySelector('.rv-inl');if(v)v.scrollIntoView({block:'start',behavior:'smooth'});return;}
+  if(!S.rvInl)return;
+  if(e.target.closest('[data-rvclose]')){S.rvInl=null;render();return;}
+  const d=e.target.closest('.rv-inl [data-rvd]');if(d){S.rvInl.di=+d.dataset.rvd;render();return;}
+  const w=e.target.closest('.rv-inl [data-rvw]');if(w){S.rvInl.w=+w.dataset.rvw;render();return;}
+  if(e.target.closest('[data-rvedit]')){openRut(S.rvInl.id);return;}
+});
 function openRutView(id,di,w){
   const r=rutById(id);if(!r)return;const ds=rutDays(r);if(!ds.length)return;
   const a=S.asigAll.find(x=>x.rutina===id&&x.cat===S.cat&&asigState(x)!=='fin')||S.asigAll.find(x=>x.rutina===id&&x.cat===S.cat);
@@ -5162,6 +5205,7 @@ function openAtlEx(name,c){
     mw.querySelectorAll('[data-atlopen]').forEach(x=>x.onclick=()=>openAtl(x.dataset.atlopen));});
 }
 $('#modalRoot').addEventListener('click',e=>{const b=e.target.closest('[data-atlex]');if(!b||RO)return;e.stopPropagation();openAtlEx(b.dataset.atlex,ATLCTX_LAST);});
+$('#view').addEventListener('click',e=>{const b=e.target.closest('.rv-inl [data-atlex]');if(!b||RO)return;e.stopPropagation();openAtlEx(b.dataset.atlex,ATLCTX_LAST);});
 
 function bootOff(){const b=document.getElementById('boot');if(b&&!b.classList.contains('off')){b.classList.add('off');setTimeout(()=>b.remove(),300);}}
 setTimeout(bootOff,12000);
