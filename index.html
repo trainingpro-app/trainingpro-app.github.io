@@ -1214,6 +1214,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .p1-c.reg{background:#0f3333}}
 @media (max-width:600px){.p1-g{grid-template-columns:1fr}}
 .att-per{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-2px 0 4px}.att-per .inp{width:auto;min-width:0}.att-per-n{display:inline-flex;gap:6px;align-items:center;font-size:13px}.att-per-n input[type=number]{width:70px}.att-per-t{margin:0 0 8px}
+.vm-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px;margin-bottom:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:13px}.vm-bar>span{flex:1 1 220px}.vm-bar.off{border-style:dashed}.vm-bar.bad{border-color:var(--bad)}.vm-unm{flex-basis:100%;font-size:12.5px;color:var(--warn)}.vm-map{display:grid;gap:6px}.vm-mr{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}.vm-mr.unm>span{color:var(--warn);font-weight:600}.vm-mr select{width:100%}@media(max-width:560px){.vm-mr{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1234,7 +1235,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · asistencia por período</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · asistencia desde la app de los profes</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -3022,6 +3023,156 @@ async function endAsig(id){
 }
 
 /* ================= asistencia ================= */
+/* ================= puente con la app de los profes (Villa Mitre) =================
+   Solo LEE de la planilla de Google de la app de los profes (no sube nada ahí).
+   La dirección y la clave quedan guardadas solo en este navegador. */
+const VM={busy:false,data:null,at:0,err:{},tried:{},unm:{},cnt:{}};
+function vmCfg(){return ls.get('pf-vm',{});}
+function vmMapCfg(){return (S.cfg||[]).find(x=>x.id==='vmmap')||{cats:{},jug:{}};}
+function vmJsonp(url,params,ms){
+  return new Promise((res,rej)=>{
+    const cb='tpVm'+Date.now()+'_'+Math.floor(Math.random()*1e6);let done=false;const sc=document.createElement('script');
+    const end=()=>{try{delete window[cb];}catch(e){window[cb]=undefined;}if(sc.parentNode)sc.parentNode.removeChild(sc);clearTimeout(t);};
+    const t=setTimeout(()=>{if(done)return;end();rej(new Error('La planilla tardó demasiado en responder'));},ms||45000);
+    window[cb]=d=>{done=true;end();res(d);};
+    sc.onerror=()=>{if(done)return;end();rej(new Error('No se pudo llegar a la planilla. Revisá la dirección (tiene que terminar en /exec).'));};
+    sc.src=url+(url.includes('?')?'&':'?')+Object.keys(params).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&')+'&callback='+cb;
+    document.head.appendChild(sc);
+  });
+}
+function vmUnwrap(v){while(v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===1&&Object.prototype.hasOwnProperty.call(v,'v'))v=v.v;return v;}
+async function vmFetch(force,cfg){
+  cfg=cfg||vmCfg();
+  if(!force&&VM.data&&Date.now()-VM.at<60000)return VM.data;
+  const r=await vmJsonp(cfg.url,{clave:cfg.clave,autor:'TrainingPro (solo lee)',cambios:'{}',desde:0});
+  if(!r||!r.ok)throw new Error(r&&String(r.error||'').includes('Clave')?'La clave no coincide con la de la planilla':'La planilla respondió con un error: '+((r&&r.error)||'sin detalle'));
+  const D={jug:{},asis:{},just:{},ses:{},total:r.total};
+  Object.keys(r.registros||{}).forEach(k=>{
+    let v=vmUnwrap((r.registros[k]||{}).v);if(v==null)return;
+    const p=k.indexOf('|');if(p<0)return;const t=k.slice(0,p),rest=k.slice(p+1);
+    if(t==='jug'){if(Array.isArray(v)&&v.length===1&&Array.isArray(v[0]))v=v[0];if(v&&!Array.isArray(v)&&typeof v==='object')v=Object.keys(v).sort((a,b)=>a-b).map(x=>v[x]);D.jug[rest]=(v||[]).filter(x=>x&&x.n).map(x=>x.n);}
+    else if(t==='asis'&&v&&typeof v==='object')D.asis[rest]=v;
+    else if(t==='just')D.just[rest]=v;
+    else if(t==='ses')D.ses[rest]=v;
+  });
+  VM.data=D;VM.at=Date.now();return D;
+}
+function vmCats(D){const s=new Set(Object.keys(D.jug));Object.keys(D.asis).forEach(k=>s.add(k.split('|')[0]));return [...s].sort();}
+function vmCatFor(cat,D){
+  const m=vmMapCfg().cats||{};if(m[cat])return m[cat]==='-'?'':m[cat];
+  const n=normTxt(catName(cat)).replace(/\s/g,'');
+  return (D?vmCats(D):[]).find(c=>normTxt(c).replace(/\s/g,'')===n)||'';
+}
+function vmTok(s){return normTxt(s).split(' ').filter(w=>w.length>1&&!['de','del','la','las','los','y'].includes(w));}
+function vmAuto(name,jug){
+  const a=vmTok(name);if(!a.length)return null;
+  const same=(x,y)=>x===y||(x.length>=3&&y.length>=3&&(x.startsWith(y)||y.startsWith(x)||x.slice(0,3)===y.slice(0,3)&&Math.min(x.length,y.length)>=4));
+  const hit=jug.filter(j=>{const b=vmTok(j.nombre);if(!b.length)return false;const [sh,lg]=a.length<=b.length?[a,b]:[b,a];
+    return (sh.length>=2||lg.length===1)&&sh.every(w=>lg.some(z=>same(w,z)));});
+  if(hit.length===1)return hit[0].id;
+  const ex=hit.filter(j=>vmTok(j.nombre).sort().join(' ')===a.slice().sort().join(' '));
+  return ex.length===1?ex[0].id:null;
+}
+function vmNames(D,vc){const s=new Set(D.jug[vc]||[]);Object.keys(D.asis).forEach(k=>{if(k.split('|')[0]===vc)Object.keys(D.asis[k]||{}).forEach(n=>s.add(n));});return [...s];}
+function vmMatch(D,vc,cat,jug){
+  const man=(vmMapCfg().jug||{})[cat]||{};const M={};
+  vmNames(D,vc).forEach(n=>{M[n]=man[n]!==undefined?man[n]:vmAuto(n,jug);});
+  return M;
+}
+async function vmAsisOf(cat){
+  if(Store.mode==='cloud'){const s=await Store.fs.collection('asistencia').where('cat','==',cat).get();return s.docs.map(d=>Object.assign({id:d.id},d.data()));}
+  const c=Store.local.asistencia||{};return Object.keys(c).filter(id=>c[id].cat===cat).map(id=>Object.assign({id},c[id]));
+}
+const vmSig=m=>JSON.stringify(Object.keys(m||{}).sort().map(k=>[k,m[k]]));
+async function vmPull(force){
+  const cfg=vmCfg(),cat=S.cat;if(RO||!cfg.url||!cfg.clave||!cat||cat===PERS||VM.busy)return;
+  VM.busy=true;VM.tried[cat]=Date.now();delete VM.err[cat];render();
+  try{
+    const D=await vmFetch(force,cfg);
+    const vc=vmCatFor(cat,D);
+    if(!vc){VM.err[cat]='nocat';return;}
+    const jug=S.jug.filter(j=>j.cat===cat);
+    const M=vmMatch(D,vc,cat,jug);
+    VM.unm[cat]=Object.keys(M).filter(n=>!M[n]);
+    const mapped=new Set(Object.values(M).filter(x=>x&&x!=='-'));
+    const ex={};(await vmAsisOf(cat)).forEach(a=>ex[a.fecha]=a);
+    const seen=new Set();let w=0,days=0;
+    for(const k of Object.keys(D.asis)){
+      const p=k.indexOf('|');if(k.slice(0,p)!==vc)continue;const fecha=k.slice(p+1);if(!/^\d{4}-\d\d-\d\d$/.test(fecha))continue;
+      if(D.ses[k])continue; /* sesión suspendida / feriado / partido: no cuenta */
+      const old=ex[fecha];const marcas=Object.assign({},old&&old.marcas||{});mapped.forEach(j=>delete marcas[j]);
+      Object.keys(D.asis[k]).forEach(n=>{const j=M[n];if(!j||j==='-')return;let st=String(D.asis[k][n]||'').toUpperCase();
+        if(st==='J'){const ju=D.just[vc+'|'+fecha+'|'+n];if(ju&&/lesi/i.test(ju.tipo||''))st='L';}
+        if('PAJL'.includes(st)&&st)marcas[j]=st;});
+      if(!Object.keys(marcas).length)continue;
+      seen.add(fecha);days++;
+      if(!old||old.src!=='vm'||vmSig(old.marcas)!==vmSig(marcas)){await Store.put('asistencia',cat+'__'+fecha,{cat,fecha,marcas,src:'vm'});w++;}
+    }
+    for(const f of Object.keys(ex))if(ex[f].src==='vm'&&!seen.has(f)){await Store.remove('asistencia',ex[f].id);w++;}
+    VM.cnt[cat]={days,w,vc};
+    const L=ls.get('pf-vm-last',{});L[cat]=Date.now();ls.set('pf-vm-last',L);
+  }catch(e){VM.err[cat]=e.message||'No se pudo traer';}
+  finally{VM.busy=false;render();}
+}
+function vmAutoPull(){const cfg=vmCfg();if(RO||!cfg.url||VM.busy||!S.cat||S.cat===PERS)return;if(Date.now()-(VM.tried[S.cat]||0)<5*60000)return;setTimeout(()=>{if(S.tab==='asistencia')vmPull(false);},400);}
+function vmAgo(t){if(!t)return 'nunca';const m=Math.round((Date.now()-t)/60000);return m<1?'recién':m<60?'hace '+m+' min':m<1440?'hace '+Math.round(m/60)+' h':'hace '+Math.round(m/1440)+' d';}
+function vmBanner(){
+  if(RO||S.cat===PERS)return '';
+  const cfg=vmCfg();
+  if(!cfg.url)return '<div class="vm-bar off"><span>📲 ¿Tomás la asistencia en la app de los profes? Conectala y se trae sola.</span><div class="grow"></div><button class="btn sm" data-act="vmCfg">Conectar</button></div>';
+  const cat=S.cat,er=VM.err[cat],last=(ls.get('pf-vm-last',{}))[cat],c=VM.cnt[cat],vc=(c&&c.vc)||vmCatFor(cat,VM.data);
+  let h='<div class="vm-bar'+(er?' bad':'')+'"><span>📲 '+(VM.busy?'Trayendo de la app de los profes…':er==='nocat'?'No encontré <b>'+esc(catName(cat))+'</b> en la app de los profes. Elegí cuál es en ⚙.':er?esc(er):'Viene de la app de los profes'+(vc?' ('+esc(vc)+')':'')+' · '+vmAgo(last))+'</span>'+
+    '<button class="btn sm" data-act="vmNow"'+(VM.busy?' disabled':'')+'>🔄 Traer ahora</button><button class="btn sm ghost" data-act="vmCfg" title="Configurar">⚙</button>';
+  const un=VM.unm[cat]||[];
+  if(un.length&&!er)h+='<div class="vm-unm">⚠ '+un.length+(un.length===1?' nombre de la app de los profes no está emparejado':' nombres de la app de los profes no están emparejados')+' con tu plantel: '+un.slice(0,4).map(esc).join(', ')+(un.length>4?'…':'')+' <button class="btn sm" data-act="vmMap">Emparejar</button></div>';
+  return h+'</div>';
+}
+function openVmCfg(){
+  const cfg=vmCfg();
+  const b='<p class="muted" style="margin-top:0">Se copia lo mismo que tenés en la app de los profes, en <b>Configurar sincronización</b>. TrainingPro solo <b>lee</b> la asistencia: no cambia nada allá.</p>'+
+    '<div class="field"><label for="vm_u">Dirección web de la planilla (termina en /exec)</label><input id="vm_u" value="'+esc(cfg.url||'')+'" placeholder="https://script.google.com/macros/s/.../exec"></div>'+
+    '<div class="field"><label for="vm_k">Clave compartida</label><input id="vm_k" value="'+esc(cfg.clave||'')+'"></div>'+
+    '<div class="field" id="vm_cw"><label for="vm_c">'+esc(catName(S.cat))+' en la app de los profes es…</label><select id="vm_c"><option value="">(probá la conexión para ver las categorías)</option></select></div>'+
+    '<div id="vm_msg" class="tiny"></div>'+
+    '<p class="tiny">La dirección y la clave quedan guardadas solo en este navegador (en otro celu o compu las cargás de nuevo).</p>';
+  openModal(modalHead('Asistencia','App de los profes')+'<div class="modal-b">'+b+'</div><div class="modal-f">'+(cfg.url?'<button class="btn danger" id="vm_off">Desconectar</button>':'')+'<div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn" id="vm_test">Probar conexión</button><button class="btn pri" id="vm_save">Guardar</button></div>',mw=>{
+    const q=id=>mw.querySelector('#'+id),msg=(t,c)=>{q('vm_msg').innerHTML=t;q('vm_msg').style.color=c||'';};
+    const fill=D=>{const cur=(vmMapCfg().cats||{})[S.cat];const auto=vmCatFor(S.cat,D);const cs=vmCats(D);
+      q('vm_c').innerHTML='<option value="">'+(auto?'Automático: '+esc(auto):'— elegí —')+'</option>'+cs.map(c=>'<option value="'+esc(c)+'"'+(cur===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'<option value="-"'+(cur==='-'?' selected':'')+'>No traer para esta categoría</option>';};
+    if(VM.data)fill(VM.data);
+    const test=async()=>{const u=q('vm_u').value.trim(),k=q('vm_k').value.trim();
+      if(!u.includes('/exec')){msg('La dirección tiene que terminar en /exec','var(--bad)');return null;}if(!k){msg('Falta la clave','var(--bad)');return null;}
+      msg('Probando…');try{const D=await vmFetch(true,{url:u,clave:k});fill(D);msg('✓ Conecta bien · '+vmCats(D).length+' categorías · '+Object.keys(D.asis).length+' días de asistencia en la planilla','var(--good)');return D;}
+      catch(e){msg(esc(e.message),'var(--bad)');return null;}};
+    q('vm_test').onclick=test;
+    q('vm_save').onclick=async()=>{const u=q('vm_u').value.trim(),k=q('vm_k').value.trim();
+      if(!VM.data||vmCfg().url!==u||vmCfg().clave!==k){const D=await test();if(!D)return;}
+      ls.set('pf-vm',{url:u,clave:k});
+      const mc=vmMapCfg();const cats=Object.assign({},mc.cats||{});const v=q('vm_c').value;if(v)cats[S.cat]=v;else delete cats[S.cat];
+      await Store.put('config','vmmap',{cats,jug:mc.jug||{}});
+      closeModal();toast('Conectada');VM.tried[S.cat]=0;setTimeout(()=>vmPull(false),300);};
+    if(q('vm_off'))q('vm_off').onclick=()=>{ls.set('pf-vm',{});VM.data=null;closeModal();toast('Desconectada. Lo que ya se trajo queda.');render();};
+  });
+}
+async function openVmMap(){
+  let D;try{D=await vmFetch(false);}catch(e){toast(e.message);return;}
+  const cat=S.cat,vc=vmCatFor(cat,D);if(!vc){openVmCfg();return;}
+  const jug=sortedJug(),M=vmMatch(D,vc,cat,jug),man=(vmMapCfg().jug||{})[cat]||{};
+  const names=Object.keys(M).sort((a,b)=>(!!M[a])-(!!M[b])||a.localeCompare(b));
+  const opts=sel=>'<option value="">— sin emparejar —</option>'+jug.map(j=>'<option value="'+esc(j.id)+'"'+(sel===j.id?' selected':'')+'>'+esc(j.nombre)+'</option>').join('')+'<option value="-"'+(sel==='-'?' selected':'')+'>No está en mi plantel (no traer)</option>';
+  const b='<p class="muted" style="margin-top:0">A la izquierda, cómo figura en la app de los profes ('+esc(vc)+'). A la derecha, quién es en tu plantel. Se guarda y no lo tenés que hacer de nuevo.</p><div class="vm-map">'+
+    names.map((n,i)=>'<div class="vm-mr'+(M[n]?'':' unm')+'"><span>'+esc(n)+(man[n]===undefined&&M[n]?' <span class="tiny">auto</span>':'')+'</span><select data-vmn="'+i+'">'+opts(M[n])+'</select></div>').join('')+'</div>';
+  openModal(modalHead(catName(cat),'Emparejar nombres')+'<div class="modal-b">'+b+'</div><div class="modal-f"><div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn pri" id="vm_ms">Guardar</button></div>',mw=>{
+    mw.querySelector('#vm_ms').onclick=async()=>{
+      const mc=vmMapCfg();const all=Object.assign({},mc.jug||{});const m={};
+      mw.querySelectorAll('[data-vmn]').forEach(s=>{const n=names[+s.dataset.vmn];const auto=vmAuto(n,jug);if(s.value!==(auto||''))m[n]=s.value||null;});
+      Object.keys(m).forEach(k=>{if(m[k]===null)m[k]='';});
+      all[cat]=m;await Store.put('config','vmmap',{cats:mc.cats||{},jug:all});
+      const i=(S.cfg||[]).findIndex(x=>x.id==='vmmap');const nd={id:'vmmap',cats:mc.cats||{},jug:all};if(i>=0)S.cfg[i]=nd;else(S.cfg=S.cfg||[]).push(nd);
+      closeModal();toast('Guardado');vmPull(false);};
+  });
+}
+
 let pendingAtt=null,attTimer=null;
 function curAtt(){if(pendingAtt&&pendingAtt.fecha===S.attDate)return pendingAtt.marcas;const a=S.asis.find(x=>x.fecha===S.attDate);return a?Object.assign({},a.marcas||{}):{};}
 const MES_L=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -3053,11 +3204,11 @@ function attPerHtml(P,r,nDias){
 function vAtt(){
   if(!S.jug.length)return noPlayers();
   const P=attPer(),R=attRange(P);const nDias=R?S.asis.filter(a=>a.fecha>=R.d&&a.fecha<=R.h).length:S.asis.length;
-  const marcas=curAtt();const st=attStats(R);
+  const marcas=curAtt();const st=attStats(R);vmAutoPull();
   const recent=S.asis.map(a=>a.fecha).sort().reverse().slice(0,10);
   const daySes=sessionsOn(S.attDate).map(sesChip).join(' ');
   const cnt={P:0,A:0,J:0,L:0};Object.values(marcas).forEach(m=>{if(cnt[m]!=null)cnt[m]++;});
-  let h='<div class="grid2"><div><div class="bar"><h2>Planilla</h2><div class="grow"></div><input type="date" class="inp" id="attDate" value="'+S.attDate+'" style="width:auto"></div>'+
+  let h=vmBanner()+'<div class="grid2"><div><div class="bar"><h2>Planilla</h2><div class="grow"></div><input type="date" class="inp" id="attDate" value="'+S.attDate+'" style="width:auto"></div>'+
     '<div class="bar" style="margin-top:-4px"><span class="muted">'+esc(fmtD(S.attDate,{weekday:'long',day:'numeric',month:'long'}))+'</span> '+daySes+'<div class="grow"></div><button class="btn sm" data-act="allP">Todos presentes</button></div>'+
     '<div class="panel" style="padding:0">'+sortedJug().map(j=>{
       const cur=marcas[j.id];const inj=lesOf().some(l=>l.jugador===j.id&&activeInj(l));
@@ -4570,6 +4721,9 @@ view.addEventListener('click',e=>{
     case 'cprev':return calMove(-1);
     case 'cnext':return calMove(1);
     case 'ctoday':S.calDate=TODAY;return render();
+    case 'vmNow':VM.tried[S.cat]=0;return vmPull(true);
+    case 'vmCfg':return openVmCfg();
+    case 'vmMap':return openVmMap();
     case 'dayAtt':S.attDate=S.calDate;S.tab='asistencia';ls.set('pf-tab',S.tab);return render();
     case 'allP':{const m=Object.assign({},curAtt());S.jug.forEach(j=>{const inj=lesOf().some(l=>l.jugador===j.id&&activeInj(l));if(!m[j.id])m[j.id]=inj?'L':'P';});return queueAtt(m);}
     case 'newMatch':return openMatch(null);
