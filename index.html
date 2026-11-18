@@ -313,6 +313,7 @@ th button.linkish{background:none;border:0;padding:0;font:inherit;color:inherit;
 .seg button.on.J{background:var(--warn);color:#fff}
 .seg button.on.L{background:var(--ink-2);color:var(--surface)}
 .dates{display:flex;gap:6px;flex-wrap:wrap}
+.club-strip{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px;margin-bottom:12px;border:1px dashed var(--line);border-radius:10px;background:var(--surface);font-size:13px}
 .date-chip{border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:3px 10px;font-size:12px}
 .date-chip.on{border-color:var(--accent);color:var(--accent);font-weight:700}
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;align-items:start}
@@ -1233,7 +1234,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · día en pantalla completa</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 18 nov 2026 · asistencia del club</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -3029,8 +3030,9 @@ function vAtt(){
   const recent=S.asis.map(a=>a.fecha).sort().reverse().slice(0,10);
   const daySes=sessionsOn(S.attDate).map(sesChip).join(' ');
   const cnt={P:0,A:0,J:0,L:0};Object.values(marcas).forEach(m=>{if(cnt[m]!=null)cnt[m]++;});
-  let h='<div class="grid2"><div><div class="bar"><h2>Planilla</h2><div class="grow"></div><input type="date" class="inp" id="attDate" value="'+S.attDate+'" style="width:auto"></div>'+
-    '<div class="bar" style="margin-top:-4px"><span class="muted">'+esc(fmtD(S.attDate,{weekday:'long',day:'numeric',month:'long'}))+'</span> '+daySes+'<div class="grow"></div><button class="btn sm" data-act="allP">Todos presentes</button></div>'+
+  const fromClub=(S.asis.find(x=>x.fecha===S.attDate)||{}).club;
+  let h=clubBar()+'<div class="grid2"><div><div class="bar"><h2>Planilla</h2><div class="grow"></div><input type="date" class="inp" id="attDate" value="'+S.attDate+'" style="width:auto"></div>'+
+    '<div class="bar" style="margin-top:-4px"><span class="muted">'+esc(fmtD(S.attDate,{weekday:'long',day:'numeric',month:'long'}))+'</span> '+(fromClub&&Object.keys(fromClub).length?'<span class="pill neutral" title="Tomada en la app de los profes">📥 del club</span> ':'')+daySes+'<div class="grow"></div><button class="btn sm" data-act="allP">Todos presentes</button></div>'+
     '<div class="panel" style="padding:0">'+sortedJug().map(j=>{
       const cur=marcas[j.id];const inj=lesOf().some(l=>l.jugador===j.id&&activeInj(l));
       return '<div class="att-row"><span class="who">'+(j.dorsal?'<span class="mono muted">'+esc(j.dorsal)+'</span> ':'')+esc(j.nombre)+(inj?' <span class="pill bad" style="font-size:10.5px">lesión</span>':'')+'</span><span class="seg">'+ATT.map(a=>'<button class="'+a[0]+(cur===a[0]?' on':'')+'" data-att="'+j.id+'" data-v="'+a[0]+'" title="'+a[1]+'" aria-pressed="'+(cur===a[0])+'">'+a[0]+'</button>').join('')+'</span></div>';
@@ -3048,10 +3050,258 @@ function queueAtt(marcas){
   pendingAtt={fecha:S.attDate,marcas};render();
   clearTimeout(attTimer);
   attTimer=setTimeout(async()=>{const p=pendingAtt;if(!p)return;
-    try{await Store.put('asistencia',S.cat+'__'+p.fecha,{cat:S.cat,fecha:p.fecha,marcas:p.marcas});}catch(e){}
+    const prev=S.asis.find(x=>x.fecha===p.fecha);const doc={cat:S.cat,fecha:p.fecha,marcas:p.marcas};if(prev&&prev.club)doc.club=prev.club;
+    try{await Store.put('asistencia',S.cat+'__'+p.fecha,doc);}catch(e){}
     if(pendingAtt===p){pendingAtt=null;render();}
   },700);
 }
+
+/* ================= asistencia de la app de los profes (Villa Mitre) ================= */
+/* TrainingPro solo LEE la planilla de Google de los profes: nunca sube ni cambia nada allá.
+   La dirección y la clave quedan guardadas solo en este dispositivo (no en la nube),
+   así no las ve nadie que entre con el link de solo lectura.
+   Qué jugador es quién y qué categoría va con cuál sí queda en la nube (config/clubAsis). */
+const CLUB_CATS=['U13 A','U13 B','U13 C','U15 A','U15 B','U15 FEM','U17 A','U17 B','U17 FEM','U21 B'];
+const CLUB={busy:false,err:'',cfgOk:false,last:ls.get('pf-club-last',0),unm:ls.get('pf-club-unm',{})};
+const clubCfg=()=>ls.get('pf-club-cfg',{});
+const clubRoster=()=>ls.get('pf-club-jug',{});           /* categoría del club → {nombre:1} */
+const clubCatsAll=()=>{const o={};CLUB_CATS.concat(Object.keys(clubRoster())).forEach(c=>o[c]=1);return Object.keys(o).sort();};
+const clubMap=()=>{const c=S.cfg.find(x=>x.id==='clubAsis')||{};return {cats:c.cats||{},jug:c.jug||{}};};
+const clubCatKey=s=>normTxt(s).replace(/\bfemenin[oa]s?\b/g,'fem');
+function clubCatTo(cc,map){
+  const m=map.cats[cc];
+  if(m==='-')return null;
+  if(m&&S.cats.some(c=>c.id===m))return m;
+  const k=clubCatKey(cc);const c=S.cats.find(x=>clubCatKey(x.nombre)===k);
+  return c?c.id:null;
+}
+const sameMarks=(a,b)=>{a=a||{};b=b||{};const ka=Object.keys(a);return ka.length===Object.keys(b).length&&ka.every(k=>a[k]===b[k]);};
+/* empareja "Pérez, Juan" con "Juan Pérez": tienen que coincidir todas las partes del nombre más corto */
+function clubMatch(name,list){
+  const nt=normTxt(name).split(' ').filter(w=>w.length>1);if(!nt.length)return null;
+  const cands=list.map(j=>{
+    const jt=normTxt(j.nombre).split(' ').filter(w=>w.length>1);
+    const shared=nt.filter(w=>jt.includes(w)).length;
+    const pref=nt.filter(w=>!jt.includes(w)&&jt.some(x=>x.length>3&&w.length>3&&(x.startsWith(w)||w.startsWith(x)))).length;
+    const need=Math.min(nt.length,jt.length);
+    const ok=shared>=1&&shared+pref>=need&&(need>=2||nt.length===jt.length);
+    return {j,ok,full:shared===nt.length&&shared===jt.length?1:0,sc:shared*2+pref};
+  }).filter(c=>c.ok).sort((a,b)=>(b.full-a.full)||(b.sc-a.sc));
+  if(!cands.length)return null;
+  if(cands.length>1&&cands[0].full===cands[1].full&&cands[0].sc===cands[1].sc)return null; /* empate: mejor preguntar */
+  return cands[0].j;
+}
+/* jugador de TrainingPro para cada nombre del club (lo elegido a mano manda; si no, por nombre) */
+function clubResolve(tp,names,map,jugAll){
+  const list=jugAll.filter(j=>j.cat===tp);const saved=map.jug[tp]||{};const r={};
+  names.forEach(n=>{
+    const s=saved[n];
+    if(s==='-'){r[n]=null;return;}
+    if(s&&list.some(j=>j.id===s)){r[n]=s;return;}
+    const m=clubMatch(n,list);r[n]=m?m.id:undefined;  /* undefined = sin emparejar */
+  });
+  return r;
+}
+const unwrapV=v=>{while(v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===1&&Object.prototype.hasOwnProperty.call(v,'v'))v=v.v;return v;};
+/* lee los registros de la planilla: días de asistencia y planteles */
+function clubParse(reg,map){
+  const roster=clubRoster();const days=[];
+  Object.keys(reg).forEach(k=>{
+    const t=k.slice(0,k.indexOf('|'));if(t!=='asis'&&t!=='jug')return;
+    const rest=k.slice(t.length+1);
+    let v=unwrapV(reg[k]&&reg[k].v);
+    if(t==='jug'){
+      if(Array.isArray(v)&&v.length===1&&Array.isArray(v[0]))v=v[0];
+      if(Array.isArray(v)){const o=roster[rest]||{};v.forEach(x=>{if(x&&x.n)o[x.n]=1;});roster[rest]=o;}
+      return;
+    }
+    const p=rest.lastIndexOf('|');if(p<0)return;
+    const cc=rest.slice(0,p),fecha=rest.slice(p+1);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha))return;
+    const marks=v&&typeof v==='object'&&!Array.isArray(v)?v:null;
+    if(marks){const o=roster[cc]||{};Object.keys(marks).forEach(n=>{if(['P','A','J'].includes(marks[n]))o[n]=1;});roster[cc]=o;}
+    const tp=clubCatTo(cc,map);if(tp)days.push({cc,tp,fecha,marks});
+  });
+  ls.set('pf-club-jug',roster);
+  return days;
+}
+/* arma lo que hay que guardar en TrainingPro. Reglas:
+   - lo que marcaron en la app del club (P/A/J) manda;
+   - si en TrainingPro está como L (lesionado), queda L;
+   - si en la app del club desmarcaron a alguien, se saca acá también (solo si nadie lo cambió en TrainingPro). */
+function clubPlan(days,map,jugAll,asisAll){
+  const put={},del=[];const res={};
+  days.forEach(d=>{
+    const R=res[d.tp+'|'+d.cc]||(res[d.tp+'|'+d.cc]=clubResolve(d.tp,Object.keys(clubRoster()[d.cc]||{}),map,jugAll));
+    const id=d.tp+'__'+d.fecha;const old=asisAll[id];
+    const om=(old&&old.marcas)||{},oc=(old&&old.club)||{};
+    const club={};
+    if(d.marks)Object.keys(d.marks).forEach(n=>{const v=d.marks[n];const jid=R[n];if(jid&&['P','A','J'].includes(v))club[jid]=v;});
+    const m=Object.assign({},om);
+    Object.keys(oc).forEach(jid=>{if(!(jid in club)&&m[jid]===oc[jid])delete m[jid];});
+    Object.keys(club).forEach(jid=>{if(m[jid]!=='L')m[jid]=club[jid];});
+    if(!old&&!Object.keys(club).length)return;
+    if(old&&!Object.keys(m).length){del.push(id);return;}
+    if(old&&sameMarks(om,m)&&sameMarks(oc,club))return;
+    const nd=Object.assign({},old||{},{cat:d.tp,fecha:d.fecha,marcas:m,club});delete nd.id;
+    put[id]=nd;
+  });
+  return {put,del};
+}
+/* nombres del club que todavía no se sabe quién son, por categoría de TrainingPro */
+function clubUnmatched(map,jugAll){
+  const roster=clubRoster();const out={};
+  Object.keys(roster).forEach(cc=>{const tp=clubCatTo(cc,map);if(!tp)return;
+    const R=clubResolve(tp,Object.keys(roster[cc]),map,jugAll);
+    const u=Object.keys(R).filter(n=>R[n]===undefined);if(u.length)out[tp]=(out[tp]||[]).concat(u);});
+  return out;
+}
+/* llamada a la planilla de Google (el mismo puente que usa la app de los profes) */
+let _clubN=0;
+function clubJsonp(url,params,ms){
+  return new Promise((ok,ko)=>{
+    const cb='tpClub'+Date.now()+'_'+(_clubN++);let done=false;const sc=document.createElement('script');
+    const end=()=>{try{delete window[cb];}catch(e){window[cb]=undefined;}if(sc.parentNode)sc.parentNode.removeChild(sc);clearTimeout(t);};
+    const t=setTimeout(()=>{if(done)return;end();ko(new Error('La planilla tardó demasiado en responder'));},ms||45000);
+    window[cb]=d=>{done=true;end();ok(d);};
+    sc.onerror=()=>{if(done)return;end();ko(new Error('No se pudo llegar a la planilla. Revisá la dirección y la conexión.'));};
+    const qs=Object.keys(params).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
+    sc.src=url+(url.indexOf('?')>=0?'&':'?')+qs+'&callback='+cb;
+    document.head.appendChild(sc);
+  });
+}
+/* solo BAJA: manda "cambios" vacío, igual que el botón "Probar conexión" de la app de los profes */
+const clubFetch=(c,desde)=>clubJsonp(c.url,{clave:c.clave,autor:'TrainingPro',cambios:'{}',desde:desde||0});
+async function clubDocs(ids,full){
+  if(full)return Store.getAll('asistencia');
+  const o={};
+  if(Store.mode==='cloud'){
+    const snaps=await Promise.all(ids.map(id=>Store.fs.collection('asistencia').doc(id).get().catch(()=>null)));
+    snaps.forEach((s,i)=>{if(s&&s.exists)o[ids[i]]=s.data();});
+  } else {const c=Store.local.asistencia||{};ids.forEach(id=>{if(c[id])o[id]=clean(c[id]);});}
+  return o;
+}
+async function clubSync(silent,full){
+  if(RO||CLUB.busy)return;
+  const c=clubCfg();
+  if(!c.url||!c.clave){if(!silent)openClubCfg();return;}
+  if(Store.mode==='loading'||!S.catsLoaded||!CLUB.cfgOk){if(!silent)toast('Esperá que termine de cargar…');return;}
+  CLUB.busy=true;CLUB.err='';clubPaint();
+  if(!silent)toast('Trayendo asistencia del club…');
+  try{
+    const desde=full?0:ls.get('pf-club-ts',0);
+    const data=await clubFetch(c,desde);
+    if(!data||!data.ok)throw new Error(String((data&&data.error)||'La planilla respondió con un error').indexOf('Clave')>=0?'La clave no coincide con la de la planilla':((data&&data.error)||'La planilla respondió con un error'));
+    const map=clubMap();
+    const days=clubParse(data.registros||{},map);
+    let n=0,nb=0;
+    const jo=await Store.getAll('jugadores');
+    const jugAll=Object.keys(jo).map(id=>Object.assign({id},jo[id]));
+    if(days.length){
+      const ids=[...new Set(days.map(d=>d.tp+'__'+d.fecha))];
+      const asisAll=await clubDocs(ids,!desde);
+      const plan=clubPlan(days,map,jugAll,asisAll);
+      n=Object.keys(plan.put).length;nb=plan.del.length;
+      if(n)await Store.putMany('asistencia',plan.put);
+      for(const id of plan.del)await Store.remove('asistencia',id);
+    }
+    CLUB.unm=clubUnmatched(map,jugAll);ls.set('pf-club-unm',CLUB.unm);
+    if(data.maxTs)ls.set('pf-club-ts',data.maxTs);
+    CLUB.last=Date.now();ls.set('pf-club-last',CLUB.last);
+    const nU=Object.values(CLUB.unm).reduce((a,b)=>a+b.length,0);
+    if(!silent||n||nb)toast((n||nb?'Asistencia del club: '+(n+nb)+(n+nb===1?' día actualizado':' días actualizados'):'Asistencia del club: ya estaba todo al día')+(nU?' · '+nU+' sin emparejar':''));
+  }catch(e){CLUB.err=(e&&e.message)||String(e);if(!silent)toast('No se pudo traer: '+CLUB.err);}
+  CLUB.busy=false;clubPaint();
+}
+function clubPaint(){if(S.tab==='asistencia'&&S.view==='cat'&&!$('#mw'))render();}
+const clubAgo=t=>{if(!t)return '';const m=Math.round((Date.now()-t)/6e4);if(m<1)return 'recién';if(m<60)return 'hace '+m+' min';const d=new Date(t);return (iso(d)===TODAY?'hoy':fmtD(iso(d),{day:'numeric',month:'short'}))+' '+pad(d.getHours())+':'+pad(d.getMinutes());};
+/* franja arriba de la planilla de asistencia */
+function clubBar(){
+  if(RO)return '';
+  const c=clubCfg();
+  if(!c.url||!c.clave)return '<div class="club-strip"><span>📥 ¿Tomás asistencia en la app de los profes? Conectala y se pasa sola a TrainingPro.</span><div class="grow"></div><button class="btn sm pri" data-act="clubCfg">Conectar</button></div>';
+  const map=clubMap();const mine=clubCatsAll().filter(cc=>clubCatTo(cc,map)===S.cat);
+  const u=(CLUB.unm[S.cat]||[]).length;
+  let t;
+  if(CLUB.busy)t='Trayendo del club…';
+  else if(CLUB.err)t='<span style="color:var(--bad)">⚠ '+esc(CLUB.err)+'</span>';
+  else if(!mine.length)t='Esta categoría no se trae de la app de los profes';
+  else t='📥 Viene de la app de los profes ('+esc(mine.join(', '))+')'+(CLUB.last?' · '+esc(clubAgo(CLUB.last)):'');
+  return '<div class="club-strip"><span>'+t+'</span>'+(u?'<button class="pill warn" data-act="clubJug" style="border:0;cursor:pointer">'+u+' sin emparejar</button>':'')+
+    '<div class="grow"></div><button class="btn sm" data-act="clubSync"'+(CLUB.busy?' disabled':'')+'>🔄 Traer ahora</button><button class="btn sm ghost" data-act="clubCfg" title="Configurar">⚙</button></div>';
+}
+const clubCatOpts=sel=>'<option value="-"'+(sel?'':' selected')+'>— No traer —</option>'+S.cats.slice().sort((a,b)=>(a.orden||0)-(b.orden||0)).map(c=>'<option value="'+esc(c.id)+'"'+(c.id===sel?' selected':'')+'>'+esc(c.nombre)+'</option>').join('');
+function openClubCfg(){
+  if(RO)return roMsg();
+  const c=clubCfg(),map=clubMap();
+  let b='<div class="rut-note"><span>Usá la <b>misma dirección y clave</b> que tenés en la app de los profes (botón 🔄 Configurar sincronización). TrainingPro <b>solo lee</b> la planilla: no sube ni cambia nada de lo que cargan los demás.</span></div>'+
+    '<div class="field"><label for="cl_url">Dirección web de la planilla (termina en /exec)</label><input class="inp mono" id="cl_url" placeholder="https://script.google.com/macros/s/.../exec" value="'+esc(c.url||'')+'"></div>'+
+    '<div class="field"><label for="cl_key">Clave compartida</label><input class="inp" id="cl_key" value="'+esc(c.clave||'')+'"></div>'+
+    '<div id="cl_diag" class="tiny" style="display:none;white-space:pre-wrap"></div>'+
+    '<div class="field"><label>Qué categoría de la app de los profes va con cuál de TrainingPro</label><div class="tbl-wrap"><table><tbody>'+
+    clubCatsAll().map((cc,i)=>'<tr><td>'+esc(cc)+'</td><td><select class="inp" data-clcat="'+esc(cc)+'">'+clubCatOpts(clubCatTo(cc,map))+'</select></td></tr>').join('')+
+    '</tbody></table></div></div>'+
+    '<p class="tiny" style="margin:0">La dirección y la clave quedan guardadas solo en este dispositivo: en el celu y en la compu hay que ponerlas una vez en cada uno. Lo que marques como L (lesionado) en TrainingPro no se pisa.</p>';
+  openModal(modalHead('Asistencia del club','Conectar con la app de los profes')+'<div class="modal-b">'+b+'</div><div class="modal-f">'+(c.url?'<button class="btn" id="cl_jug">Revisar jugadores</button>':'')+'<div class="grow"></div><button class="btn" id="cl_test">🔍 Probar</button><button class="btn" data-close>Cancelar</button><button class="btn pri" id="cl_save">Guardar y traer</button></div>',mw=>{
+    const q=id=>mw.querySelector('#'+id);
+    const read=()=>({url:q('cl_url').value.trim(),clave:q('cl_key').value.trim()});
+    const diag=(t,col)=>{const d=q('cl_diag');d.style.display='block';d.style.color=col||'';d.textContent=t;};
+    q('cl_test').onclick=async()=>{
+      const v=read();
+      if(!v.url||v.url.indexOf('/exec')<0)return diag('La dirección tiene que terminar en /exec.','var(--bad)');
+      if(!v.clave)return diag('Falta la clave.','var(--bad)');
+      diag('Probando…');
+      try{const d=await clubFetch(v,0);
+        if(!d||!d.ok)return diag(String((d&&d.error)||'').indexOf('Clave')>=0?'Llegó a la planilla, pero la clave no coincide.':'La planilla respondió con un error: '+((d&&d.error)||'sin detalle'),'var(--bad)');
+        const nA=Object.keys(d.registros||{}).filter(k=>k.indexOf('asis|')===0).length;
+        diag('✓ Conecta bien. Hay '+nA+' días de asistencia en la planilla.','var(--good)');
+      }catch(e){diag(e.message||String(e),'var(--bad)');}
+    };
+    q('cl_save').onclick=async()=>{
+      const v=read();
+      if(!v.url||v.url.indexOf('/exec')<0||!v.clave)return diag('Completá la dirección (termina en /exec) y la clave.','var(--bad)');
+      ls.set('pf-club-cfg',v);
+      const cats={};mw.querySelectorAll('[data-clcat]').forEach(s=>cats[s.dataset.clcat]=s.value);
+      await Store.patch('config','clubAsis',{cats});
+      ls.set('pf-club-ts',0);closeModal();
+      setTimeout(()=>clubSync(false,true),300);
+    };
+    if(q('cl_jug'))q('cl_jug').onclick=()=>openClubJug();
+  });
+}
+/* emparejar a mano los nombres que no se reconocieron solos (o corregir uno mal emparejado) */
+async function openClubJug(){
+  if(RO)return roMsg();
+  const map=clubMap(),roster=clubRoster();
+  const jo=await Store.getAll('jugadores');const jugAll=Object.keys(jo).map(id=>Object.assign({id},jo[id]));
+  const groups=[];
+  Object.keys(roster).sort().forEach(cc=>{const tp=clubCatTo(cc,map);if(!tp)return;
+    const R=clubResolve(tp,Object.keys(roster[cc]),map,jugAll);
+    const list=jugAll.filter(j=>j.cat===tp).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+    const names=Object.keys(R).sort((a,b)=>((R[a]===undefined?0:1)-(R[b]===undefined?0:1))||a.localeCompare(b));
+    groups.push({cc,tp,R,list,names});});
+  if(!groups.length){toast('Primero traé la asistencia del club');return;}
+  const tpName=id=>(S.cats.find(c=>c.id===id)||{}).nombre||id;
+  let b='<p class="tiny" style="margin:0 0 6px">A la izquierda, cómo figura en la app de los profes. A la derecha, quién es en TrainingPro. Los que dicen <b>sin emparejar</b> no se pasan hasta que los elijas.</p>';
+  groups.forEach(g=>{
+    b+='<div class="field"><label>'+esc(g.cc)+' → '+esc(tpName(g.tp))+'</label><div class="tbl-wrap"><table><tbody>'+g.names.map(n=>{
+      const v=g.R[n];
+      return '<tr><td>'+esc(n)+(v===undefined?' <span class="pill warn">sin emparejar</span>':'')+'</td><td><select class="inp" data-cljtp="'+esc(g.tp)+'" data-cljn="'+esc(n)+'"><option value=""'+(v===undefined?' selected':'')+'>— Elegí —</option>'+
+        g.list.map(j=>'<option value="'+esc(j.id)+'"'+(v===j.id?' selected':'')+'>'+esc(j.nombre)+'</option>').join('')+'<option value="-"'+(v===null?' selected':'')+'>No está en TrainingPro (ignorar)</option></select></td></tr>';}).join('')+'</tbody></table></div></div>';
+  });
+  openModal(modalHead('Asistencia del club','Emparejar jugadores')+'<div class="modal-b">'+b+'</div><div class="modal-f"><div class="grow"></div><button class="btn" data-close>Cancelar</button><button class="btn pri" id="clj_save">Guardar y traer</button></div>',mw=>{
+    mw.querySelector('#clj_save').onclick=async()=>{
+      const jug=JSON.parse(JSON.stringify(map.jug||{}));
+      mw.querySelectorAll('[data-cljtp]').forEach(s=>{const tp=s.dataset.cljtp,n=s.dataset.cljn;jug[tp]=jug[tp]||{};if(s.value)jug[tp][n]=s.value;else delete jug[tp][n];});
+      await Store.patch('config','clubAsis',{jug});
+      ls.set('pf-club-ts',0);closeModal();
+      setTimeout(()=>clubSync(false,true),300);
+    };
+  });
+}
+/* se trae sola al abrir la app y cuando volvés a ella (si pasaron más de 15 min) */
+function clubAuto(){if(RO||!clubCfg().url)return;if(Date.now()-CLUB.last<15*6e4)return;clubSync(true);}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')clubAuto();});
 
 /* ================= partidos ================= */
 function vMatches(){
@@ -4509,7 +4759,7 @@ view.addEventListener('click',e=>{
   const d=t.dataset;
   if(d.ficha)return openFicha(d.ficha);
   if(RO){
-    if(d.att||d.asig||d.asignew||d.asigend||d.rutdup||d.tesmode||d.atl||['allP','newMatch','newTest','newInj','editIdeal','testList','newRut','newRutInd','newRutHere','newAsig','newInd','atlLink'].includes(d.act))return roMsg();
+    if(d.att||d.asig||d.asignew||d.asigend||d.rutdup||d.tesmode||d.atl||['allP','clubSync','clubCfg','clubJug','newMatch','newTest','newInj','editIdeal','testList','newRut','newRutInd','newRutHere','newAsig','newInd','atlLink'].includes(d.act))return roMsg();
     if(d.day){S.daySi=d.si!=null?+d.si:0;S.dayEdit=null;return openDay(d.day,d.tipo||undefined,false);}
   }
   if(d.rutarch)return archRut(d.rutarch,d.v==='1');
@@ -4542,6 +4792,9 @@ view.addEventListener('click',e=>{
     case 'cprev':return calMove(-1);
     case 'cnext':return calMove(1);
     case 'ctoday':S.calDate=TODAY;return render();
+    case 'clubSync':return clubSync(false);
+    case 'clubCfg':return openClubCfg();
+    case 'clubJug':return openClubJug();
     case 'dayAtt':S.attDate=S.calDate;S.tab='asistencia';ls.set('pf-tab',S.tab);return render();
     case 'allP':{const m=Object.assign({},curAtt());S.jug.forEach(j=>{const inj=lesOf().some(l=>l.jugador===j.id&&activeInj(l));if(!m[j.id])m[j.id]=inj?'L':'P';});return queueAtt(m);}
     case 'newMatch':return openMatch(null);
@@ -5323,7 +5576,7 @@ function startData(){
   Store.watch('asignaciones',null,null,a=>{S.asigAll=a.filter(x=>!x.dif&&!x.oculta);S.asigDif=a.filter(x=>x.dif);S.asigCal=a.filter(x=>x.oculta);render();trabSync();});
   Store.watch('ideales',null,null,a=>{S.ideales=a;render();});
   Store.watch('testeosLista',null,null,a=>{S.testList=a;render();});
-  Store.watch('config',null,null,a=>{S.cfg=a;renderNav();avPaint();});
+  Store.watch('config',null,null,a=>{S.cfg=a;renderNav();avPaint();if(!CLUB.cfgOk){CLUB.cfgOk=true;setTimeout(clubAuto,2500);}});
   if(!RO)Store.watch('registrosAtletas','cat','pers',a=>{S.pAtl=a.filter(d=>!d.baja);renderNav();avPaint();if(S.cat==='pers'&&S.view==='cat'&&!$('#mw'))render();});
   /* agenda: lo de hoy y mañana de TODAS las categorías */
   Store.watch('sesiones','fecha',TODAY,a=>{S.sesHoy=a;renderAgenda();});
