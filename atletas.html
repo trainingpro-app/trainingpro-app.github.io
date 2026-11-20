@@ -237,6 +237,21 @@ body.has-wa .wrap{padding-bottom:90px}
 .an-last{flex-basis:100%;font-size:12px;color:var(--ink-3,#7A847D)}
 .reg.on{background:var(--accent,#00963E);color:#fff;border-color:var(--accent,#00963E)}
 .me-slim{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+.fi-i{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);background:transparent;font:700 12px Georgia,serif;display:inline-grid;place-items:center;padding:0;vertical-align:middle;margin-left:4px;cursor:pointer}
+.ex-sw{display:block;color:var(--warn);font-style:normal;font-size:11.5px;font-weight:700}
+.fi-pop-w{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+@media(min-width:600px){.fi-pop-w{align-items:center}}
+.fi-pop{position:relative;background:var(--surface);color:var(--ink);border-radius:16px;max-width:440px;width:100%;max-height:85vh;overflow:auto;padding:18px 16px 16px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.fi-pop h3{margin:0 36px 12px 0;font-size:20px;text-transform:uppercase;letter-spacing:.02em}
+.fi-x{position:absolute;right:8px;top:8px;border:0;background:none;color:var(--ink-2);font-size:18px;width:36px;height:36px;border-radius:8px}
+.fi-feel{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-weight:600;font-size:15px}
+.fi-feel small{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.fi-sec{margin-top:12px}.fi-l{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.fi-sec ul{margin:4px 0 0;padding-left:18px}.fi-sec li{margin:3px 0}
+.fi-err li::marker{content:'✕  ';color:var(--bad)}
+.fi-no{margin-top:12px;background:var(--warn-soft);color:var(--ink);border-radius:10px;padding:8px 12px;font-size:13.5px}
+.fi-vid{margin-top:12px}
 </style>
 </head>
 <body>
@@ -256,6 +271,7 @@ const FIREBASE_CONFIG = {
   appId: "1:703419944880:web:2d58355ecf71cd11365075"
 };
 </script>
+<script src="fichas.js"></script>
 <script>
 (function(){
 "use strict";
@@ -378,6 +394,22 @@ function toast(m){$('#troot').innerHTML='<div class="toast">'+esc(m)+'</div>';cl
 
 /* ---------- datos (solo lectura): categorías, rutinas y asignaciones ---------- */
 const D={cats:[],rut:[],asig:[],ready:{c:0,r:0,a:0}};
+/* ---------- ficha técnica del ejercicio (la ⓘ) ---------- */
+function atFicha(n){if(!window.TPF||!n)return null;const d=D.fov||{};return TPF.find(n,{ed:d.ed||{},link:d.link||{}});}
+function atFi(e){return atFicha(e.n)?' <button type="button" class="fi-i" data-fiq="'+esc(e.n)+'" data-fil="'+esc(e.link||'')+'" aria-label="Cómo se hace '+esc(e.n)+'">i</button>':'';}
+function atFiPop(n,link){const f=atFicha(n);if(!f)return;const o=document.getElementById('fiPop');if(o)o.remove();
+  const w=document.createElement('div');w.id='fiPop';w.className='fi-pop-w';const mo=TPF.molestia(f);
+  w.innerHTML='<div class="fi-pop" role="dialog" aria-modal="true"><button type="button" class="fi-x" data-fix aria-label="Cerrar">✕</button><h3>'+esc(n)+'</h3>'+
+    '<div class="fi-feel"><small>📍 Dónde lo tenés que sentir</small>'+esc(f.s)+'</div>'+
+    (f.c&&f.c.length?'<div class="fi-sec"><span class="fi-l">Cómo hacerlo bien</span><ul>'+f.c.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'')+
+    (f.e&&f.e.length?'<div class="fi-sec fi-err"><span class="fi-l">Lo que no tenés que hacer</span><ul>'+f.e.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'')+
+    (mo?'<div class="fi-no">⚠ '+esc(mo)+'</div>':'')+
+    (link?'<div class="fi-vid">'+vidBtn(link)+'</div>':'')+'</div>';
+  document.body.appendChild(w);
+  w.addEventListener('click',e=>{if(e.target===w||e.target.closest('[data-fix]'))w.remove();else if(e.target.closest('[data-vplay]'))setTimeout(()=>w.remove(),0);});
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-fiq]');if(!b)return;e.preventDefault();e.stopPropagation();atFiPop(b.dataset.fiq,b.dataset.fil);},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const o=document.getElementById('fiPop');if(o)o.remove();}});
 function watch(coll,cb){
   if(window.firebase&&FIREBASE_CONFIG.apiKey){
     return firebase.firestore().collection(coll).onSnapshot(s=>cb(s.docs.map(d=>Object.assign({id:d.id},d.data()))),e=>{console.warn(e);$('#app').innerHTML='<div class="empty"><b>No se pudo conectar</b>Revisá tu conexión e intentá de nuevo.</div>';});
@@ -541,11 +573,13 @@ function rutView(c){
   const rd=resolveDay(d,st.week);
   if(rd.objetivo||rd.md)h+='<div class="sec"><span class="lbl">Objetivo</span><b>'+esc([rd.md,rd.objetivo].filter(Boolean).join(' · '))+'</b></div>';
   if(rd.calor)h+='<div class="sec card"><span class="lbl">Entrada en calor</span><div class="txt">'+esc(rd.calor)+'</div></div>';
-  const bl=toBloques(rd,r.tipo).filter(b=>(b.ejercicios||[]).some(e=>e.n));
+  /* cambios individuales: la profe le cambió un ejercicio solo a este jugador */
+  const CH={};(pick.cambios||[]).forEach(c=>{if(me&&(c.uids||[]).includes(me))CH[c.de]=c.a;});
+  const bl=toBloques(rd,r.tipo).filter(b=>(b.ejercicios||[]).some(e=>e.n)).map(b=>Object.assign({},b,{ejercicios:(b.ejercicios||[]).map(e=>{const k=window.TPF&&e.n?TPF.norm(e.n):'';return k&&CH[k]?Object.assign({},e,{n:CH[k],link:'',sw:1}):e;})}));
   bl.forEach((b,bi)=>{const L=String.fromCharCode(65+bi);
     h+='<div class="blk"><div class="blk-h"><span class="blk-l '+r.tipo+'">'+L+'</span><span class="blk-n">'+esc(b.nombre||('Bloque '+(bi+1)))+'</span>'+(b.series?'<span class="blk-s">'+esc(b.series)+' series</span>':'')+'</div>'+
       (b.nota?'<div class="blk-nota">'+esc(b.nota)+'</div>':'')+
-      (b.ejercicios||[]).filter(e=>e.n).map((e,ei)=>'<div class="ex"><span class="ex-i">'+L+(ei+1)+'</span><span class="ex-n">'+esc(e.n)+(e.obs?'<i>'+esc(e.obs)+'</i>':'')+'</span>'+
+      (b.ejercicios||[]).filter(e=>e.n).map((e,ei)=>'<div class="ex"><span class="ex-i">'+L+(ei+1)+'</span><span class="ex-n">'+esc(e.n)+atFi(e)+(e.sw?'<i class="ex-sw">Cambiado para vos</i>':'')+(e.obs?'<i>'+esc(e.obs)+'</i>':'')+'</span>'+
         '<span class="ex-p'+(e.progW?' chg':'')+'">'+presHtml(e,b)+'</span>'+
         '<span class="ex-a">'+(e.c?'<span class="ex-c">'+esc(e.c)+'</span>':'')+(e.link?vidBtn(e.link):'')+'<button class="reg'+(st.anEx===L+(ei+1)?' on':'')+'" data-regex="'+esc(e.n)+'" data-anid="'+L+(ei+1)+'">+ Anotar mi peso</button>'+(isPersC(c)?'<button class="reg mol-b" data-mol="'+esc(e.n)+'">🤕 Molestia</button>':'')+'</span></div>'+(st.anEx===L+(ei+1)?anForm(e):'')).join('')+'</div>';});
   if(rd.principal)h+='<div class="sec card"><span class="lbl">Parte principal</span><div class="txt">'+esc(rd.principal)+'</div></div>';
@@ -885,7 +919,7 @@ if(!FB()){try{const L=ls.get('pfclub-local',{});bajaCheck((L.registrosAtletas||{
 const fromHash=decodeURIComponent((location.hash||'').slice(1));
 st.cat=LOCK||(fromHash==='todas'?'':fromHash)||(fromHash==='todas'?null:ls.get('pfat-cat',''))||null;
 watch('categorias',a=>{D.cats=a;D.ready.c=1;render();});
-watch('rutinas',a=>{D.rut=a;D.ready.r=1;render();});
+watch('rutinas',a=>{D.fov=a.find(r=>r.id==='tp_fichas')||null;a=a.filter(r=>r.id!=='tp_fichas');D.rut=a;D.ready.r=1;render();});
 watch('asignaciones',a=>{D.asig=a;D.ready.a=1;render();});
 window.addEventListener('hashchange',()=>{if(LOCK)return;const h=decodeURIComponent(location.hash.slice(1));if(h&&h!==st.cat)go(h);});
 })();

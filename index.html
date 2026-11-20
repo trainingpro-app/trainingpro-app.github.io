@@ -1215,6 +1215,38 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 @media (max-width:600px){.p1-g{grid-template-columns:1fr}}
 .att-per{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-2px 0 4px}.att-per .inp{width:auto;min-width:0}.att-per-n{display:inline-flex;gap:6px;align-items:center;font-size:13px}.att-per-n input[type=number]{width:70px}.att-per-t{margin:0 0 8px}
 .vm-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px;margin-bottom:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:13px}.vm-bar>span{flex:1 1 220px}.vm-bar.off{border-style:dashed}.vm-bar.bad{border-color:var(--bad)}.vm-unm{flex-basis:100%;font-size:12.5px;color:var(--warn)}.vm-map{display:grid;gap:6px}.vm-mr{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}.vm-mr.unm>span{color:var(--warn);font-weight:600}.vm-mr select{width:100%}@media(max-width:560px){.vm-mr{grid-template-columns:1fr}}
+
+/* fichas técnicas */
+.exr .ex-n{padding-right:58px}
+.exr .ex-fi{position:absolute;right:32px;top:50%;transform:translateY(-50%)}
+.ex-fi,.fi-i{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);background:var(--surface);font:700 12px Georgia,serif;display:inline-grid;place-items:center;padding:0;cursor:pointer;vertical-align:middle;flex:none}
+.ex-fi[hidden]{display:none}
+.fi-i{margin-left:6px}
+.ex-fi:hover,.fi-i:hover{background:var(--accent);color:var(--accent-ink)}
+.fi-pop-w{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.35);display:grid;place-items:center;padding:16px}
+.fi-pop{position:relative;background:var(--surface);color:var(--ink);border-radius:14px;max-width:440px;width:100%;max-height:calc(100vh - 32px);overflow:auto;padding:18px 18px 16px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.fi-pop h3{margin:2px 34px 10px 0;font-family:var(--f-disp);font-size:22px;letter-spacing:.02em}
+.fi-x{position:absolute;right:10px;top:10px;border:0;background:none;font-size:18px;color:var(--ink-2);width:32px;height:32px;border-radius:8px}
+.fi-feel{background:var(--accent-soft);border-radius:9px;padding:8px 11px;font-weight:600}
+.fi-sec{margin:10px 0 0}.fi-sec ul{margin:4px 0 0;padding-left:18px}.fi-sec li{margin:2px 0}
+.fi-err li::marker{content:'✕  ';color:var(--bad)}
+.fi-no{margin-top:10px;background:var(--bad-soft);color:var(--bad);border-radius:9px;padding:7px 11px;font-size:13px;font-weight:600}
+.fi-tip{margin-top:10px;font-size:13px;color:var(--ink-2)}
+.fi-vers{margin-top:10px}
+.fi-sw{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.fi-chs,.fi-solo{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.fi-pop [data-fisolo]{margin-top:12px}
+.ch-warn{border:1.5px solid var(--warn);background:var(--warn-soft);border-radius:12px;padding:12px 14px;margin:0 0 14px}
+.ch-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border-radius:9px;padding:8px 10px;margin-top:8px}
+.ch-who{flex:1 1 220px}
+.ch-list{margin:0 0 14px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface)}
+.ch-list summary{cursor:pointer;font-weight:600}
+.ch-it{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid var(--line);font-size:13px}
+.ch-mark{display:block;font-size:12px;color:var(--warn);font-weight:600;margin-top:2px}
+.fi-ed{border-top:1px dashed var(--line);margin-top:14px;padding-top:12px}
+.fi-ed h3{margin:0 0 2px}
+.fi-in{display:block;width:100%;margin-bottom:6px}
+.ej-chip.fz.on{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
 </style>
 </head>
 <body>
@@ -1235,7 +1267,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · asistencia desde la app de los profes</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · fichas técnicas de ejercicios</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1286,6 +1318,7 @@ const FIREBASE_CONFIG = {
   appId: "1:703419944880:web:2d58355ecf71cd11365075"
 };
 </script>
+<script src="fichas.js"></script>
 <script>
 (function(){
 "use strict";
@@ -1532,7 +1565,7 @@ function selectCat(id){
     /* DNIs y registros de atletas: solo vos (nunca en el link de solo lectura) */
     if(!RO)catUnsubs.push(
       Store.watch('dnis','cat',id,a=>{S.dni=a;render();}),
-      Store.watch('registrosAtletas','cat',id,a=>{S.atl=a.filter(d=>!d.baja).map(atlNorm);render();difUidsCheck();trabSync();}));
+      Store.watch('registrosAtletas','cat',id,a=>{S.atl=a.filter(d=>!d.baja).map(atlNorm);render();difUidsCheck();trabSync();cambiosSync();}));
   }
   renderNav();render();
 }
@@ -1801,7 +1834,7 @@ function exRowHtml(e,blkSeries){
   const link=e.link||'';
   const G=!e.n&&e.g?' data-g="'+esc(e.g)+'" data-gej="'+esc(e.gej||'')+'"':'';
   return '<div class="exr" data-dist="'+(dist?1:0)+'"'+(e.isrc?' data-isrc="'+esc(e.isrc)+'"':'')+G+'><button type="button" class="ex-drag" aria-label="Mover ejercicio (arrastrá, o usá las flechas arriba/abajo)" title="Arrastrá para cambiar el orden">⠿</button>'+
-    '<div class="cb"><input class="ex-n'+(G?' pg-ph':'')+'" aria-label="Ejercicio" placeholder="'+(G?esc('✎ '+e.g):'Ejercicio')+'" value="'+esc(e.n||'')+'" autocomplete="off" role="combobox" aria-expanded="false"><button type="button" class="cb-arr" tabindex="-1" aria-label="Ver todos los ejercicios">▾</button></div>'+
+    '<div class="cb"><input class="ex-n'+(G?' pg-ph':'')+'" aria-label="Ejercicio" placeholder="'+(G?esc('✎ '+e.g):'Ejercicio')+'" value="'+esc(e.n||'')+'" autocomplete="off" role="combobox" aria-expanded="false"><button type="button" class="cb-arr" tabindex="-1" aria-label="Ver todos los ejercicios">▾</button><button type="button" class="ex-fi" data-fiq="" tabindex="-1" title="Ficha técnica"'+(fichaOf(e.n)?'':' hidden')+'>i</button></div>'+
     '<button type="button" class="ex-lk'+(link?' on':'')+'" title="'+(link?'Tiene video: tocá para ver o cambiar el link':'Agregar link de video (YouTube o Drive)')+'" aria-label="Link de video"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>'+
     '<input class="ex-o" aria-label="Observación del ejercicio" placeholder="'+(G&&e.gej?esc(e.gej):'Observaciones (opcional)')+'" title=""Notita del ejercicio: ej. control al bajar, pausa abajo…" value="'+esc(e.obs||'')+'">'+
     '<input class="ex-s" type="number" min="1" max="12" inputmode="numeric" aria-label="Series" title="Series (vacío = las del bloque)" placeholder="'+esc(blkSeries||'Ser.')+'" value="'+esc(e.series||'')+'">'+
@@ -2356,7 +2389,7 @@ function fichaHtml(s,tipo,fecha,rut){
       const ej=(b.ejercicios||[]).filter(e=>e.n);
       return '<div class="f-blk"><div class="f-blk-h"><span class="f-blk-l">'+L+'</span><span class="f-blk-n">'+esc(b.nombre||('Bloque '+(bi+1)))+'</span>'+(b.obj&&OBJS[b.obj]?'<span class="f-blk-o">'+esc(OBJS[b.obj].t)+'</span>':'')+(b.series?'<span class="f-blk-s">'+esc(b.series)+' series</span>':'')+'</div>'+
         (b.nota?'<div class="f-blk-nota">'+esc(b.nota)+'</div>':'')+
-        ej.map((e,ei)=>'<div class="f-ex"><span class="f-ex-i">'+L+(ei+1)+'</span><span class="f-ex-n">'+(RO||!ATLCTX?esc(e.n):'<button type="button" class="atlex-b" data-atlex="'+esc(e.n)+'">'+esc(e.n)+atlBadge(e.n)+'</button>')+
+        ej.map((e,ei)=>'<div class="f-ex"><span class="f-ex-i">'+L+(ei+1)+'</span><span class="f-ex-n">'+(RO||!ATLCTX?esc(e.n):'<button type="button" class="atlex-b" data-atlex="'+esc(e.n)+'">'+esc(e.n)+atlBadge(e.n)+'</button>')+fiBtn(e.n,ATLCTX&&ATLCTX.aid)+cambMark(e.n)+
           (()=>{const lk=e.link||libLinkOf(e.n);return lk?' '+vidBtn(lk):'';})()+(e.obs?'<i class="f-ex-obs">'+esc(e.obs)+'</i>':'')+'</span>'+
           '<span class="f-ex-p'+(e.progW?' prog':'')+'"'+(e.progW?' title="Cambia esta semana"':'')+'>'+prescripcion(e,b)+'</span><span class="f-ex-c">'+(e.c?esc(e.c):'')+(fecha&&parseLoad(e.c)?'<button type="button" class="ld-btn" data-loads="'+bi+':'+ei+'" data-lday="'+fecha+'" data-ltipo="'+tipo+'">kg por jugador</button>':'')+'</span></div>').join('')+
       '</div>';
@@ -2598,7 +2631,7 @@ async function migrateRutinas(){
 function vRut(){
   const mine=asigOfCat(S.cat);
   let h='<div class="bar"><div class="grow"></div><button class="btn" data-act="atlLink">Link para los atletas</button><button class="btn" data-act="goLib">Ver biblioteca</button><button class="btn pri" data-act="newAsig">+ Asignar rutina</button></div>'+
-    '<p class="tiny" style="margin:-6px 0 12px">Las rutinas se cargan en la <b>biblioteca</b> (menú lateral) y se asignan a una o varias categorías, cada una con sus días y horarios.</p>';
+    '<p class="tiny" style="margin:-6px 0 12px">Las rutinas se cargan en la <b>biblioteca</b> (menú lateral) y se asignan a una o varias categorías, cada una con sus días y horarios.</p>'+choqueHtml();
   const side=vRutInd();
   if(S.rvInl&&S.rvInl.cat===S.cat&&rutById(S.rvInl.id))return vRutInline();
   if(S.cat===PERS)return '<div class="bar"><div class="grow"></div><button class="btn" data-act="goLib">Ver biblioteca</button></div><p class="tiny" style="margin:-6px 0 12px">Cada alumno tiene su rutina. Se la asignás desde su ficha o acá con <b>+ Rutina individual</b>.</p>'+side;
@@ -2714,6 +2747,7 @@ function prevOpts(r0,after,nombre){
 }
 function prevRange(rid){const L=S.asigAll.filter(a=>a.rutina===rid&&a.desde).sort((a,b)=>(b.desde||'').localeCompare(a.desde||''));const a=L[0];return a?ddShort(a.desde)+(a.hasta?' → '+ddShort(a.hasta):''):'';}
 function openRut(id,preset,after){
+  FI_RID=id||'';
   const r0=id?rutById(id):null;
   let r=r0||preset||{nombre:'',tipo:'gym',semanas:4};
   const isNew=!r0;const isTpl=!!(r0?r0.plantilla:(preset&&preset.plantilla));
@@ -3022,6 +3056,152 @@ async function endAsig(id){
   await Store.put('asignaciones',id,d);toast('Finalizada: desde mañana ya no aparece en el calendario');
 }
 
+/* ================= fichas técnicas (técnica de cada ejercicio) =================
+   Las fichas base vienen en fichas.js. Lo que la PF edita queda en rutinas/tp_fichas
+   (así la app de los atletas lo puede leer sin tocar reglas). */
+const FI_DOC='tp_fichas';
+function FOV(){const d=S.fichasDoc||{};return {ed:d.ed||{},link:d.link||{}};}
+function fichaOf(n){return window.TPF&&n?TPF.find(n,FOV()):null;}
+const FZ_INJ={'Isquiotibiales':{ids:['8.17','8.18','8.21','8.22','8.23','8.24','8.25','8.27']},'Cuádriceps':{ids:['8.01','8.02','8.05','8.06','8.08','8.10','8.12','8.13','8.14','8.42']},
+  'Aductores':{z:['cadera'],ids:['8.16','8.19','8.44']},'Gemelos / sóleo':{z:['tobillo'],ids:['8.37','8.38','8.39','8.42']},'Tobillo':{z:['tobillo']},'Rodilla':{z:['rodilla']},
+  'Cadera / pubis':{z:['cadera']},'Lumbar':{z:['lumbar']},'Hombro':{z:['hombro']},'Muñeca / mano':{z:['muneca']}};
+function fichaChoca(f,zona){const m=FZ_INJ[zona];if(!f||!m)return false;return (m.z||[]).some(z=>(f.z||[]).includes(z))||(m.ids||[]).includes(f.id);}
+function cambMark(n){const aid=ATLCTX&&ATLCTX.aid;if(!aid||!window.TPF)return '';const a=S.asigAll.find(x=>x.id===aid);const cs=cambiosOf(a,n);return cs.length?'<span class="ch-mark">'+cs.map(c=>'↔ '+esc(jugName(c.jid)||'Jugador')+': '+esc(c.a)).join(' · ')+'</span>':'';}
+function fiBtn(n,aid){return fichaOf(n)?'<button type="button" class="fi-i" data-fiq="'+esc(n)+'"'+(aid?' data-fia="'+esc(aid)+'"':'')+' title="Ficha técnica" aria-label="Ficha técnica de '+esc(n)+'">i</button>':'';}
+async function fichasSave(ed,link){const d={tpFichas:true,ed:ed||{},link:link||{}};S.fichasDoc=Object.assign({id:FI_DOC},d);await Store.put('rutinas',FI_DOC,d);}
+/* ---- cambios individuales: un ejercicio distinto solo para un jugador ---- */
+function cambiosOf(a,n){const k=TPF.norm(n);return (a&&a.cambios||[]).filter(c=>c.de===k);}
+async function addCambio(aid,jid,de,nuevo){
+  const a=S.asigAll.find(x=>x.id===aid);if(!a||!jid||!nuevo)return;
+  const k=TPF.norm(de),les=S.lesAll.find(l=>l.jugador===jid&&activeInj(l));
+  const list=(a.cambios||[]).filter(c=>!(c.jid===jid&&c.de===k));
+  list.push({jid,uids:a.cat===S.cat?uidsOfJ([jid]):[],de:k,deN:String(de).toLocaleUpperCase('es'),a:String(nuevo).trim().toLocaleUpperCase('es'),les:les?les.id:'',t:Date.now()});
+  a.cambios=list;await Store.patch('asignaciones',aid,{cambios:list});
+}
+async function rmCambio(aid,i){const a=S.asigAll.find(x=>x.id===aid);if(!a)return;const list=(a.cambios||[]).slice();list.splice(i,1);a.cambios=list;await Store.patch('asignaciones',aid,{cambios:list});}
+/* se borran solos al dar el alta; y se actualizan los celulares del jugador */
+function cambiosSync(){
+  if(RO||!S.lesLoaded)return;
+  S.asigAll.filter(a=>a.cat===S.cat&&(a.cambios||[]).length).forEach(a=>{
+    let ch=false;const list=[];
+    a.cambios.forEach(c=>{if(c.les){const l=S.lesAll.find(x=>x.id===c.les);if(!l||!activeInj(l)){ch=true;return;}}
+      const u=S.atl?uidsOfJ([c.jid]):(c.uids||[]);if(S.atl&&JSON.stringify(u)!==JSON.stringify((c.uids||[]).slice().sort())){ch=true;c=Object.assign({},c,{uids:u});}list.push(c);});
+    if(ch){a.cambios=list;Store.patch('asignaciones',a.id,{cambios:list});}
+  });
+}
+function rutExNames(r){const s=new Set(),out=[];rutDays(r).forEach(d=>(toBloques(d,r.tipo)||[]).forEach(b=>(b.ejercicios||[]).forEach(e=>{if(e.n&&!s.has(TPF.norm(e.n))){s.add(TPF.norm(e.n));out.push(e.n);}})));return out;}
+/* aviso: jugadores con lesión activa que chocan con la rutina de la categoría */
+function choqueHtml(){
+  if(RO||!window.TPF||S.cat===PERS)return '';
+  const act=asigOfCat(S.cat).filter(a=>asigState(a)!=='fin'&&rutById(a.rutina));const inj=lesOf().filter(activeInj);
+  let rows='';
+  inj.forEach(l=>act.forEach(a=>{const r=rutById(a.rutina);const ign=a.ignorar||[];
+    const hits=rutExNames(r).filter(n=>{const f=fichaOf(n);return fichaChoca(f,l.zona)&&!cambiosOf(a,n).some(c=>c.jid===l.jugador)&&!ign.includes(l.jugador+'|'+TPF.norm(n));});
+    if(!hits.length)return;
+    rows+='<div class="ch-row"><span class="ch-who"><b>'+esc(jugName(l.jugador))+'</b> · '+esc(l.zona||'lesión')+(l.tipo?' ('+esc(l.tipo)+')':'')+'<br><span class="tiny">'+esc(r.nombre)+': '+hits.map(n=>esc(n)).join(' · ')+'</span></span>'+
+      '<button class="btn sm" data-chfa="'+esc(a.id)+'" data-chj="'+esc(l.jugador)+'" data-chn="'+esc(JSON.stringify(hits))+'">Ponerle la versión fácil</button><button class="btn sm ghost" data-chig="'+esc(a.id)+'" data-chj="'+esc(l.jugador)+'" data-chn="'+esc(JSON.stringify(hits))+'">Dejar igual</button></div>';}));
+  let h=rows?'<div class="ch-warn"><b>⚠ Hay jugadores con lesión activa que chocan con la rutina</b>'+rows+'<p class="tiny" style="margin:6px 0 0">La versión fácil se le cambia solo a ese jugador; el resto sigue igual. Se saca sola cuando le das el alta.</p></div>':'';
+  const ch=[];act.forEach(a=>(a.cambios||[]).forEach((c,i)=>ch.push({a,c,i})));
+  if(ch.length)h+='<details class="ch-list"><summary>↔ Cambios individuales ('+ch.length+')</summary>'+ch.map(x=>'<div class="ch-it"><span><b>'+esc(jugName(x.c.jid)||'Jugador')+'</b>: '+esc(x.c.deN||x.c.de)+' → <b>'+esc(x.c.a)+'</b> <span class="tiny">'+(x.c.les?'hasta el alta':'hasta que lo saques')+' · '+esc(rutById(x.a.rutina).nombre)+'</span></span><button class="btn sm ghost" data-chrm="'+esc(x.a.id)+'" data-chi="'+x.i+'">Quitar</button></div>').join('')+'</details>';
+  return h;
+}
+const ZL_ORD=['lumbar','rodilla','hombro','codo','muneca','cadera','tobillo','cuello'];
+/* ventana con la ficha (no usa openModal para no cerrar el editor que esté abierto) */
+async function fichaPop(name,ctx){
+  ctx=ctx||{};const f=fichaOf(name);if(!f)return;
+  const old=document.getElementById('fiPop');if(old)old.remove();
+  const w=document.createElement('div');w.id='fiPop';w.className='fi-pop-w';
+  let cands=[];
+  if(!RO){const as=ctx.aid?S.asigAll.filter(a=>a.id===ctx.aid):ctx.rid?S.asigAll.filter(a=>a.rutina===ctx.rid&&asigState(a)!=='fin'):[];
+    cands=as.filter(a=>a.cat!==PERS);}
+  let jugs=null;
+  const loadJ=async()=>{if(jugs)return jugs;let all=S.jugAll;if(!all){try{all=await Store.getAll('jugadores');S.jugAll=all;}catch(e){all={};}}
+    jugs=[];cands.forEach(a=>Object.keys(all||{}).forEach(id=>{const j=all[id];if(j&&j.cat===a.cat)jugs.push({id,nombre:j.nombre,cat:a.cat,aid:a.id,les:S.lesAll.some(l=>l.jugador===id&&activeInj(l))});}));
+    jugs.sort((x,y)=>(y.les-x.les)||String(x.nombre).localeCompare(String(y.nombre),'es'));return jugs;};
+  const zl=(f.z||[]).map(z=>(TPF.Z[z]||z).toLowerCase());
+  const draw=(swap)=>{
+    const chs=[];cands.forEach(a=>cambiosOf(a,name).forEach(c=>chs.push({a,c,i:a.cambios.indexOf(c)})));
+    let h='<div class="fi-pop" role="dialog" aria-modal="true"><button type="button" class="fi-x" data-fix aria-label="Cerrar">✕</button>'+
+      '<div class="eyebrow">Ficha técnica'+(f.propia?' · editada por vos':'')+'</div><h3>'+esc(String(name).toLocaleUpperCase('es'))+'</h3>'+
+      '<div class="fi-feel">📍 '+esc(f.s)+'</div>'+
+      (f.c&&f.c.length?'<div class="fi-sec"><span class="lbl">Claves</span><ul>'+f.c.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'')+
+      (f.e&&f.e.length?'<div class="fi-sec fi-err"><span class="lbl">Errores típicos</span><ul>'+f.e.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'')+
+      (zl.length?'<div class="fi-no">No conviene con molestia en '+esc(zl.length>1?zl.slice(0,-1).join(', ')+' o '+zl[zl.length-1]:zl[0])+'</div>':'')+
+      (f.t?'<div class="fi-tip">💡 '+esc(f.t)+'</div>':'');
+    if(ctx.row&&(f.f||f.x))h+='<div class="fi-sw">'+(f.f?'<button type="button" class="btn sm" data-fiset="'+esc(f.f)+'">▼ Más fácil: '+esc(f.f)+'</button>':'')+(f.x?'<button type="button" class="btn sm" data-fiset="'+esc(f.x)+'">▲ Más exigente: '+esc(f.x)+'</button>':'')+'</div>'+
+      '<p class="tiny" style="margin:4px 0 0">Esto lo cambia para todos los que hacen la rutina.</p>';
+    else if(f.f||f.x)h+='<div class="fi-vers tiny">'+(f.f?'▼ Más fácil: <b>'+esc(f.f)+'</b>':'')+(f.f&&f.x?' · ':'')+(f.x?'▲ Más exigente: <b>'+esc(f.x)+'</b>':'')+'</div>';
+    if(cands.length){
+      if(chs.length)h+='<div class="fi-chs"><span class="lbl">Cambios individuales</span>'+chs.map(x=>'<div class="ch-it"><span><b>'+esc(jugName(x.c.jid)||((S.jugAll||{})[x.c.jid]||{}).nombre||'Jugador')+'</b> → '+esc(x.c.a)+' <span class="tiny">'+(x.c.les?'hasta el alta':'')+'</span></span><button type="button" class="btn sm ghost" data-fichrm="'+esc(x.a.id)+'" data-chi="'+x.i+'">Quitar</button></div>').join('')+'</div>';
+      if(!swap)h+='<button type="button" class="btn sm" data-fisolo>Cambiar solo para…</button>';
+      else{const J=jugs||[];
+        h+='<div class="fi-solo"><span class="lbl">Cambiar solo para un jugador</span><div class="field"><select id="fi_j">'+(J.length?J.map(j=>'<option value="'+esc(j.aid+'|'+j.id)+'">'+(j.les?'🤕 ':'')+esc(j.nombre)+(cands.length>1?' · '+esc(catName(j.cat)):'')+'</option>').join(''):'<option value="">No hay jugadores</option>')+'</select></div>'+
+          '<div class="field"><label class="tiny" for="fi_a">Por cuál ejercicio</label><input id="fi_a" list="fi_dl" value="'+esc(f.f?String(f.f).toLocaleUpperCase('es'):'')+'" style="text-transform:uppercase"><datalist id="fi_dl">'+ejAll().map(e=>'<option value="'+esc(e.nombre)+'">').join('')+'</datalist></div>'+
+          '<div class="fi-sw"><button type="button" class="btn sm" data-fix2>Cancelar</button><button type="button" class="btn sm pri" data-fisave>Guardar</button></div>'+
+          '<p class="tiny" style="margin:4px 0 0">Si el jugador tiene una lesión activa, el cambio se saca solo cuando le das el alta.</p></div>';}
+    }
+    w.innerHTML=h+'</div>';
+  };
+  draw(false);document.body.appendChild(w);
+  const close=()=>{w.remove();document.removeEventListener('keydown',esk,true);};
+  const esk=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};document.addEventListener('keydown',esk,true);
+  w.addEventListener('click',async e=>{const t=e.target;
+    if(t===w||t.closest('[data-fix]'))return close();
+    const st=t.closest('[data-fiset]');if(st&&ctx.row){const inp=ctx.row.querySelector('.ex-n');inp.value=st.dataset.fiset.toLocaleUpperCase('es');inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));fiRowSync(ctx.row);close();toast('Ejercicio cambiado');return;}
+    if(t.closest('[data-fisolo]')){await loadJ();draw(true);return;}
+    if(t.closest('[data-fix2]')){draw(false);return;}
+    const rm=t.closest('[data-fichrm]');if(rm){await rmCambio(rm.dataset.fichrm,+rm.dataset.chi);draw(false);toast('Cambio quitado');render();return;}
+    if(t.closest('[data-fisave]')){const v=(w.querySelector('#fi_j')||{}).value||'';const nv=(w.querySelector('#fi_a')||{}).value||'';
+      if(!v){toast('Elegí un jugador');return;}if(!nv.trim()){toast('Escribí por cuál ejercicio');return;}
+      const [aid,jid]=v.split('|');await addCambio(aid,jid,name,nv);draw(false);toast('Listo: solo a ese jugador le cambia');render();return;}
+  });
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-fiq]');if(!b)return;e.preventDefault();e.stopPropagation();
+  const row=b.closest('.exr');const n=row?row.querySelector('.ex-n').value:b.dataset.fiq;fichaPop(n,{row:row||null,aid:b.dataset.fia||'',rid:row?FI_RID:''});},true);
+/* el ⓘ del editor aparece cuando el nombre tiene ficha */
+let FI_RID='';
+function fiRowSync(row){const i=row&&row.querySelector('.ex-fi');if(!i)return;const n=row.querySelector('.ex-n').value;i.hidden=!fichaOf(n);}
+['input','change','focusout'].forEach(ev=>document.addEventListener(ev,e=>{const t=e.target;if(t&&t.classList&&t.classList.contains('ex-n')){const r=t.closest('.exr');if(r)setTimeout(()=>fiRowSync(r),ev==='focusout'?250:0);}},true));
+/* "Con menos peso" no es un ejercicio: se arma "REMO … (CON MENOS PESO)" */
+const FI_DESC=/^(con|sin|rango|un|cajon|banda|lento|rodilla|rodillas|talones|cuerpo|menos|mas|a|de|solo|pies|arrodillado|levantando|subiendo|recorrido|bajar|bajada|piernas|balanceo|sentado|barra)\b/;
+function verName(orig,v){return FI_DESC.test(TPF.norm(v))?String(orig).toLocaleUpperCase('es')+' ('+String(v).toLocaleUpperCase('es')+')':String(v).toLocaleUpperCase('es');}
+/* ---- edición en la biblioteca ---- */
+function fiVals(f){f=f||{};return {s:f.s||'',c:[0,1,2].map(i=>(f.c||[])[i]||''),e:[0,1,2].map(i=>(f.e||[])[i]||''),z:(f.z||[]).slice(),f:f.f||'',x:f.x||''};}
+function fiEdInit(name){const ov=FOV(),k=TPF.norm(name);return {base:ov.link[k]!==undefined?ov.link[k]:'',k0:k,v:fiVals(fichaOf(name))};}
+function fiEdHtml(fi,name){
+  const auto=TPF.M[TPF.norm(name)]||'';const ids=Object.keys(TPF.L).sort((a,b)=>TPF.L[a].n.localeCompare(TPF.L[b].n,'es'));
+  let h='<div class="fi-ed"><h3>Ficha técnica</h3><p class="tiny" style="margin:0 0 8px">Es lo que ven los jugadores al tocar la ⓘ. Corto: una línea, 3 claves, 3 errores.</p>'+
+    '<div class="field"><label for="ej_fb">Ficha</label><select id="ej_fb"><option value="">'+(auto?'Automática: '+esc(TPF.L[auto].n):'Automática (no encontré una para este nombre)')+'</option>'+ids.map(i=>'<option value="'+i+'"'+(fi.base===i?' selected':'')+'>'+esc(TPF.L[i].n)+'</option>').join('')+'<option value="-"'+(fi.base==='-'?' selected':'')+'>Sin ficha</option></select></div>';
+  if(fi.base==='-')return h+'</div>';
+  const v=fi.v;
+  h+='<div class="field"><label for="ej_fs">Dónde se siente</label><input id="ej_fs" value="'+esc(v.s)+'" placeholder="Ej: muslo de adelante y glúteo"></div>'+
+    '<div class="field"><label>Claves</label>'+v.c.map((x,i)=>'<input class="fi-in" id="ej_fc'+i+'" value="'+esc(x)+'" placeholder="Clave '+(i+1)+'">').join('')+'</div>'+
+    '<div class="field"><label>Errores típicos</label>'+v.e.map((x,i)=>'<input class="fi-in" id="ej_fe'+i+'" value="'+esc(x)+'" placeholder="Error '+(i+1)+'">').join('')+'</div>'+
+    '<div class="field"><label>No conviene con molestia en… <small class="tiny">(dispara el aviso por lesión)</small></label><div class="ej-chips">'+ZL_ORD.map(z=>'<button type="button" class="ej-chip fz'+(v.z.includes(z)?' on':'')+'" data-fz="'+z+'">'+esc(TPF.Z[z])+'</button>').join('')+'</div></div>'+
+    '<div class="form-grid"><div class="field"><label for="ej_ff">▼ Versión más fácil</label><input id="ej_ff" value="'+esc(v.f)+'"></div><div class="field"><label for="ej_fx">▲ Versión más exigente</label><input id="ej_fx" value="'+esc(v.x)+'"></div></div>';
+  return h+'</div>';
+}
+function fiEdKeep(fi,body){const g=id=>{const x=body.querySelector('#'+id);return x?x.value:null;};if(g('ej_fs')===null)return;
+  fi.v.s=g('ej_fs');fi.v.c=[0,1,2].map(i=>g('ej_fc'+i)||'');fi.v.e=[0,1,2].map(i=>g('ej_fe'+i)||'');fi.v.f=g('ej_ff')||'';fi.v.x=g('ej_fx')||'';}
+async function fiEdSave(fi,n){
+  const k=TPF.norm(n),ov=FOV();const ed=Object.assign({},ov.ed),link=Object.assign({},ov.link);const before=JSON.stringify([ed,link]);
+  if(fi.k0&&fi.k0!==k){if(ed[fi.k0]&&!ed[k])ed[k]=ed[fi.k0];if(link[fi.k0]!==undefined&&link[k]===undefined)link[k]=link[fi.k0];delete ed[fi.k0];delete link[fi.k0];}
+  if(fi.base)link[k]=fi.base;else delete link[k];
+  if(fi.base==='-')delete ed[k];
+  else{const bid=fi.base||TPF.M[k]||'';const B=bid?TPF.L[bid]:null;const v=fi.v;
+    const c={s:v.s.trim(),c:v.c.map(x=>x.trim()).filter(Boolean),e:v.e.map(x=>x.trim()).filter(Boolean),z:v.z.slice(),f:v.f.trim(),x:v.x.trim()};
+    const sig=o=>JSON.stringify([o.s,o.c,o.e,(o.z||[]).slice().sort(),o.f,o.x]);
+    if((B&&sig(c)===sig(B))||(!B&&!c.s&&!c.c.length&&!c.e.length))delete ed[k];
+    else ed[k]=Object.assign({n:B?B.n:n,t:B?B.t||'':''},c);}
+  if(JSON.stringify([ed,link])!==before)await fichasSave(ed,link);
+}
+
+document.getElementById('view').addEventListener('click',async e=>{const t=e.target;
+  const fa=t.closest('[data-chfa]');if(fa){const names=JSON.parse(fa.dataset.chn);let n=0;for(const x of names){const f=fichaOf(x);if(f&&f.f){await addCambio(fa.dataset.chfa,fa.dataset.chj,x,verName(x,f.f));n++;}}
+    toast(n?'Listo: '+n+(n===1?' ejercicio cambiado':' ejercicios cambiados')+' solo para '+jugName(fa.dataset.chj):'Esos ejercicios no tienen versión fácil cargada');render();return;}
+  const ig=t.closest('[data-chig]');if(ig){const a=S.asigAll.find(x=>x.id===ig.dataset.chig);if(!a)return;const list=(a.ignorar||[]).concat(JSON.parse(ig.dataset.chn).map(x=>ig.dataset.chj+'|'+TPF.norm(x)));a.ignorar=list;await Store.patch('asignaciones',a.id,{ignorar:list});render();return;}
+  const rm=t.closest('[data-chrm]');if(rm){await rmCambio(rm.dataset.chrm,+rm.dataset.chi);toast('Cambio quitado');render();}
+});
 /* ================= asistencia ================= */
 /* ================= puente con la app de los profes (Villa Mitre) =================
    Solo LEE de la planilla de Google de la app de los profes (no sube nada ahí).
@@ -4868,7 +5048,7 @@ function rutViewParts(id,di,w,inline){
   if(ds.length>1)b+='<div class="seg cal-seg" style="flex-wrap:wrap">'+ds.map((x,i)=>'<button type="button" data-rok data-rvd="'+i+'" class="'+(i===di?'on':'')+'">'+esc(x.nombre||('Día '+(i+1)))+'</button>').join('')+'</div>';
   b+='<div class="seg cal-seg" style="flex-wrap:wrap">'+Array.from({length:W},(_,i)=>'<button type="button" data-rok data-rvw="'+i+'" class="'+(i===w?'on':'')+'">Sem '+(i+1)+'</button>').join('')+'</div>';
   const back=inline?()=>{}:()=>openRutView(id,di,w);
-  if(a){const wk=addDays(a.desde,7*w);ATLCTX={desde:wk,hasta:addDays(wk,6),sem:w+1,back};}
+  if(a){const wk=addDays(a.desde,7*w);ATLCTX={desde:wk,hasta:addDays(wk,6),sem:w+1,back,aid:a.id};}
   else ATLCTX={desde:null,hasta:null,sem:null,back};
   b+=fichaHtml(sd,r.tipo,null,r);ATLCTX_LAST=ATLCTX;ATLCTX=null;
   if(!RO&&a)b+='<p class="tiny" style="margin:0">Tocá un ejercicio para ver qué cargaron los atletas en la semana '+(w+1)+' ('+esc(fmtD(addDays(a.desde,7*w),{day:'numeric',month:'short'}))+' al '+esc(fmtD(addDays(a.desde,7*w+6),{day:'numeric',month:'short'}))+').</p>';
@@ -4900,7 +5080,7 @@ function openRutView(id,di,w){
   let b='';
   if(ds.length>1)b+='<div class="seg cal-seg" style="flex-wrap:wrap">'+ds.map((x,i)=>'<button type="button" data-rok data-rvd="'+i+'" class="'+(i===di?'on':'')+'">'+esc(x.nombre||('Día '+(i+1)))+'</button>').join('')+'</div>';
   b+='<div class="seg cal-seg" style="flex-wrap:wrap">'+Array.from({length:W},(_,i)=>'<button type="button" data-rok data-rvw="'+i+'" class="'+(i===w?'on':'')+'">Sem '+(i+1)+'</button>').join('')+'</div>';
-  if(a){const wk=addDays(a.desde,7*w);ATLCTX={desde:wk,hasta:addDays(wk,6),sem:w+1,back:()=>openRutView(id,di,w)};}
+  if(a){const wk=addDays(a.desde,7*w);ATLCTX={desde:wk,hasta:addDays(wk,6),sem:w+1,back:()=>openRutView(id,di,w),aid:a.id};}
   else ATLCTX={desde:null,hasta:null,sem:null,back:()=>openRutView(id,di,w)};
   b+=fichaHtml(sd,r.tipo,null,r);ATLCTX_LAST=ATLCTX;ATLCTX=null;
   if(!RO&&a)b+='<p class="tiny" style="margin:0">Tocá un ejercicio para ver qué cargaron los atletas en la semana '+(w+1)+' ('+esc(fmtD(addDays(a.desde,7*w),{day:'numeric',month:'short'}))+' al '+esc(fmtD(addDays(a.desde,7*w+6),{day:'numeric',month:'short'}))+').</p>';
@@ -5373,7 +5553,7 @@ function openEj(id,onSaved){
   const e0=id?ejAll(true).find(x=>x.id===id):null;
   const e=e0?Object.assign({},e0):{id:'',nombre:'',link:'',impl:[],rol:'',pat:'',uni:false};
   const auto=!!(e0&&e0.auto);
-  const st={gr:e.gr||'',gr2:e.gr2||'',rol:e.rol||'',pat:e.pat||'',uni:!!e.uni,impl:(e.impl||[]).slice(),img:EJIMG.m[e.id]||'',imgCh:false,prep:prepOf(e).slice(),prepCh:false};
+  const st={gr:e.gr||'',gr2:e.gr2||'',rol:e.rol||'',pat:e.pat||'',uni:!!e.uni,impl:(e.impl||[]).slice(),img:EJIMG.m[e.id]||'',imgCh:false,prep:prepOf(e).slice(),prepCh:false,fi:window.TPF?fiEdInit(e.nombre):null};
   const chip=(attr,v,on,txt,col)=>'<button type="button" class="ej-chip'+(col?' rc':'')+(on?' on':'')+'"'+(col?' style="--rc:'+col+'"':'')+' '+attr+'="'+esc(v)+'">'+esc(txt)+'</button>';
   const draw=()=>{
     const th=st.img?'<img alt="" src="'+esc(st.img)+'">':(e.link&&vidInfo(e.link)&&vidInfo(e.link).thumb?'<img alt="" src="'+esc(vidInfo(e.link).thumb)+'"><small>portada del video</small>':'<span>Sin foto</span>');
@@ -5390,12 +5570,13 @@ function openEj(id,onSaved){
       '<div class="field"><label>Patrón de movimiento</label><div class="ej-chips">'+PATS.map(p=>chip('data-fp',p[0],st.pat===p[0],p[1])).join('')+chip('data-fu','1',st.uni,'Unilateral / a una pierna')+'</div></div>'+
       (['m','p','k'].includes(st.rol)?'<div class="field"><label>Prepara para <small class="tiny">(en un bloque de movilidad/activación se sugiere cuando el día tiene estos patrones)</small></label><div class="ej-chips">'+PREP_OPTS.map(p=>chip('data-fprep',p[0],st.prep.includes(p[0]),p[1])).join('')+'</div></div>':'')+
       '<div class="field"><label>Implemento <small class="tiny">(podés marcar varios)</small></label><div class="ej-chips">'+EJ_IMPL.map(t=>chip('data-fi',t,st.impl.includes(t),t)).join('')+'</div></div>'+
+      (st.fi&&!RO?fiEdHtml(st.fi,e.nombre):'')+
       (e.uso?'<p class="tiny">Está en '+e.uso+(e.uso===1?' rutina.':' rutinas.')+'</p>':'');
   };
   const foot='<div class="modal-f">'+(e0&&!RO?'<button class="btn danger" id="ej_del">Sacar de la biblioteca</button>':'')+'<div class="grow"></div><button class="btn" data-close>Cancelar</button>'+(RO?'':'<button class="btn pri" id="ej_save">Guardar</button>')+'</div>';
   openModal(modalHead('Biblioteca de ejercicios',e0?e.nombre:'Nuevo ejercicio')+'<div class="modal-b" id="ej_b">'+draw()+'</div>'+foot,mw=>{
     const body=mw.querySelector('#ej_b');
-    const keep=()=>{e.nombre=body.querySelector('#ej_n').value;e.link=body.querySelector('#ej_l').value;e.obs=body.querySelector('#ej_o').value;};
+    const keep=()=>{e.nombre=body.querySelector('#ej_n').value;e.link=body.querySelector('#ej_l').value;e.obs=body.querySelector('#ej_o').value;if(st.fi)fiEdKeep(st.fi,body);};
     const redraw=()=>{keep();body.innerHTML=draw();};
     body.addEventListener('click',ev=>{const t=ev.target;
       const r=t.closest('[data-fr]');if(r){st.rol=st.rol===r.dataset.fr?'':r.dataset.fr;return redraw();}
@@ -5406,10 +5587,12 @@ function openEj(id,onSaved){
       const pp=t.closest('[data-fprep]');if(pp){const v=pp.dataset.fprep;st.prep=st.prep.includes(v)?st.prep.filter(x=>x!==v):st.prep.concat(v);st.prepCh=true;return redraw();}
       const im=t.closest('[data-fi]');if(im){const v=im.dataset.fi;st.impl=st.impl.includes(v)?st.impl.filter(x=>x!==v):st.impl.concat(v);return redraw();}
       if(t.closest('#ej_fx')){st.img='';st.imgCh=true;return redraw();}
+      const fz=t.closest('[data-fz]');if(fz&&st.fi){const z=fz.dataset.fz;st.fi.v.z=st.fi.v.z.includes(z)?st.fi.v.z.filter(x=>x!==z):st.fi.v.z.concat(z);return redraw();}
     });
     body.addEventListener('change',async ev=>{if(ev.target.id!=='ej_f')return;const fl=ev.target.files&&ev.target.files[0];if(!fl)return;
       try{st.img=await ejShrink(fl);st.imgCh=true;redraw();}catch(err){toast('No pude leer esa imagen');}});
     body.addEventListener('input',ev=>{if(ev.target.id==='ej_l'){keep();}});
+    body.addEventListener('change',ev=>{if(ev.target.id!=='ej_fb'||!st.fi)return;keep();st.fi.base=ev.target.value;const id=st.fi.base&&st.fi.base!=='-'?st.fi.base:TPF.M[TPF.norm(e.nombre)];st.fi.v=fiVals(st.fi.base==='-'?null:(st.fi.base||!FOV().ed[TPF.norm(e.nombre)]?TPF.L[id]:fichaOf(e.nombre)));redraw();});
     body.addEventListener('focusout',ev=>{if(ev.target.id==='ej_l')redraw();});
     if(RO)body.querySelectorAll('input').forEach(i=>i.disabled=true);
     const del=mw.querySelector('#ej_del');if(del)armDelete(del,()=>{ejPut(e.id,{nombre:e.nombre,oculto:true});closeModal();ejRedrawView();toast('Lo saqué de la biblioteca (las rutinas no cambian)');});
@@ -5420,6 +5603,7 @@ function openEj(id,onSaved){
       if(e0&&slug(n)!==e.id){nid=slug(n);ejPut(e.id,{oculto:true});if(EJIMG.m[e.id]&&!st.imgCh){st.imgCh=true;}}
       ejPut(nid,{nombre:n,link:e.link.trim(),obs:String(e.obs||'').trim()||null,gr:st.gr||null,gr2:st.gr2||null,rol:st.gr?grOf(st.gr)[3]:st.rol,pat:st.pat,uni:st.uni,impl:st.impl,prep:(st.prepCh&&['m','p','k'].includes(st.rol))?st.prep:(e.prep||null),oculto:false,foto:!!st.img,zona:null,tipo:null});
       if(st.imgCh){if(st.img){EJIMG.m[nid]=st.img;Store.put('ejImg',nid,{d:st.img});}else{delete EJIMG.m[nid];Store.remove('ejImg',nid);}}
+      if(st.fi)fiEdSave(st.fi,n);
       closeModal();ejRedrawView();if(EJP.box)EJP.draw();toast('Ejercicio guardado');if(onSaved)onSaved(nid);
     };
   });
@@ -5502,10 +5686,10 @@ new MutationObserver(()=>{if(!$('#login').hidden)bootOff();}).observe($('#login'
 function startData(){
   Store.watch('categorias',null,null,a=>{S.cats=a;S.catsLoaded=true;bootOff();
     if(!S.cat||!a.find(c=>c.id===S.cat)||!catUnsubs.length)selectCat(S.cat);else{renderNav();render();}});
-  Store.watch('lesiones',null,null,a=>{S.lesAll=a;renderNav();render();});
+  Store.watch('lesiones',null,null,a=>{S.lesAll=a;S.lesLoaded=true;cambiosSync();renderNav();render();});
   Store.watch('ejercicios',null,null,a=>{S.lib=a;EJC.t=0;migMayus('ejercicios',a);if(S.view==='ejs'&&!$('#mw'))render();});
-  Store.watch('rutinas',null,null,a=>{S.tplAll=a.filter(r=>r.plantilla);S.rutAll=a.filter(r=>!r.plantilla&&!r.oculta);S.rutCal=a.filter(r=>r.oculta);EJC.t=0;renderNav();render();migMayus('rutinas',a);});
-  Store.watch('asignaciones',null,null,a=>{S.asigAll=a.filter(x=>!x.dif&&!x.oculta);S.asigDif=a.filter(x=>x.dif);S.asigCal=a.filter(x=>x.oculta);render();trabSync();});
+  Store.watch('rutinas',null,null,a=>{S.fichasDoc=a.find(r=>r.id==='tp_fichas')||null;a=a.filter(r=>r.id!=='tp_fichas');S.tplAll=a.filter(r=>r.plantilla);S.rutAll=a.filter(r=>!r.plantilla&&!r.oculta);S.rutCal=a.filter(r=>r.oculta);EJC.t=0;renderNav();render();migMayus('rutinas',a);});
+  Store.watch('asignaciones',null,null,a=>{S.asigAll=a.filter(x=>!x.dif&&!x.oculta);S.asigDif=a.filter(x=>x.dif);S.asigCal=a.filter(x=>x.oculta);render();trabSync();cambiosSync();});
   Store.watch('ideales',null,null,a=>{S.ideales=a;render();});
   Store.watch('testeosLista',null,null,a=>{S.testList=a;render();});
   Store.watch('config',null,null,a=>{S.cfg=a;renderNav();avPaint();});
