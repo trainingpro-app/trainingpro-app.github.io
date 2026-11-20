@@ -252,6 +252,12 @@ body.has-wa .wrap{padding-bottom:90px}
 .fi-err li::marker{content:'✕  ';color:var(--bad)}
 .fi-no{margin-top:12px;background:var(--warn-soft);color:var(--ink);border-radius:10px;padding:8px 12px;font-size:13.5px}
 .fi-vid{margin-top:12px}
+
+.an-q{flex-basis:100%;width:100%;font-size:13px;color:var(--ink-2);margin:2px 0 4px}
+.an-q small{color:var(--ink-3)}
+.an-qc{display:flex;gap:6px;margin-top:6px}
+.an-qc button{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:8px 0;font-weight:700;font-size:15px}
+.an-qc button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 </style>
 </head>
 <body>
@@ -581,7 +587,7 @@ function rutView(c){
       (b.nota?'<div class="blk-nota">'+esc(b.nota)+'</div>':'')+
       (b.ejercicios||[]).filter(e=>e.n).map((e,ei)=>'<div class="ex"><span class="ex-i">'+L+(ei+1)+'</span><span class="ex-n">'+esc(e.n)+atFi(e)+(e.sw?'<i class="ex-sw">Cambiado para vos</i>':'')+(e.obs?'<i>'+esc(e.obs)+'</i>':'')+'</span>'+
         '<span class="ex-p'+(e.progW?' chg':'')+'">'+presHtml(e,b)+'</span>'+
-        '<span class="ex-a">'+(e.c?'<span class="ex-c">'+esc(e.c)+'</span>':'')+(e.link?vidBtn(e.link):'')+'<button class="reg'+(st.anEx===L+(ei+1)?' on':'')+'" data-regex="'+esc(e.n)+'" data-anid="'+L+(ei+1)+'">+ Anotar mi peso</button>'+(isPersC(c)?'<button class="reg mol-b" data-mol="'+esc(e.n)+'">🤕 Molestia</button>':'')+'</span></div>'+(st.anEx===L+(ei+1)?anForm(e):'')).join('')+'</div>';});
+        '<span class="ex-a">'+(e.c?'<span class="ex-c">'+esc(e.c)+'</span>':'')+(e.link?vidBtn(e.link):'')+'<button class="reg'+(st.anEx===L+(ei+1)?' on':'')+'" data-regex="'+esc(e.n)+'" data-anid="'+L+(ei+1)+'">+ Anotar mi peso</button>'+(isPersC(c)?'<button class="reg mol-b" data-mol="'+esc(e.n)+'">🤕 Molestia</button>':'')+'</span></div>'+(st.anEx===L+(ei+1)?anForm(e,r.esf):'')).join('')+'</div>';});
   if(rd.principal)h+='<div class="sec card"><span class="lbl">Parte principal</span><div class="txt">'+esc(rd.principal)+'</div></div>';
   if(rd.calma)h+='<div class="sec card"><span class="lbl">Vuelta a la calma</span><div class="txt">'+esc(rd.calma)+'</div></div>';
   if(rd.notas)h+='<div class="sec card"><span class="lbl">Notas</span><div class="txt">'+esc(rd.notas)+'</div></div>';
@@ -809,11 +815,11 @@ function histView(k){
   return h+'<p class="tiny" style="margin:8px 2px">Cada número es un peso que anotaste, del más viejo al más nuevo. Si tu profe corrigió algo, aparece con ✎.</p>';
 }
 /* anotar el peso ahí mismo, debajo del ejercicio */
-function anForm(e){const R=getReg();const EL=effLog(R);const k=Object.keys(EL).find(x=>x.toLowerCase()===String(e.n).toLowerCase());
+function anForm(e,esf){const R=getReg();const EL=effLog(R);const k=Object.keys(EL).find(x=>x.toLowerCase()===String(e.n).toLowerCase());
   const L=k?(EL[k]||[]).slice().sort((a,b)=>b.f.localeCompare(a.f)||(b.t||0)-(a.t||0)):[];const last=L[0];
   const rr=String((e.reps||[])[0]||'').match(/\d+/);
-  return '<div class="an-f"><div class="fld"><label for="ak">Kilos</label><input id="ak" type="number" inputmode="decimal" step="any"></div><div class="fld"><label for="ar">Reps</label><input id="ar" type="number" inputmode="numeric" min="1" max="30" value="'+(rr?rr[0]:'')+'"></div><button class="btn pri" id="aok" data-anx="'+esc(e.n)+'">Anotar</button>'+
-    (last?'<span class="an-last">Última vez: <b>'+fmtN(last.kg)+' kg × '+last.r+'</b> · '+esc(fmtD(last.f,{day:'numeric',month:'short'}))+'</span>':'')+'</div>';}
+  return '<div class="an-f"><div class="fld"><label for="ak">Kilos</label><input id="ak" type="number" inputmode="decimal" step="any"></div><div class="fld"><label for="ar">Reps</label><input id="ar" type="number" inputmode="numeric" min="1" max="30" value="'+(rr?rr[0]:'')+'"></div>'+(esf?'<div class="an-q"><span>¿Cuántas más podías hacer? <small>(opcional)</small></span><div class="an-qc">'+[0,1,2,3,4].map(q=>'<button type="button" data-anq="'+q+'">'+(q===4?'4+':q)+'</button>').join('')+'</div></div>':'')+'<button class="btn pri" id="aok" data-anx="'+esc(e.n)+'">Anotar</button>'+
+    (last?'<span class="an-last">Última vez: <b>'+fmtN(last.kg)+' kg × '+last.r+'</b>'+(last.q!=null?' · te quedaban '+(last.q>=4?'4+':last.q):'')+' · '+esc(fmtD(last.f,{day:'numeric',month:'short'}))+'</span>':'')+'</div>';}
 function regTop(R){
   return '<div class="card me me-slim"><span><b>'+esc(R.nombre)+'</b>'+(R.dniFin?' <span class="tiny">· DNI …'+esc(R.dniFin)+'</span>':'')+'</span><button class="btn sm" id="pedit">Editar mis datos</button></div>';
 }
@@ -873,7 +879,7 @@ $('#app').addEventListener('click',e=>{
     if(fx.id==='lesAdd'){const z=$('#l_z').value,tp=$('#l_t').value;if(!z||!tp){toast('Elegí la zona y qué fue');return;}
       FD.les.push({zona:z,lado:$('#l_l').value,tipo:tp,anio:$('#l_a').value,mol:$('#l_m').value||'No',det:$('#l_d').value.trim()});st.lesNew=false;return render();}
     if(fx.id==='fiSave')return fichaSave();}
-  const t=e.target.closest('[data-hist],[data-hday],[data-anf],[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],#aok,#radd,#psave,#pedit');if(!t)return;
+  const t=e.target.closest('[data-hist],[data-hday],[data-anf],[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],[data-anq],#aok,#radd,#psave,#pedit');if(!t)return;
   if(t.id==='psave')return saveProfile();
   if(t.dataset.regmode){st.regMode=t.dataset.regmode;return render();}
   if(t.id==='pedit'){st.editProf=true;return render();}
@@ -891,10 +897,11 @@ $('#app').addEventListener('click',e=>{
     else window.open(d.vid,'_blank','noopener');return;}
   if(d.regex){const R=getReg();if(!R.nombre){toast('Primero completá tus datos');st.editProf=true;if(!isPersC(catById(st.cat)))st.tab='reg';render();window.scrollTo(0,0);return;}
     st.anEx=st.anEx===d.anid?null:d.anid;render();setTimeout(()=>{const k=$('#ak');if(k)k.focus();},30);return;}
-  if(t.id==='aok'){const x=t.dataset.anx;const kg=Number(String($('#ak').value).replace(',','.')),r=Math.max(1,parseInt($('#ar').value)||1);
+  const aq=t.closest('[data-anq]');if(aq){const was=aq.classList.contains('on');aq.parentElement.querySelectorAll('[data-anq]').forEach(b=>b.classList.remove('on'));if(!was)aq.classList.add('on');return;}
+  if(t.id==='aok'){const x=t.dataset.anx;const qb=document.querySelector('.an-f [data-anq].on');const qv=qb?+qb.dataset.anq:null;const kg=Number(String($('#ak').value).replace(',','.')),r=Math.max(1,parseInt($('#ar').value)||1);
     if(!(kg>0)){toast('Poné los kilos');$('#ak').focus();return;}
-    const R=getReg();const tg=curTag();(R.log[x]=R.log[x]||[]).push(Object.assign({id:uid(),f:TODAY,kg,r,t:Date.now()},tg||{}));if(!BASE_EX.includes(x)&&!R.ex.includes(x))R.ex.push(x);
-    R.cat=st.cat;setReg(R);st.anEx=null;render();toast('Anotado: '+fmtN(kg)+' kg × '+r);return;}
+    const R=getReg();const tg=curTag();(R.log[x]=R.log[x]||[]).push(Object.assign({id:uid(),f:TODAY,kg,r,t:Date.now()},qv!=null?{q:qv}:{},tg||{}));if(!BASE_EX.includes(x)&&!R.ex.includes(x))R.ex.push(x);
+    R.cat=st.cat;setReg(R);st.anEx=null;render();toast('Anotado: '+fmtN(kg)+' kg × '+r+(qv!=null?' · te quedaban '+(qv>=4?'4+':qv):''));return;}
   if(d.del){const [x,id]=d.del.split('|');const R=getReg();R.log[x]=(R.log[x]||[]).filter(z=>z.id!==id);setReg(R);return render();}
   if(t.id==='radd')return addReg();
 });
