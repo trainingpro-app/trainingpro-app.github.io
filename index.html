@@ -1267,7 +1267,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · fichas técnicas de ejercicios</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · anotaciones con fecha completa</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -5656,14 +5656,18 @@ new MutationObserver(()=>{if(EJP.box&&!document.contains(EJP.box))EJP.close();})
 
 /* ---------- lo que anotaron los atletas, por ejercicio de la rutina ---------- */
 let ATLCTX=null,ATLCTX_LAST=null;
-const atlExMatch=(a,b)=>{a=normTxt(a);b=normTxt(b);return a===b||(a.length>=5&&b.length>=5&&(a.startsWith(b)||b.startsWith(a)));};
+/* mismo ejercicio = mismo nombre (antes "SENTADILLA" también traía "SENTADILLA SUMO…") */
+const atlExMatch=(a,b)=>normTxt(a)===normTxt(b);
 function atlEntries(d,name){const out=[];Object.keys(d.log||{}).forEach(k=>{if(atlExMatch(k,name))(d.log[k]||[]).forEach(e=>out.push(Object.assign({ex:k},e)));});return out.sort((a,b)=>(b.f||'').localeCompare(a.f||''));}
 const inCtx=(e,c)=>!c||!c.desde||(e.f>=c.desde&&e.f<=c.hasta);
 function atlBadge(name){const c=ATLCTX;if(!c||!S.atl.length)return '';
   const n=S.atl.filter(d=>atlEntries(d,name).some(e=>inCtx(e,c))).length;return n?'<span class="atl-n" title="Atletas que anotaron">'+n+'</span>':'';}
 function openAtlEx(name,c){
   c=c||{};
-  const rows=S.atl.map(d=>({d,m:atlPlayer(d),wk:atlEntries(d,name).filter(e=>inCtx(e,c)).reverse()})).filter(x=>x.wk.length);
+  /* un renglón por jugador aunque tenga varios registros (celu nuevo, se volvió a anotar…) y en orden de fecha */
+  const by={};S.atl.forEach(d=>{const m=atlPlayer(d);const k=m.j?'j:'+m.j.id:'d:'+d.id;const wk=atlEntries(d,name).filter(e=>inCtx(e,c));if(!wk.length)return;
+    if(!by[k])by[k]={d,m,wk:[]};by[k].wk.push(...wk);});
+  const rows=Object.values(by);rows.forEach(x=>{const seen=new Set();x.wk=x.wk.filter(e=>{const id=e.id||(e.f+'|'+e.kg+'|'+e.r);if(seen.has(id))return false;seen.add(id);return true;}).sort((a,b)=>(a.f||'').localeCompare(b.f||''));});
   const nmOf=x=>x.m.j?x.m.j.nombre:(x.d.ape?x.d.ape+', '+(x.d.nom||''):x.d.nombre||'Sin nombre');
   rows.sort((a,b)=>nmOf(a).localeCompare(nmOf(b),'es'));
   const rng=c.desde?(c.sem?'Semana '+c.sem+' · ':'')+fmtD(c.desde,{day:'numeric',month:'short'})+' al '+fmtD(c.hasta,{day:'numeric',month:'short'}):'Todo lo anotado';
@@ -5671,7 +5675,7 @@ function openAtlEx(name,c){
   if(!rows.length)b+='<div class="empty"><b>Nadie anotó '+esc(name)+(c.desde?' esta semana':'')+'</b>Cuando los atletas toquen “+ Anotar mi peso” en este ejercicio, aparece acá.</div>';
   else b+='<div class="tbl-wrap"><table class="ax-t"><thead><tr><th>Atleta</th><th>Anotó</th></tr></thead><tbody>'+rows.map(x=>
     '<tr><td><b>'+esc(nmOf(x))+'</b>'+(x.m.j?'':'<div><button class="linkish tiny" data-rok data-atlopen="'+esc(x.d.id)+'">sin vincular · vincular</button></div>')+'</td>'+
-    '<td>'+x.wk.map(e=>'<div class="ax-e"><b>'+fmtN(e.kg)+' kg × '+e.r+'</b> <span class="tiny">'+esc(fmtD(e.f,{weekday:'short',day:'numeric'}))+'</span></div>').join('')+'</td></tr>').join('')+'</tbody></table></div>';
+    '<td>'+x.wk.map(e=>'<div class="ax-e"><b>'+fmtN(e.kg)+' kg × '+e.r+'</b> <span class="tiny">'+esc(fmtD(e.f,{weekday:'short',day:'numeric',month:'short'})+(e.f&&e.f.slice(0,4)!==TODAY.slice(0,4)?' '+e.f.slice(0,4):''))+(e.rn&&e.kind==='ind'?' · rutina individual':'')+'</span></div>').join('')+'</td></tr>').join('')+'</tbody></table></div>';
   openModal(modalHead('Lo que anotaron los atletas',name)+'<div class="modal-b">'+b+'</div><div class="modal-f">'+(c.back?'<button class="btn" id="axBack" type="button">← Volver a la rutina</button>':'')+'<div class="grow"></div><button class="btn pri" data-close>Cerrar</button></div>',mw=>{
     const bk=mw.querySelector('#axBack');if(bk)bk.onclick=c.back;
     mw.querySelectorAll('[data-atlopen]').forEach(x=>x.onclick=()=>openAtl(x.dataset.atlopen));});
