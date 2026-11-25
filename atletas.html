@@ -523,6 +523,8 @@ function render(){
   const c=st.cat&&catById(st.cat);
   if(!c){if(LOCK)return noCat();st.cat=null;return home();}
   const PC=isPersC(c);
+  /* sin código no se ve nada: ni la rutina */
+  if(!regOk(getReg())){persChrome(PC);$('#back').hidden=!!LOCK||PC;$('#eye').textContent=PC?'Personalizado':(c.grupo||'Categoría');$('#ttl').textContent=PC?'Personalizados':c.nombre;$('#app').innerHTML=profileForm(getReg());return;}
   {const cr=document.querySelector('.top .crest');if(cr){if(!cr.dataset.cvm)cr.dataset.cvm=cr.src;const want=PC?'icon-tp-192.png':cr.dataset.cvm;if(cr.getAttribute('src')!==want)cr.src=want;cr.classList.toggle('tp',PC);}}
   $('#back').hidden=!!LOCK||PC;$('#eye').textContent=PC?'Personalizado':(c.grupo||'Categoría');$('#ttl').textContent=PC?(getReg().nombre||'Personalizados'):c.nombre;
   persChrome(PC);
@@ -868,7 +870,7 @@ function saveProfile(){
     if(!c){er.hidden=false;er.textContent='Escribí el código que te pasó tu profe.';ci.focus();return;}
     if(!codOk(c)){er.hidden=false;er.textContent='Ese código no es válido. Revisalo letra por letra o pedíselo de nuevo a tu profe.';ci.classList.add('bad');ci.focus();return;}
     R.dniH='c:'+sha256('pizarra-pf|cod|'+c).slice(0,32);R.dniFin='';R.codFin=c.slice(-3);
-    if(!R.alta)R.alta=Date.now();R.cat=st.cat;st.editProf=false;st.datosLink=false;setReg(R);pushCloud(R);render();
+    R.alta=Date.now();R.cat=st.cat;st.editProf=false;st.datosLink=false;setReg(R);pushCloud(R);render();
     const n=myName(R);toast(n?'¡Listo, '+n.split(' ')[0]+'!':'¡Listo! Ya podés ver tu rutina y anotar tus pesos');return;}
   const nac=$('#pnac')?$('#pnac').value:'',tal=$('#ptal')?$('#ptal').value:'';
   if(nac)R.nac=nac;if(tal)R.talla=tal;R.cat=st.cat;st.editProf=false;st.datosLink=false;setReg(R);render();toast('Datos guardados');
