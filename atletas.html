@@ -258,6 +258,15 @@ body.has-wa .wrap{padding-bottom:90px}
 .an-qc{display:flex;gap:6px;margin-top:6px}
 .an-qc button{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:8px 0;font-weight:700;font-size:15px}
 .an-qc button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.cod-in h3{font-size:24px}
+.cod-inp{font-family:'JetBrains Mono',ui-monospace,monospace!important;font-size:22px!important;font-weight:700;letter-spacing:.14em;text-align:center;text-transform:uppercase;padding:14px!important}
+.cod-inp::placeholder{font-family:var(--f-body,inherit);font-size:15px;font-weight:500;letter-spacing:0;text-transform:none}
+.cod-inp.bad{border-color:var(--bad)!important;background:var(--bad-soft)!important}
+.cod-err{color:var(--bad);font-size:13px;font-weight:600;margin:4px 0 8px;text-align:center}
+.cod-help{display:flex;gap:10px;align-items:flex-start;background:var(--warn-soft);border-radius:12px;padding:11px 12px;margin-top:12px;font-size:13px}
+.cod-help i{font-style:normal;font-size:20px}
+.cod-go{width:100%;margin-top:14px;padding:13px;font-size:15px}
 </style>
 </head>
 <body>
@@ -325,6 +334,12 @@ function sha256(ascii){
   }
   return h.map(x=>('00000000'+(x>>>0).toString(16)).slice(-8)).join('');
 }
+/* acceso con código (lo genera tu profe): mismo alfabeto y verificación que la app de la PF */
+const COD_A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function codClean(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}
+function codOk(c){if(c.length!==6||[...c].some(x=>COD_A.indexOf(x)<0))return false;let t=0;for(let i=0;i<5;i++)t+=(i+1)*COD_A.indexOf(c[i]);return COD_A[t%32]===c[5];}
+const regOk=R=>!!(R&&R.dniH&&String(R.dniH).startsWith('c:'));
+const myName=R=>(R&&R.nombre)||(pfNow().nm)||'';
 function dniHash(v){const d=cleanDni(v);return d?sha256('pizarra-pf|dni|'+d).slice(0,32):'';}
 function toBloques(s,tipo){
   if(s.bloques&&s.bloques.length)return s.bloques;
@@ -537,14 +552,14 @@ function home(){
 function rpeDate(a,i){const h=(a.horario||[])[i];if(!h||h.d==null)return TODAY;for(let k=0;k<7;k++){const f=addDays(TODAY,-k);if(f<a.desde)break;if(wdOf(f)===h.d)return f;}return TODAY;}
 function rpeGet(R,a,i,f){return (R.rpe||[]).find(x=>x.a===a.id&&x.d===i&&x.f===f);}
 /* días de entrenamiento de la última semana (sin contar hoy) que quedaron sin responder */
-function rpeMissing(a,ds){const R=getReg();if(!R.nombre)return [];const out=[];
+function rpeMissing(a,ds){const R=getReg();if(!regOk(R))return [];const out=[];
   for(let k=1;k<=6;k++){const f=addDays(TODAY,-k);if(f<a.desde||(a.hasta&&f>a.hasta))continue;
     (a.horario||[]).forEach((h,i)=>{if(h&&h.d===wdOf(f)&&i<ds.length&&!rpeGet(R,a,i,f))out.push({f,i});});}
   return out;}
 function rpeCard(a,i,dayName){
   const R=getReg();const f=rpeDate(a,i);const cur=rpeGet(R,a,i,f);
   let h='<div class="card rpe-card" id="rpeCard"><b>¿Qué tan duro fue el entrenamiento?</b><div class="tiny">RPE · '+esc(dayName)+' del '+esc(fmtD(f,{weekday:'long',day:'numeric',month:'short'}))+'. Del 1 (muy fácil) al 10 (no podía más). No es obligatorio, pero le sirve mucho a tu preparadora.</div>';
-  if(!R.nombre)return h+'<p class="tiny" style="margin:8px 0 0">Para responder, primero completá tus datos en <b>Mis registros</b>.</p><button class="btn sm" data-tab="reg" style="margin-top:6px">Completar mis datos</button></div>';
+  if(!regOk(R))return h+'<p class="tiny" style="margin:8px 0 0">Para responder, primero poné tu código en <b>Mis registros</b>.</p><button class="btn sm" data-tab="reg" style="margin-top:6px">Completar mis datos</button></div>';
   h+='<div class="rpe-g">'+Array.from({length:10},(_,k)=>k+1).map(v=>'<button class="rpe-b'+(cur&&cur.v===v?' on':'')+'" data-rpe="'+v+'" data-rpei="'+i+'" data-rpef="'+f+'" style="--h:'+(120-v*12)+'">'+v+'</button>').join('')+'</div>';
   if(cur)h+='<div class="tiny" style="margin-top:6px">Respondiste <b>'+cur.v+'</b>. Si te equivocaste, tocá otro número.</div>';
   return h+'</div>';
@@ -611,7 +626,7 @@ function getReg(){
 let myUid=null,syncT=null;
 /* si tu profe borró tu cuenta: se limpia este celular y vuelve a pedir el registro */
 function bajaCheck(data){
-  if(!data||!data.baja)return false;const R=getReg();if(R.nombre&&(R.alta||0)>data.baja)return false;
+  if(!data||!data.baja)return false;const R=getReg();if(regOk(R)&&(R.alta||0)>data.baja)return false;
   try{Object.keys(localStorage).filter(k=>k==='pfat-reg'||k.indexOf('pfat-reg-')===0).forEach(k=>localStorage.removeItem(k));}catch(e){}
   PF={};
   if(FB()&&myUid){try{firebase.firestore().collection('registrosAtletas').doc(myUid).delete().catch(()=>{});}catch(e){}}
@@ -619,8 +634,8 @@ function bajaCheck(data){
   st.tab=null;st.editProf=false;render();setTimeout(()=>toast('Tu cuenta fue dada de baja. Si querés, registrate de nuevo'),300);return true;}
 function setReg(R){R.upd=Date.now();ls.set('pfat-reg',R);clearTimeout(syncT);syncT=setTimeout(()=>pushCloud(R),400);}
 function pushCloud(R){
-  R=R||getReg();if(!R.nombre)return;
-  const doc={nombre:R.nombre,nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',nac:R.nac||'',talla:R.talla||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now(),alta:R.alta||R.upd||Date.now()};if(FB())try{doc.baja=firebase.firestore.FieldValue.delete();}catch(e){}if(R.ficha)doc.ficha=R.ficha;if(R.mol)doc.mol=R.mol;
+  R=R||getReg();if(!regOk(R))return;
+  const doc={nombre:myName(R),nom:R.nom||'',ape:R.ape||'',dniH:R.dniH||'',dniFin:R.dniFin||'',cat:st.cat||R.cat||'',pc:R.pc||'',nac:R.nac||'',talla:R.talla||'',log:R.log,ex:R.ex,rpe:R.rpe||[],upd:R.upd||Date.now(),alta:R.alta||R.upd||Date.now()};if(FB())try{doc.baja=firebase.firestore.FieldValue.delete();}catch(e){}if(R.ficha)doc.ficha=R.ficha;if(R.mol)doc.mol=R.mol;
   if(FB()){if(!myUid)return;firebase.firestore().collection('registrosAtletas').doc(myUid).set(doc,{mergeFields:Object.keys(doc)}).catch(e=>console.warn('sync',e));}
   else{/* prueba local: lo deja donde lo lee Pizarra PF */const L=ls.get('pfclub-local',{});L.registrosAtletas=L.registrosAtletas||{};const k=ls.get('pfat-uid','')||(()=>{const u='loc'+uid();ls.set('pfat-uid',u);return u;})();L.registrosAtletas[k]=Object.assign({},L.registrosAtletas[k]||{},doc);ls.set('pfclub-local',L);}
 }
@@ -653,14 +668,17 @@ function rutHist(L){const G=myGroups(L);if(!G.length)return '';const T={ind:'Ind
     return '<div class="lift"><div class="lift-h"><b>'+esc(p.k==='sin'?'Otros registros':(p.rn||'Rutina'))+'</b><span class="tiny">'+(live?'Rutina actual':T[p.kind]||'')+(p.k!=='sin'&&p.desde?' · desde el '+esc(fmtD(p.desde,{day:'numeric',month:'short'})):'')+'</span></div>'+
       Object.keys(by).sort((a,b)=>a.localeCompare(b,'es')).map(x=>'<div class="rh-x"><span>'+esc(x)+'</span><span class="rh-v">'+by[x].sort((a,b)=>b.f.localeCompare(a.f)).map(e=>'<span class="mono">'+fmtN(e.kg)+' kg × '+e.r+' <small>'+esc(fmtD(e.f,{day:'numeric',month:'short'}))+'</small>'+(e.ed||e.pfAdd?' <i class="pf-ed" title="Lo corrigió o lo cargó tu preparadora">✎ PF</i>':'')+'</span>').join('')+'</span></div>').join('')+'</div>';}).join('')+'</div>';}
 function profileForm(R){
-  return '<div class="card me"><h3>Tus datos</h3>'+
-    '<div class="fld"><label for="pn">Nombre</label><input id="pn" autocomplete="given-name" value="'+esc(R.nom||(R.ape?'':R.nombre)||'')+'"></div>'+
-    '<div class="fld"><label for="pa">Apellido</label><input id="pa" autocomplete="family-name" value="'+esc(R.ape||'')+'"></div>'+
-    '<div class="fld"><label for="pd">DNI</label><input id="pd" inputmode="numeric" autocomplete="off" placeholder="'+(R.dniFin?'Cargado: …'+esc(R.dniFin)+' (escribí otro para cambiarlo)':'')+'"></div>'+
-    '<details class="opt-d"'+(st.datosLink||R.nac||R.talla?' open':'')+'><summary>Más datos (opcional): nacimiento y altura</summary>'+
+  if(!regOk(R))return '<div class="card me cod-in"><h3>Entrá a tu rutina</h3><p class="tiny" style="margin:0 0 12px">Solo la primera vez. Después tu celu queda recordado.</p>'+
+    (R.dniH?'<div class="cod-help" style="margin:0 0 12px"><i>🔄</i><span><b>Cambió la forma de entrar.</b><br>Ahora se entra con un código. Tus pesos anotados no se pierden.</span></div>':'')+
+    '<div class="fld"><label for="pcode">Tu código</label><input id="pcode" class="cod-inp" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="9" placeholder="Pedile el código a tu profe"></div>'+
+    '<div class="cod-err" id="pcerr" hidden></div>'+
+    '<div class="cod-help"><i>🔑</i><span><b>¿No tenés código?</b><br>Pedíselo a tu profe. Es personal: te lo pasa por WhatsApp.</span></div>'+
+    '<button class="btn pri cod-go" id="psave">Entrar</button></div>';
+  return '<div class="card me"><h3>Mis datos</h3>'+
+    '<details class="opt-d" open><summary>Datos opcionales: nacimiento y altura</summary>'+
     '<div class="fld"><label for="pnac">Fecha de nacimiento</label><input id="pnac" type="date" value="'+esc(R.nac||'')+'"></div>'+
     '<div class="me-row"><div class="fld" style="flex:1"><label for="ptal">Altura (cm)</label><input id="ptal" type="number" inputmode="decimal" step="any" value="'+esc(R.talla||'')+'" placeholder="Ej: 185"></div></div></details>'+
-    '<button class="btn pri" id="psave">Guardar mis datos</button><p class="tiny" style="margin:0">Podés poner el DNI con o sin puntos. No se guarda escrito: se usa solo para reconocerte.</p></div>';
+    '<button class="btn pri" id="psave">Guardar</button> <button class="btn" id="pcodchg">Cambiar mi código</button></div>';
 }
 
 
@@ -682,7 +700,7 @@ const selA=(id,opts,v,ph)=>'<select id="'+id+'"><option value="">'+(ph||'Elegí�
 let FD=null; /* borrador de la ficha mientras la completa */
 function fichaView(){
   const R=getReg();
-  if(!R.nombre||!R.ape||!R.dniH)return profileForm(R);
+  if(!regOk(R))return profileForm(R);
   if(!FD)FD=JSON.parse(JSON.stringify(R.ficha||{les:[],q:{},dj:null}));FD.les=FD.les||[];FD.q=FD.q||{};
   const done=R.ficha&&R.ficha.dj;const meTop=regTop(R);
   let h=meTop+(done?'<div class="card fi-ok">✓ Completaste tu ficha el '+esc(fmtD(R.ficha.dj.f,{day:'numeric',month:'short',year:'numeric'}))+'. Si algo cambia, actualizala acá.</div>':'<p class="tiny" style="margin:0 4px 8px">La ve solo tu profe. Completala con la verdad: así tu entrenamiento es más seguro.</p>');
@@ -710,7 +728,7 @@ function fichaView(){
     '<div class="fi-g2"><div class="fld"><label for="d_exp">Experiencia en gimnasio</label>'+selA('d_exp',EXP_A,D.exp||'')+'</div><div class="fld"><label for="d_dias">Días disponibles</label>'+selA('d_dias',['1','2','3','4','5','6'],D.dias||'')+'</div></div></div>';
   /* 4 · declaración jurada */
   h+='<div class="sec-t">4 · Declaración jurada</div><div class="card fi-dj"><label class="fi-djl"><input type="checkbox" id="dj"'+(FD.dj?' checked':'')+'> <span>Declaro que me encuentro en condiciones de salud para realizar actividad física, que la información que cargué es verdadera y completa, y que entreno bajo mi propia responsabilidad. Si mi salud cambia, lo actualizo acá y le aviso a mi profe.</span></label>'+
-    '<div class="tiny">'+esc(R.nombre)+(R.dniFin?' · DNI …'+esc(R.dniFin):'')+' · '+esc(fmtD(TODAY,{day:'numeric',month:'short',year:'numeric'}))+'</div></div>';
+    '<div class="tiny">'+esc(myName(R))+' · '+esc(fmtD(TODAY,{day:'numeric',month:'short',year:'numeric'}))+'</div></div>';
   return h+'<button class="btn pri fi-save" id="fiSave">Guardar mi ficha</button>';
 }
 function fichaKeep(){if(!FD)return;const v=id=>{const x=document.getElementById(id);return x?x.value.trim():undefined;};
@@ -781,7 +799,7 @@ function pastPeriods(){const R=getReg();const G=myGroups(effLog(R));const P=myPe
 const rng=p=>p.desde?esc(fmtD(p.desde,{day:'numeric',month:'short'}))+(p.hasta&&p.hasta<'9999'?' → '+esc(fmtD(p.hasta,{day:'numeric',month:'short'})):''):'';
 function persRut(c){
   const R=getReg();
-  if(!R.nombre||!R.ape||!R.dniH||st.editProf)return profileForm(R);
+  if(!regOk(R)||st.editProf)return profileForm(R);
   if(st.hist)return histView(st.hist);
   const exs=[...new Set(BASE_EX.concat(R.ex||[]).concat(Object.keys(R.log||{})))];const sel=st.regEx||exs[0];
   const FI=R.ficha||{};
@@ -821,11 +839,11 @@ function anForm(e,esf){const R=getReg();const EL=effLog(R);const k=Object.keys(E
   return '<div class="an-f"><div class="fld"><label for="ak">Kilos</label><input id="ak" type="number" inputmode="decimal" step="any"></div><div class="fld"><label for="ar">Reps</label><input id="ar" type="number" inputmode="numeric" min="1" max="30" value="'+(rr?rr[0]:'')+'"></div>'+(esf?'<div class="an-q"><span>¿Cuántas más podías hacer? <small>(opcional)</small></span><div class="an-qc">'+[0,1,2,3,4].map(q=>'<button type="button" data-anq="'+q+'">'+(q===4?'4+':q)+'</button>').join('')+'</div></div>':'')+'<button class="btn pri" id="aok" data-anx="'+esc(e.n)+'">Anotar</button>'+
     (last?'<span class="an-last">Última vez: <b>'+fmtN(last.kg)+' kg × '+last.r+'</b>'+(last.q!=null?' · te quedaban '+(last.q>=4?'4+':last.q):'')+' · '+esc(fmtD(last.f,{day:'numeric',month:'short'}))+'</span>':'')+'</div>';}
 function regTop(R){
-  return '<div class="card me me-slim"><span><b>'+esc(R.nombre)+'</b>'+(R.dniFin?' <span class="tiny">· DNI …'+esc(R.dniFin)+'</span>':'')+'</span><button class="btn sm" id="pedit">Editar mis datos</button></div>';
+  return '<div class="card me me-slim"><span><b>'+esc(myName(R)||'Tu cuenta')+'</b>'+(R.codFin?' <span class="tiny">· código …'+esc(R.codFin)+'</span>':'')+'</span><button class="btn sm" id="pedit">Editar mis datos</button></div>';
 }
 function regView(){
   const R=getReg();
-  if(!R.nombre||!R.ape||!R.dniH||st.editProf)return profileForm(R);
+  if(!regOk(R)||st.editProf)return profileForm(R);
   const exs=[...new Set(BASE_EX.concat(R.ex||[]).concat(Object.keys(R.log||{})))];
   const sel=st.regEx||exs[0];
   let h=regTop(R);
@@ -845,16 +863,15 @@ function regView(){
   return h;
 }
 function saveProfile(){
-  const nm=$('#pn').value.trim().replace(/\s+/g,' '),ap=$('#pa').value.trim().replace(/\s+/g,' ');const dRaw=$('#pd').value;const d=cleanDni(dRaw);
-  if(!nm){toast('Poné tu nombre');$('#pn').focus();return;}
-  if(!ap){toast('Poné tu apellido');$('#pa').focus();return;}
-  const n=nm+' '+ap;
-  const R=getReg();
-  if(d){if(d.length<7||d.length>9){toast('El DNI tiene que tener 7 u 8 números');return;}R.dniH=dniHash(d);R.dniFin=d.slice(-3);}
-  else if(!R.dniH){toast('Poné tu DNI (solo números)');return;}
-  const nac=$('#pnac')?$('#pnac').value:'',pc2=$('#ppc')?$('#ppc').value:'',tal=$('#ptal')?$('#ptal').value:'';
-  if(nac)R.nac=nac;if(pc2)R.pc=pc2;if(tal)R.talla=tal;
-  if(!R.nombre)R.alta=Date.now();R.nombre=n;R.nom=nm;R.ape=ap;R.cat=st.cat;st.editProf=false;st.datosLink=false;setReg(R);render();toast('Listo, '+n.split(' ')[0]+'. Ya podés anotar tus pesos');
+  const R=getReg();const ci=$('#pcode');
+  if(ci){const c=codClean(ci.value);const er=$('#pcerr');
+    if(!c){er.hidden=false;er.textContent='Escribí el código que te pasó tu profe.';ci.focus();return;}
+    if(!codOk(c)){er.hidden=false;er.textContent='Ese código no es válido. Revisalo letra por letra o pedíselo de nuevo a tu profe.';ci.classList.add('bad');ci.focus();return;}
+    R.dniH='c:'+sha256('pizarra-pf|cod|'+c).slice(0,32);R.dniFin='';R.codFin=c.slice(-3);
+    if(!R.alta)R.alta=Date.now();R.cat=st.cat;st.editProf=false;st.datosLink=false;setReg(R);pushCloud(R);render();
+    const n=myName(R);toast(n?'¡Listo, '+n.split(' ')[0]+'!':'¡Listo! Ya podés ver tu rutina y anotar tus pesos');return;}
+  const nac=$('#pnac')?$('#pnac').value:'',tal=$('#ptal')?$('#ptal').value:'';
+  if(nac)R.nac=nac;if(tal)R.talla=tal;R.cat=st.cat;st.editProf=false;st.datosLink=false;setReg(R);render();toast('Datos guardados');
 }
 function addReg(){
   let x=$('#rx').value;
@@ -867,7 +884,7 @@ function addReg(){
 
 /* ---------- eventos ---------- */
 $('#app').addEventListener('click',e=>{
-  const rb=e.target.closest('[data-rpe]');if(rb){const R=getReg();if(!R.nombre)return;R.rpe=(R.rpe||[]).filter(x=>!(x.a===st.asig&&x.d===+rb.dataset.rpei&&x.f===rb.dataset.rpef));
+  const rb=e.target.closest('[data-rpe]');if(rb){const R=getReg();if(!regOk(R))return;R.rpe=(R.rpe||[]).filter(x=>!(x.a===st.asig&&x.d===+rb.dataset.rpei&&x.f===rb.dataset.rpef));
     R.rpe.push({a:st.asig,d:+rb.dataset.rpei,f:rb.dataset.rpef,v:+rb.dataset.rpe,t:Date.now()});setReg(R);render();toast('Gracias. Guardamos tu RPE: '+rb.dataset.rpe);return;}
   const fx=e.target.closest('[data-lesnew],[data-lesdel],[data-q],[data-mol],#lesAdd,#fiSave');
   if(fx){const d=fx.dataset;
@@ -879,10 +896,11 @@ $('#app').addEventListener('click',e=>{
     if(fx.id==='lesAdd'){const z=$('#l_z').value,tp=$('#l_t').value;if(!z||!tp){toast('Elegí la zona y qué fue');return;}
       FD.les.push({zona:z,lado:$('#l_l').value,tipo:tp,anio:$('#l_a').value,mol:$('#l_m').value||'No',det:$('#l_d').value.trim()});st.lesNew=false;return render();}
     if(fx.id==='fiSave')return fichaSave();}
-  const t=e.target.closest('[data-hist],[data-hday],[data-anf],[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],[data-anq],#aok,#radd,#psave,#pedit');if(!t)return;
+  const t=e.target.closest('[data-hist],[data-hday],[data-anf],[data-cat],[data-tab],[data-asig],[data-day],[data-week],[data-vid],[data-regex],[data-del],[data-regmode],[data-anq],#aok,#radd,#psave,#pedit,#pcodchg');if(!t)return;
   if(t.id==='psave')return saveProfile();
   if(t.dataset.regmode){st.regMode=t.dataset.regmode;return render();}
   if(t.id==='pedit'){st.editProf=true;return render();}
+  if(t.id==='pcodchg'){const R=getReg();R.dniH='';R.codFin='';ls.set('pfat-reg',R);st.editProf=false;return render();}
   const d=t.dataset;
   if(d.hist!==undefined){st.hist=d.hist||null;st.hday=0;render();window.scrollTo(0,0);return;}
   if(d.hday!==undefined){st.hday=+d.hday;return render();}
@@ -895,7 +913,7 @@ $('#app').addEventListener('click',e=>{
   if(d.vid){const em=ytEmbed(d.vid);if(em){$('#vroot').innerHTML='<div class="vmodal" id="vm"><div class="vbox"><iframe src="'+esc(em)+'" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Video del ejercicio"></iframe><button class="btn" id="vclose">Cerrar video</button></div></div>';
       $('#vm').onclick=ev=>{if(ev.target.id==='vm'||ev.target.id==='vclose')$('#vroot').innerHTML='';};}
     else window.open(d.vid,'_blank','noopener');return;}
-  if(d.regex){const R=getReg();if(!R.nombre){toast('Primero completá tus datos');st.editProf=true;if(!isPersC(catById(st.cat)))st.tab='reg';render();window.scrollTo(0,0);return;}
+  if(d.regex){const R=getReg();if(!regOk(R)){toast('Primero poné tu código');st.editProf=true;if(!isPersC(catById(st.cat)))st.tab='reg';render();window.scrollTo(0,0);return;}
     st.anEx=st.anEx===d.anid?null:d.anid;render();setTimeout(()=>{const k=$('#ak');if(k)k.focus();},30);return;}
   const aq=t.closest('[data-anq]');if(aq){const was=aq.classList.contains('on');aq.parentElement.querySelectorAll('[data-anq]').forEach(b=>b.classList.remove('on'));if(!was)aq.classList.add('on');return;}
   if(t.id==='aok'){const x=t.dataset.anx;const qb=document.querySelector('.an-f [data-anq].on');const qv=qb?+qb.dataset.anq:null;const kg=Number(String($('#ak').value).replace(',','.')),r=Math.max(1,parseInt($('#ar').value)||1);
@@ -905,6 +923,8 @@ $('#app').addEventListener('click',e=>{
   if(d.del){const [x,id]=d.del.split('|');const R=getReg();R.log[x]=(R.log[x]||[]).filter(z=>z.id!==id);setReg(R);return render();}
   if(t.id==='radd')return addReg();
 });
+$('#app').addEventListener('input',e=>{if(e.target.id==='pcode'){e.target.classList.remove('bad');const er=$('#pcerr');if(er)er.hidden=true;const c=codClean(e.target.value).slice(0,6);const f=c.length>3?c.slice(0,3)+'-'+c.slice(3):c;if(f!==e.target.value)e.target.value=f;}});
+$('#app').addEventListener('keydown',e=>{if(e.target.id==='pcode'&&e.key==='Enter'){e.preventDefault();saveProfile();}});
 $('#app').addEventListener('change',e=>{if(e.target.id==='pc'){const R=getReg();R.pc=e.target.value;setReg(R);render();}
   if(e.target.id==='rx'){const o=e.target.value==='__otro';$('#rxoBox').hidden=!o;if(o)$('#rxo').focus();else st.regEx=e.target.value;}});
 
@@ -914,11 +934,11 @@ if(FB()){firebase.initializeApp(FIREBASE_CONFIG);try{firebase.firestore().enable
   firebase.auth().onAuthStateChanged(async u=>{
     if(!u){firebase.auth().signInAnonymously().catch(e=>console.warn('anon',e));return;}
     myUid=u.uid;render();
-    try{firebase.firestore().collection('registrosAtletas').doc(myUid).onSnapshot(sn=>{if(sn.exists&&bajaCheck(sn.data()))return;const n=(sn.exists&&sn.data().pf)||{};if(JSON.stringify(n)!==JSON.stringify(PF)){PF=n;render();}},()=>{});}catch(e){}
+    try{firebase.firestore().collection('registrosAtletas').doc(myUid).onSnapshot(sn=>{if(sn.exists&&bajaCheck(sn.data()))return;const n=(sn.exists&&sn.data().pf)||{};if(JSON.stringify(n)!==JSON.stringify(PF)){PF=n;const R0=getReg();if(n.nm&&regOk(R0)&&R0.nombre!==n.nm){R0.nombre=n.nm;R0.nom=n.nm.split(' ')[0];R0.ape=n.nm.split(' ').slice(1).join(' ');ls.set('pfat-reg',R0);}render();}},()=>{});}catch(e){}
     try{const snap=await firebase.firestore().collection('registrosAtletas').doc(myUid).get();
       const R=getReg();if(snap.exists&&bajaCheck(snap.data()))return;
-      if(snap.exists&&!snap.data().baja&&!Object.keys(R.log).some(k=>R.log[k].length)&&!R.nombre){const c=snap.data();ls.set('pfat-reg',{nombre:c.nombre,nom:c.nom,ape:c.ape,dniH:c.dniH,dniFin:c.dniFin,pc:c.pc,nac:c.nac,talla:c.talla,log:c.log||{},ex:c.ex||[],upd:c.upd,alta:c.alta,ficha:c.ficha,mol:c.mol});render();}
-      else if(R.nombre)pushCloud(R);
+      if(snap.exists&&!snap.data().baja&&!Object.keys(R.log).some(k=>R.log[k].length)&&!regOk(R)&&String(snap.data().dniH||'').startsWith('c:')){const c=snap.data();ls.set('pfat-reg',{nombre:c.nombre,nom:c.nom,ape:c.ape,dniH:c.dniH,dniFin:c.dniFin,pc:c.pc,nac:c.nac,talla:c.talla,log:c.log||{},ex:c.ex||[],upd:c.upd,alta:c.alta,ficha:c.ficha,mol:c.mol});render();}
+      else if(regOk(R))pushCloud(R);
     }catch(e){console.warn(e);}
   });
 }

@@ -1298,6 +1298,14 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
 .pl-pr{white-space:nowrap}.pl-pr .up{color:var(--good);font-weight:800}.pl-pr .dn{color:var(--bad);font-weight:800}.pl-pr .eq{color:var(--ink-3);font-weight:700}
 .pl-t .flag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 6px;margin-top:3px}
 .pl-t .flag.lo{background:var(--accent-soft);color:var(--good)}.pl-t .flag.hi{background:var(--bad-soft);color:var(--bad)}
+
+.roster .pl{flex-wrap:wrap}.roster .pl .info{flex:1 1 150px;min-width:150px}
+.cod-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 8px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px}
+.cod-chip{font-family:var(--f-mono,monospace);font-weight:700;letter-spacing:.08em;background:var(--surface-2);border:0;border-radius:7px;padding:4px 9px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap}
+.cod-chip:hover{background:var(--accent-soft)}
+.app-b.dni{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.cod-big{font-family:var(--f-mono,monospace);font-weight:700;font-size:34px;letter-spacing:.14em;text-align:center;background:var(--surface-2);border-radius:12px;padding:14px;margin-bottom:12px}
+.cod-wa{white-space:pre-line;background:#E7F7DE;color:#0D110E;border:1px solid #cfe9c2;border-radius:10px;padding:10px 12px;font-size:13.5px;margin-bottom:8px}
 </style>
 
 </head>
@@ -1319,7 +1327,7 @@ body.ro .modal-b input::placeholder,body.ro .modal-b textarea::placeholder{color
       <div class="bk"><button class="btn-side" type="button" id="expBtn">Descargar respaldo</button><button class="btn-side" type="button" id="impBtn">Importar</button></div>
       <input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn-side theme-btn" type="button" id="themeBtn"></button>
-      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · caja de herramientas y planilla de progreso</div>
+      <div class="ver" title="Si no ves esta fecha, recargá la página">Versión 17 nov 2026 · acceso con código</div>
       <div class="status" id="status"><i></i><span>Conectando…</span></div>
     </div>
   </aside>
@@ -1606,9 +1614,9 @@ function selectCat(id){
   S.cat=id;ls.set('pf-cat',id);
   if(changed){
     catUnsubs.forEach(u=>{try{u();}catch(e){}});
-    S.jug=[];S.dni=[];S.ses=[];S.par=[];S.asis=[];S.tes=[];S.atl=[];
+    S.jug=[];S.dni=[];S.dniLoaded=false;S.ses=[];S.par=[];S.asis=[];S.tes=[];S.atl=[];
     catUnsubs=[
-      Store.watch('jugadores','cat',id,a=>{S.jug=a;render();migrateDni(a);}),
+      Store.watch('jugadores','cat',id,a=>{S.jug=a;render();migrateDni(a);ensureCodes();}),
       Store.watch('sesiones','cat',id,a=>{S.ses=a;render();}),
       Store.watch('partidos','cat',id,a=>{S.par=a;render();}),
       Store.watch('asistencia','cat',id,a=>{S.asis=a;if(!pendingAtt)render();}),
@@ -1616,8 +1624,8 @@ function selectCat(id){
     ];
     /* DNIs y registros de atletas: solo vos (nunca en el link de solo lectura) */
     if(!RO)catUnsubs.push(
-      Store.watch('dnis','cat',id,a=>{S.dni=a;render();}),
-      Store.watch('registrosAtletas','cat',id,a=>{S.atl=a.filter(d=>!d.baja).map(atlNorm);render();difUidsCheck();trabSync();cambiosSync();}));
+      Store.watch('dnis','cat',id,a=>{S.dni=a;S.dniLoaded=true;ensureCodes();render();}),
+      Store.watch('registrosAtletas','cat',id,a=>{S.atl=a.filter(d=>!d.baja).map(atlNorm);render();difUidsCheck();trabSync();cambiosSync();codNameSync();}));
   }
   renderNav();render();
 }
@@ -3336,6 +3344,41 @@ function planHtml(p,r,days,ui,W,wOf,start){
   });
   return {b,used};
 }
+/* ================= códigos de acceso a la app de atletas (en vez del DNI) ================= */
+const COD_A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function codChk(s5){let t=0;for(let i=0;i<5;i++)t+=(i+1)*COD_A.indexOf(s5[i]);return COD_A[t%32];}
+function codNew(){const used=new Set(S.dni.map(x=>x.cod).filter(Boolean));let c;do{const r=new Uint8Array(5);crypto.getRandomValues(r);const s=[...r].map(x=>COD_A[x%32]).join('');c=s+codChk(s);}while(used.has(c));return c;}
+const codFmt=c=>c?c.slice(0,3)+'-'+c.slice(3):'';
+const codHash=c=>sha256('pizarra-pf|cod|'+c).slice(0,32);
+function codOf(jid){return (S.dni.find(x=>x.id===jid)||{}).cod||'';}
+function dniPut(id,d){const o=S.dni.find(x=>x.id===id);return Store.put('dnis',id,Object.assign({},o&&o.cod?{cod:o.cod,codH:o.codH}:{},d));}
+function codSet(jid,cat){const c=codNew(),h=codHash(c);const o=S.dni.find(x=>x.id===jid);if(o){o.cod=c;o.codH=h;}else S.dni.push({id:jid,cat,cod:c,codH:h});Store.patch('dnis',jid,{cat,cod:c,codH:h});return c;}
+function ensureCodes(){if(RO||!S.dniLoaded||!S.jug.length)return;S.jug.filter(j=>!codOf(j.id)).forEach(j=>codSet(j.id,j.cat||S.cat));}
+/* al que entró con código le mandamos su nombre a la app */
+function codNameSync(){if(RO||!S.atl)return;S.atl.forEach(d=>{const m=atlPlayer(d);if(m.how==='cod'&&m.j&&(d.pf||{}).nm!==m.j.nombre)atlPfSave(d.id,pf=>{pf.nm=m.j.nombre;});});}
+function codMsg(j){return 'Hola '+String(j.nombre||'').split(' ')[0]+'! 💪 Esta es la app con tu rutina'+((j.cat||S.cat)===PERS?'':' del club')+':\n'+atlUrl(j.cat||S.cat)+'\n\nTu código para entrar es: '+codFmt(codOf(j.id))+'\n(es personal, no lo compartas)';}
+function openCodAcc(jid){
+  const j=S.jug.find(x=>x.id===jid);if(!j)return;if(!codOf(jid))codSet(jid,j.cat||S.cat);const msg=codMsg(j);
+  openModal(modalHead('Acceso a la app · '+j.nombre,'Mandar acceso')+'<div class="modal-b"><div class="cod-big">'+esc(codFmt(codOf(jid)))+'</div><p class="tiny" style="margin:0 0 6px">Mensaje listo para pegar en WhatsApp:</p><div class="cod-wa">'+esc(msg)+'</div>'+
+    '<p class="tiny">Si se lo olvida, mandale este mismo de nuevo. Generá uno nuevo solo si lo está usando otra persona: el código es lo que le dice a la app quién es.</p></div>'+
+    '<div class="modal-f"><button class="btn danger" id="cod_new">🔄 Nuevo código</button><div class="grow"></div><button class="btn" id="cod_wa">Abrir WhatsApp</button><button class="btn pri" id="cod_cp">Copiar mensaje</button></div>',mw=>{
+    mw.querySelector('#cod_cp').onclick=()=>copyTxt(msg,'Mensaje copiado: pegalo en WhatsApp');
+    mw.querySelector('#cod_wa').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank','noopener');
+    armDelete(mw.querySelector('#cod_new'),()=>{codSet(jid,j.cat||S.cat);toast('Código nuevo: el anterior ya no sirve');openCodAcc(jid);});
+  });
+}
+function codAllTxt(){return 'Códigos para entrar a la app ('+catName(S.cat)+'):\n'+atlUrl(S.cat)+'\n\n'+sortedJug().map(j=>j.nombre+': '+codFmt(codOf(j.id))).join('\n');}
+function codPrint(){
+  const cards=sortedJug().map(j=>'<div class="c"><small>'+esc(catName(S.cat))+'</small><b>'+esc(j.nombre)+'</b><div class="k">'+esc(codFmt(codOf(j.id)))+'</div><p>Entrá a <u>'+esc(atlUrl(S.cat).replace(/^https?:\/\//,''))+'</u> y poné tu código. Es personal: no lo compartas.</p></div>').join('');
+  const w=window.open('','_blank');if(!w){toast('Habilitá las ventanas emergentes para imprimir');return;}
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Códigos · '+esc(catName(S.cat))+'</title><style>body{font-family:Arial,sans-serif;margin:16px}.g{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.c{border:1.5px dashed #888;border-radius:10px;padding:12px 14px;break-inside:avoid}.c small{color:#666;text-transform:uppercase;font-size:10px;letter-spacing:.1em}.c b{display:block;font-size:16px;margin:2px 0}.k{font:700 26px monospace;letter-spacing:.12em;margin:6px 0}.c p{font-size:11px;color:#333;margin:0}</style></head><body><div class="g">'+cards+'</div><script>setTimeout(()=>print(),300)<\/script></body></html>');w.document.close();
+}
+document.getElementById('view').addEventListener('click',e=>{const t=e.target;
+  const cp=t.closest('[data-codcp]');if(cp){const c=codOf(cp.dataset.codcp);if(c)copyTxt(codFmt(c),'Código copiado: '+codFmt(c));return;}
+  const ac=t.closest('[data-codacc]');if(ac)return openCodAcc(ac.dataset.codacc);
+  if(t.closest('[data-codall]'))return copyTxt(codAllTxt(),'Copiados todos los códigos');
+  if(t.closest('[data-codprint]'))return codPrint();
+});
 /* ================= asistencia ================= */
 /* ================= puente con la app de los profes (Villa Mitre) =================
    Solo LEE de la planilla de Google de la app de los profes (no sube nada ahí).
@@ -3674,6 +3717,7 @@ const atlMap=()=>(S.cfg.find(x=>x.id==='atlmap')||{}).map||{};
 /* a qué jugador del plantel corresponde: 1) lo que vinculaste a mano 2) DNI 3) nombre */
 function atlPlayer(d){
   const m=atlMap()[d.id];if(m){const j=S.jug.find(x=>x.id===m);if(j)return {j,how:'manual'};}
+  if(d.dniH&&String(d.dniH).startsWith('c:')){const h=d.dniH.slice(2);const k=S.dni.find(x=>x.codH===h);const j=k&&S.jug.find(x=>x.id===k.id);return j?{j,how:'cod'}:{j:null,how:''};}
   if(d.dniH){const k=S.dni.find(x=>x.dniH===d.dniH);const j=(k&&S.jug.find(x=>x.id===k.id))||S.jug.find(x=>x.dniH&&x.dniH===d.dniH);if(j)return {j,how:'dni'};}
   const j=matchPlayer(null,d.ape?d.ape+', '+(d.nom||''):(d.nombre||''));return j?{j,how:'nombre'}:{j:null,how:''};
 }
@@ -4211,7 +4255,7 @@ function openAtl(id){
       L.map(e=>'<tr><td>'+esc(fmtD(e.f,{day:'numeric',month:'short',year:'2-digit'}))+'</td><td class="r mono">'+fmtN(e.kg)+' kg × '+e.r+'</td><td class="r mono">'+(e.r>1?'≈':'')+fmtN(Math.round(epl(+e.kg,+e.r)*10)/10)+'</td></tr>').join('')+'</tbody></table></div></div>';}).join('')||'<p class="muted">Todavía no anotó nada.</p>';
   openModal(modalHead('Registros del atleta',m.j?m.j.nombre:(d.nombre||'Atleta'))+'<div class="modal-b">'+b+'</div><div class="modal-f">'+(m.j?'':'<button class="btn" id="atlNew">'+(S.cat===PERS?'Sumar como alumno':'Sumar al plantel')+'</button>')+'<div class="grow"></div><button class="btn" data-close>Cerrar</button><button class="btn pri" id="atlSave">Guardar vínculo</button></div>',mw=>{
     /* el DNI que puso el atleta queda guardado en el jugador, así la próxima vez se reconoce solo */
-    const keepDni=jid=>{if(d.dniH&&!(dniOf(jid)||{}).dniH)Store.put('dnis',jid,{cat:S.cat,dniH:d.dniH,dniFin:d.dniFin||''});};
+    const keepDni=jid=>{if(d.dniH&&!String(d.dniH).startsWith('c:')&&!(dniOf(jid)||{}).dniH)dniPut(jid,{cat:S.cat,dniH:d.dniH,dniFin:d.dniFin||''});};
     const nb=mw.querySelector('#atlNew');
     if(nb)nb.onclick=async()=>{
       if(S.cat===PERS){const jid=uid();const nm=d.nombre||((d.nom||'')+' '+(d.ape||'')).trim()||'Alumno';
@@ -4785,17 +4829,18 @@ function noPlayers(){return '<div class="empty"><b>Primero cargá el plantel</b>
 function vRoster(){
   const st=attStats();
   /* quién ya entró a la app de atletas (se empareja por DNI o nombre) */
-  const regOf={},sinVinc=[];S.atl.forEach(d=>{const m=atlPlayer(d);if(m.j){const o=regOf[m.j.id];if(!o||(d.upd||0)>(o.d.upd||0))regOf[m.j.id]={d,how:m.how};}else if(d.nombre||d.dniFin)sinVinc.push(d);});
+  const regOf={},sinVinc=[];S.atl.forEach(d=>{const m=atlPlayer(d);if(m.j){const o=regOf[m.j.id];if(!o||(d.upd||0)>(o.d.upd||0))regOf[m.j.id]={d,how:m.how};}else if(d.nombre||d.dniFin||d.dniH)sinVinc.push(d);});
   const nApp=S.jug.filter(j=>regOf[j.id]).length;
   const dd=t=>t?fmtD(new Date(t).toISOString().slice(0,10),{day:'numeric',month:'short'}):'';
   let h='<div class="grid2"><div><div class="bar"><span class="muted">'+S.jug.length+' jugadores</span>'+(S.jug.length&&!RO?'<span class="pill '+(nApp?'good':'neutral')+'" title="Jugadores que ya cargaron sus datos en la app de atletas">📱 '+nApp+' de '+S.jug.length+' en la app</span>':'')+'</div>';
   h+=S.jug.length?'<div class="roster" style="grid-template-columns:1fr">'+sortedJug().map(j=>{const inj=lesOf().find(l=>l.jugador===j.id&&activeInj(l));const p=(st[j.id]||{}).pct;
     return '<div class="pl"><span class="dor">'+esc(j.dorsal||'·')+'</span><div class="info pl-click" data-ficha="'+esc(j.id)+'" title="Ver ficha"><div class="nm">'+esc(j.nombre)+'</div><div class="tiny">'+esc(j.pos||'Sin posición')+(p!=null?' · '+p+'% asist.':'')+'</div></div>'+(inj?'<span class="pill bad">lesión</span>':'')+(indOf(j.id)?'<span class="pill neutral" title="Hace una rutina individual">rutina individual</span>':'')+
-      (RO?'':(regOf[j.id]?'<button type="button" class="app-b on" data-atl="'+esc(regOf[j.id].d.id)+'" title="Ya está en la app de atletas'+(regOf[j.id].how==='nombre'?' (reconocido por nombre)':'')+'. Tocá para ver lo que anotó.">📱 en la app'+(regOf[j.id].d.upd?' · '+esc(dd(regOf[j.id].d.upd)):'')+'</button>':'<span class="app-b" title="Todavía no cargó sus datos en la app de atletas">sin app</span>'))+
+      (RO?'':'<button type="button" class="cod-chip" data-codcp="'+esc(j.id)+'" title="Código para entrar a la app · tocá para copiarlo">'+esc(codFmt(codOf(j.id))||'…')+'</button>'+(regOf[j.id]&&regOf[j.id].how==='cod'?'<button type="button" class="app-b on" data-atl="'+esc(regOf[j.id].d.id)+'" title="Entró con su código. Tocá para ver lo que anotó.">📱 en la app'+(regOf[j.id].d.upd?' · '+esc(dd(regOf[j.id].d.upd)):'')+'</button>':regOf[j.id]?'<button type="button" class="app-b dni" data-atl="'+esc(regOf[j.id].d.id)+'" title="Entró con DNI: la próxima vez que abra la app le va a pedir el código">con DNI</button><button type="button" class="btn sm pri" data-codacc="'+esc(j.id)+'">Mandar acceso</button>':'<button type="button" class="btn sm pri" data-codacc="'+esc(j.id)+'">Mandar acceso</button>'))+
       '<button class="btn sm ghost" data-editj="'+esc(j.id)+'">'+(RO?'Ver':'Editar')+'</button></div>';}).join('')+'</div>'
     :'<div class="empty"><b>Plantel vacío</b>Sumá jugadores con el formulario, o pegá una lista entera.</div>';
-  if(sinVinc.length&&!RO)h+='<div class="panel" style="margin-top:12px"><h3>En la app pero sin reconocer ('+sinVinc.length+')</h3><p class="tiny" style="margin:0 0 8px">Cargaron sus datos pero no coinciden con nadie del plantel (DNI o nombre distinto). Tocá uno para vincularlo al jugador correcto.</p>'+
-    sinVinc.map(d=>'<button type="button" class="app-b on" style="margin:0 6px 6px 0" data-atl="'+esc(d.id)+'">'+esc(d.nombre||'Sin nombre')+(d.dniFin?' · DNI …'+esc(d.dniFin):'')+(d.upd?' · '+esc(dd(d.upd)):'')+'</button>').join('')+'</div>';
+  if(S.jug.length&&!RO)h=h.replace('<div class="roster"','<div class="cod-bar"><span class="tiny">Cada jugador entra a la app con su código (tocalo para copiarlo).</span><span class="grow"></span><button type="button" class="btn sm" data-codall>📋 Copiar todos</button><button type="button" class="btn sm" data-codprint>🖨 Imprimir tarjetitas</button></div><div class="roster"');
+  if(sinVinc.length&&!RO)h+='<div class="panel" style="margin-top:12px"><h3>En la app pero sin reconocer ('+sinVinc.length+')</h3><p class="tiny" style="margin:0 0 8px">Entraron a la app pero no coinciden con nadie del plantel (código viejo o equivocado, o DNI/nombre distinto). Tocá uno para vincularlo al jugador correcto.</p>'+
+    sinVinc.map(d=>'<button type="button" class="app-b on" style="margin:0 6px 6px 0" data-atl="'+esc(d.id)+'">'+esc(d.nombre||(String(d.dniH||'').startsWith('c:')?'Código que ya no existe':'Sin nombre'))+(d.dniFin?' · DNI …'+esc(d.dniFin):'')+(d.upd?' · '+esc(dd(d.upd)):'')+'</button>').join('')+'</div>';
   h+='</div><div style="display:grid;gap:16px"><form class="panel" id="plForm"><h3>Sumar jugador</h3><div class="form-grid"><div class="field" style="grid-column:1/-1"><label for="p_n">Nombre y apellido</label><input id="p_n" required></div><div class="field"><label for="p_p">Posición</label><select id="p_p"><option></option><option>Arquero/a</option><option>Defensor/a</option><option>Mediocampista</option><option>Delantero/a</option></select></div><div class="field"><label for="p_d">Dorsal</label><input id="p_d" inputmode="numeric"></div></div><button class="btn pri" style="margin-top:12px" type="submit">Sumar</button></form>'+
     '<form class="panel" id="bulkForm"><h3>Pegar lista</h3><div class="field"><label for="p_bulk">Un jugador por línea (el DNI al final es opcional)</label><textarea id="p_bulk" placeholder="Juana Pérez 45123456&#10;Sofía Gómez 44.987.321&#10;…" style="min-height:120px"></textarea></div><button class="btn" style="margin-top:10px" type="submit">Sumar todos</button></form></div></div>';
   return h;
@@ -4824,7 +4869,7 @@ function openPlayer(id){
       const base=Object.assign({},S.jug.find(x=>x.id===id)||{});delete base.id;if(!ind.indRut){delete base.indRut;delete base.indDesde;delete base.indSem;}
       const flds=PC?aluRead(mw):{pos:v('e_p'),dorsal:v('e_d'),nacimiento:v('e_nac'),nac:v('e_nac')||base.nac||'',peso:v('e_peso'),notas:v('e_not')};
       try{await Store.put('jugadores',id,Object.assign(base,{cat:S.cat,nombre:v('e_n')},flds,ind));syncInd(id,ind);
-        if(dd&&(dn||j.dniH||(jd.cat&&jd.cat!==S.cat)))await Store.put('dnis',id,Object.assign({cat:S.cat},dd));closeModal();toast(isNew?(PC?'Alumno sumado':'Jugador sumado'):'Guardado');}catch(e){}};
+        if(dd&&(dn||j.dniH||(jd.cat&&jd.cat!==S.cat)))await dniPut(id,Object.assign({cat:S.cat},dd));closeModal();toast(isNew?(PC?'Alumno sumado':'Jugador sumado'):'Guardado');}catch(e){}};
   });
 }
 
@@ -4850,7 +4895,7 @@ function aluRead(mw){const v=i=>(mw.querySelector('#'+i)||{value:''}).value.trim
   return {sexo:v('e_sx'),nac:v('e_nac'),desde:v('e_dsd'),objetivo:v('e_obj'),modal:v('e_mod'),dias:v('e_dia'),pat:v('e_pat'),cuidado:v('e_cui'),notas:v('e_not')};}
 function aluLast(d){let m='';Object.values(d.log||{}).forEach(a=>(a||[]).forEach(e=>{if(e&&e.f>m)m=e.f;}));return m;}
 const relDia=f=>{const n=daysBetween(f,TODAY);return n<=0?'hoy':n===1?'ayer':'hace '+n+' días';};
-function aluRegs(){const regOf={},sinVinc=[];S.atl.forEach(d=>{const m=atlPlayer(d);if(m.j){const o=regOf[m.j.id];if(!o||(d.upd||0)>(o.upd||0))regOf[m.j.id]=d;}else if(d.nombre||d.dniFin)sinVinc.push(d);});return {regOf,sinVinc};}
+function aluRegs(){const regOf={},sinVinc=[];S.atl.forEach(d=>{const m=atlPlayer(d);if(m.j){const o=regOf[m.j.id];if(!o||(d.upd||0)>(o.upd||0))regOf[m.j.id]=d;}else if(d.nombre||d.dniFin||d.dniH)sinVinc.push(d);});return {regOf,sinVinc};}
 function kpisPers(){
   const wk=addDays(TODAY,-6);const n=S.jug.length;const {regOf}=aluRegs();
   const venc=S.jug.filter(j=>{const a=indOf(j.id);return !a||(a.hasta&&a.hasta<=addDays(TODAY,7));}).length;
@@ -5148,7 +5193,7 @@ view.addEventListener('submit',async e=>{
     for(const ln of lines){const m=ln.match(/^(.*?)[\s,;:\-–]+(\d[\d.\s]{5,}\d)\s*$/);const n=(m?m[1]:ln).trim();const dn=m?cleanDni(m[2]):'';
       const jid=uid();
       try{await Store.put('jugadores',jid,{cat:S.cat,nombre:n,pos:'',dorsal:''});
-        if(dn.length>=7&&dn.length<=9)await Store.put('dnis',jid,{cat:S.cat,dniH:dniHash(dn),dniFin:dn.slice(-3)});}catch(err){break;}}
+        if(dn.length>=7&&dn.length<=9)await dniPut(jid,{cat:S.cat,dniH:dniHash(dn),dniFin:dn.slice(-3)});}catch(err){break;}}
     toast(lines.length+' jugadores sumados');}
 });
 
@@ -5227,7 +5272,7 @@ function dniOf(jid){const k=S.dni.find(x=>x.id===jid);if(k)return k;const j=S.ju
 function migrateDni(list){
   if(RO)return;
   list.filter(j=>j.dniH).forEach(j=>{
-    Store.put('dnis',j.id,{cat:j.cat,dniH:j.dniH,dniFin:j.dniFin||''});
+    dniPut(j.id,{cat:j.cat,dniH:j.dniH,dniFin:j.dniFin||''});
     const c=Object.assign({},j);delete c.id;delete c.dniH;delete c.dniFin;Store.put('jugadores',j.id,c);});
 }
 
